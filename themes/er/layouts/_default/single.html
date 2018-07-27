@@ -11,6 +11,14 @@
     tags: [ {{ range .Params.tags }}<a href='{{ "/tags/" | relLangURL }}{{ . | urlize }}' class="silver">{{ . }}</a> {{ end }} ]
     {{ end }}
   </p>
+  {{ if .Params.logo_empresa }}
+  <img src="{{ .Params.logo_empresa }}"><br>
+  {{ end }}
+  <p>Empresa: <a href="{{ .Params.link_empresa }}" target="_blank" class="silver">{{ .Params.nombre_empresa }}</a></p>
+  {{ if .Params.sueldo_ofrecido }}
+  <p>Sueldo ofrecido: ${{ .Params.sueldo_ofrecido }}</p>
+  {{ end }}
+  <hr>
   <div class="lh-copy post-content">{{ .Content }}</div>
 </main>
 {{ partial "table-of-contents" . }}
@@ -19,8 +27,8 @@
 <div class="pagination tc tr-l db fixed-l bottom-2-l right-2-l mb3 mb0-l">
   {{ partial "back-to-top.html" . }}<br>
   <p class="mb0 mt2">
-  {{ with .PrevInSection }}{{ if . }}<a href="{{ .Permalink }}">prev post</a>{{ end }}{{ end }}
-  {{ with .NextInSection }}{{ if . }}<a href="{{ .Permalink }}">next post</a>{{ end }}{{ end }}
+  {{ with .PrevInSection }}{{ if . }}<a href="{{ .Permalink }}">Pega anterior</a>{{ end }}{{ end }}
+  {{ with .NextInSection }}{{ if . }}<a href="{{ .Permalink }}">Pega siguiente</a>{{ end }}{{ end }}
   </p>
 </div>
 {{ end }}
