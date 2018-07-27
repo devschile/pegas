@@ -24,6 +24,19 @@ fields:
   name: logo_empresa
   label: Logo empresa
   description: Si la empresa quiere, puede agregar su logo
+- type: text
+  name: nombre_empresa
+  label: Nombre empresa
+  config:
+    required: true
 - type: textarea
+  label: Link empresa
+  name: link_empresa
+  description: http://www.
+- type: number
+  name: sueldo_ofrecido
+  label: Sueldo ofrecido
+  config:
+    step: '50000'
 pages:
 - content/posts/cuponatic_stgo-busca-full-stack-developer-semi-senior-full-time-en-santiago.md
