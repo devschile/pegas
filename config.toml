@@ -1,0 +1,11 @@
+baseURL = ""
+relativeURLs = true
+canonifyurls = true
+languageCode = "es-cl"
+title = "Pegas devsChile"
+theme = "er"
+
+googleAnalytics = "UA-XXXXXX-X"
+
+[params]
+description = "Vitrina de pegas para _developers / designers_ moderado para la comunidad devsChile"
