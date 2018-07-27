@@ -1,0 +1,27 @@
+---
+label: Pega
+hide_body: false
+is_partial: false
+fields:
+- type: text
+  name: description
+  label: Resumen
+  description: Pequeño resumen de la pega, con hartas palabras claves.
+  config:
+    required: false
+- type: datetime
+  name: date
+  label: Fecha publicación
+  config:
+    date_format: DD/MM/YYY
+    time_format: hh:mm
+    required: true
+- type: tag_list
+  name: tags
+  label: Etiquetas
+  description: frontend, backend, fullstack, devops...
+- type: file
+  name: logo_empresa
+  label: Logo empresa
+  description: Si la empresa quiere, puede agregar su logo
+- type: textarea
