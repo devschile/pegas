@@ -41,6 +41,11 @@ fields:
 - type: text
   name: sueldo_ofrecido
   label: Sueldo ofrecido
+- type: text
+  name: contacto
+  label: Contacto
+  config:
+    required: true
 pages:
 - content/posts/cuponatic_stgo-busca-full-stack-developer-semi-senior-full-time-en-santiago.md
 - content/posts/buscamos-nuevo-admin-para-devschile.md
