@@ -6,7 +6,7 @@ link_empresa = "http://www.miningtag.cl/"
 logo_empresa = "/uploads/Screen Shot 2019-01-15 at 12.56.29.png"
 nombre_empresa = "Mining TAG"
 sueldo_ofrecido = ""
-tags = []
+tags = ["fullstack"]
 
 +++
 Busco 2 perfiles *Full Stack* _(Presencial)_ para MiningTag \[www.miningtag.cl\]
