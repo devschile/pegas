@@ -4,6 +4,11 @@ hide_body: false
 is_partial: false
 fields:
 - type: text
+  name: titulo
+  label: Título
+  config:
+    required: true
+- type: text
   name: description
   label: Resumen
   description: Pequeño resumen de la pega, con hartas palabras claves.
