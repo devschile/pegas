@@ -9,13 +9,11 @@ sueldo_ofrecido = ""
 tags = ["fullstack"]
 
 +++
-Busco 2 perfiles *Full Stack* _(Presencial)_ para MiningTag \[www.miningtag.cl\]
+Busco 2 perfiles _Full Stack_ _(Presencial)_ para \[MiningTag\](www.miningtag.cl)
 
 • Junior _(1 año o más de experiencia)_
 
 • Semi Senior _(mínimo 3 años de experiencia)_
-
->>>*Sueldo* :moneybag:
 
 1M a 1.6M dependiendo de la experiencia.
 
@@ -31,7 +29,7 @@ Busco 2 perfiles *Full Stack* _(Presencial)_ para MiningTag \[www.miningtag.cl\]
 
 \*Horarios*
 
-• Lunes a Jueves de 08:30 a 18:30 
+• Lunes a Jueves de 08:30 a 18:30
 
 • Viernes de 08:30 a 16:00
 
