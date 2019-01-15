@@ -1,6 +1,7 @@
 +++
 date = "2018-07-27T17:25:57-04:00"
 description = "Por voto popular, echaremos a un admin y necesitamos reemplazarlo"
+draft = true
 link_empresa = "http://www.devschile.cl"
 logo_empresa = "/uploads/Screen Shot 2018-07-27 at 16.26.32.png"
 nombre_empresa = "devsChile"
