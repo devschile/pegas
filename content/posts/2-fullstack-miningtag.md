@@ -9,7 +9,7 @@ sueldo_ofrecido = ""
 tags = ["fullstack"]
 
 +++
-Busco 2 perfiles _Full Stack_ _(Presencial)_ para \[MiningTag\](www.miningtag.cl)
+Busco 2 perfiles _Full Stack_ _(Presencial)_ para [MiningTag](www.miningtag.cl)
 
 • Junior _(1 año o más de experiencia)_
 
@@ -17,7 +17,7 @@ Busco 2 perfiles _Full Stack_ _(Presencial)_ para \[MiningTag\](www.miningtag.cl
 
 1M a 1.6M dependiendo de la experiencia.
 
-\*Requisitos*
+**Requisitos**
 
 • Conocimiento de bases de datos: optimización de consultas y rendimiento (idealmente SQL avanzado)
 
@@ -27,17 +27,17 @@ Busco 2 perfiles _Full Stack_ _(Presencial)_ para \[MiningTag\](www.miningtag.cl
 
 • Experiencia trabajando con NodeJS, C#, AngularJS o Python.
 
-\*Horarios*
+**Horarios**
 
 • Lunes a Jueves de 08:30 a 18:30
 
 • Viernes de 08:30 a 16:00
 
-\*Ubicación*
+**Ubicación**
 
 Providencia a 10 minutos del Metro (Línea 1) Pedro de Valdivia/Manuel Montt.
 
-\*Beneficios*
+**Beneficios**
 
 • Seguro de salud complementario
 
@@ -47,6 +47,6 @@ Providencia a 10 minutos del Metro (Línea 1) Pedro de Valdivia/Manuel Montt.
 
 • Capacitaciones relacionadas con tópicos de desarrollo de software
 
-\*Tipo de contrato*
+**Tipo de contrato**
 
 3 meses plazo fijo, luego Indefinido
