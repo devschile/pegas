@@ -1,6 +1,7 @@
 +++
 date = "2018-07-27T21:02:36+00:00"
 description = "Hola red!  Qué tal el viernes? Abríguense bien!"
+draft = true
 link_empresa = "http://www.forestry.io"
 logo_empresa = "/uploads/Screen Shot 2018-07-27 at 16.03.11.png"
 nombre_empresa = "Forestry"
