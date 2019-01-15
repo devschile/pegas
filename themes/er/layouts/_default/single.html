@@ -16,7 +16,8 @@
   {{ end }}
   <p>Empresa: <a href="{{ .Params.link_empresa }}" target="_blank" class="silver">{{ .Params.nombre_empresa }}</a></p>
   {{ if .Params.sueldo_ofrecido }}
-  <p>Sueldo ofrecido: ${{ .Params.sueldo_ofrecido }}</p>
+  <p>Sueldo ofrecido: {{ .Params.sueldo_ofrecido }}</p>
+  <p>Contacto: {{ .Params.contacto }}</p>
   {{ end }}
   <hr>
   <div class="lh-copy post-content">{{ .Content }}</div>
