@@ -1,12 +1,13 @@
 +++
 date = "2019-01-15T03:00:00-03:00"
-description = "2 perfiles *Full Stack* _(Presencial)_ para MiningTag"
+description = "Junior (1 año o más de experiencia),  Semi Senior (mínimo 3 años de experiencia)"
 draft = true
 link_empresa = "http://www.miningtag.cl/"
 logo_empresa = "/uploads/Screen Shot 2019-01-15 at 12.56.29.png"
 nombre_empresa = "Mining TAG"
 sueldo_ofrecido = ""
 tags = ["fullstack"]
+titulo = "Busco 2 perfiles Full Stack para MiningTag"
 
 +++
 Busco 2 perfiles _Full Stack_ _(Presencial)_ para [MiningTag](www.miningtag.cl)
