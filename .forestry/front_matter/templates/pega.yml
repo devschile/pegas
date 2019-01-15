@@ -38,11 +38,9 @@ fields:
   label: Link empresa
   name: link_empresa
   description: http://www.
-- type: number
+- type: text
   name: sueldo_ofrecido
   label: Sueldo ofrecido
-  config:
-    step: '50000'
 pages:
 - content/posts/cuponatic_stgo-busca-full-stack-developer-semi-senior-full-time-en-santiago.md
 - content/posts/buscamos-nuevo-admin-para-devschile.md
