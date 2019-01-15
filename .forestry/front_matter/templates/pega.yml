@@ -39,5 +39,5 @@ fields:
   config:
     step: '50000'
 pages:
-- content/posts/buscamos-nuevo-admin-para-devschile.md
 - content/posts/cuponatic_stgo-busca-full-stack-developer-semi-senior-full-time-en-santiago.md
+- content/posts/buscamos-nuevo-admin-para-devschile.md
