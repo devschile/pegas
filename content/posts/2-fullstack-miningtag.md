@@ -1,11 +1,12 @@
 +++
+contacto = "@ravenous"
 date = "2019-01-15T03:00:00-03:00"
 description = "Junior (1 año o más de experiencia),  Semi Senior (mínimo 3 años de experiencia)"
 draft = true
 link_empresa = "http://www.miningtag.cl/"
 logo_empresa = "/uploads/Screen Shot 2019-01-15 at 12.56.29.png"
 nombre_empresa = "Mining TAG"
-sueldo_ofrecido = "1.000.000 a 1.600.000"
+sueldo_ofrecido = "$1.000.000 a $1.600.000"
 tags = ["fullstack"]
 title = "Busco 2 perfiles Full Stack (Presencial) para MiningTag"
 titulo = "Busco 2 perfiles Full Stack para MiningTag"
