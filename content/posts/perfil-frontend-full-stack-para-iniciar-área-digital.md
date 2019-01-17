@@ -10,7 +10,7 @@ tags = ["frontend", "fullstack"]
 title = "Perfil frontend / full stack para iniciar área digital!"
 
 +++
-Perfil frontend / full stack para iniciar área digital!
+**Perfil frontend / full stack para iniciar área digital!**
 
 • Senior / Semi Senior (3 años o más de experiencia)
 
@@ -20,6 +20,6 @@ Perfil frontend / full stack para iniciar área digital!
 
 • Capacidad de liderazgo (para armar team, capacitar gente, etc)
 
-Tipo de contrato
+**Tipo de contrato**
 
 3 meses plazo fijo, luego Indefinido
