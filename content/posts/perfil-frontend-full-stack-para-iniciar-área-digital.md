@@ -6,7 +6,7 @@ draft = true
 link_empresa = ""
 logo_empresa = "/uploads/slack-imgs.png"
 nombre_empresa = "LECHE"
-sueldo_ofrecido = "> $1.000.000 , dependiendo de stack / experiencia"
+sueldo_ofrecido = "desde $1.000.000 , dependiendo de stack / experiencia"
 tags = ["frontend", "fullstack"]
 title = "Perfil frontend / full stack para iniciar área digital!"
 
@@ -23,4 +23,4 @@ Perfil frontend / full stack para iniciar área digital!
 
 Tipo de contrato
 
-3 meses plazo fijo, luego Indefinido (edited)
+3 meses plazo fijo, luego Indefinido
