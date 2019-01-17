@@ -2,7 +2,7 @@
 contacto = "mariajose.yanez@agencialeche.cl"
 date = "2019-01-16T03:00:00-03:00"
 description = "Senior / Semi Senior (3 años o más de experiencia)"
-link_empresa = ""
+link_empresa = "http://www.agencialeche.cl"
 logo_empresa = "/uploads/slack-imgs.png"
 nombre_empresa = "LECHE"
 sueldo_ofrecido = "desde $1.000.000 , dependiendo de stack / experiencia"
