@@ -2,7 +2,6 @@
 contacto = "mariajose.yanez@agencialeche.cl"
 date = "2019-01-16T03:00:00-03:00"
 description = "Senior / Semi Senior (3 años o más de experiencia)"
-draft = true
 link_empresa = ""
 logo_empresa = "/uploads/slack-imgs.png"
 nombre_empresa = "LECHE"
