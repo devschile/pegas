@@ -46,6 +46,9 @@ fields:
   label: Contacto
   config:
     required: true
+- type: text
+  name: ciudad
+  label: Ciudad
 pages:
 - content/posts/empresa-de-la-zona-requiere-desarrollador-front-end.md
 - content/posts/2-fullstack-miningtag.md
