@@ -15,8 +15,13 @@
   <img src="{{ .Params.logo_empresa }}"><br>
   {{ end }}
   <p>Empresa: <a href="{{ .Params.link_empresa }}" target="_blank" class="silver">{{ .Params.nombre_empresa }}</a></p>
+  {{ if .Params.ciudad }}
+  <p>Comuna: {{ .Params.ciudad }}</p>
+  {{ end }}
   {{ if .Params.sueldo_ofrecido }}
   <p>Sueldo ofrecido: {{ .Params.sueldo_ofrecido }}</p>
+  {{ end }}
+  {{ if .Params.contacto }}
   <p>Contacto: {{ .Params.contacto }}</p>
   {{ end }}
   <hr>
