@@ -6,14 +6,14 @@ description = "Perfil Full Stack JS, ReactJS, Nodejs, GraphQL."
 link_empresa = "http://eclass.cl"
 logo_empresa = "/uploads/Screen Shot 2019-01-28 at 13.32.00.png"
 nombre_empresa = "eClass S.A. Chile"
-sueldo_ofrecido = "800.000 - 1.100.000"
+sueldo_ofrecido = "$800.000 - $1.100.000"
 tags = ["fullstack"]
 title = "eClass busca Developer Nodejs + Reactjs"
 
 +++
 **Perfil Full Stack (Presencial)**
 
-¡Estamos buscando al nuevo/a integrante del área de Tecnología en eClass! 
+¡Estamos buscando al nuevo/a integrante del área de Tecnología en eClass!
 
 Nuestro equipo está a cargo de mantener y perfeccionar diferentes sistemas de la empresa, diseñar y desarrollar nuevas herramientas y productos, desde su concepción hasta la publicación y puesta en marcha.
 
@@ -44,7 +44,7 @@ Estamos desarrollando una nueva experiencia de estudio desde Chile para el Mundo
 * Contamos con alimentos saludables de libre acceso y un kiosko.
 * Contamos con máquinas de café para consumo ilimitado.
 * No usamos camisa
-* Buen y cómo ambiente de trabajo
+* Buen y cómodo ambiente de trabajo
 * Además, tenemos convenios y beneficios con Bancos, Centros Médicos, Clínicas Dentales, Gimnasios y más.
 
 _* Algunos beneficios depende de la antigüedad._
