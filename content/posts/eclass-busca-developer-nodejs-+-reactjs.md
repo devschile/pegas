@@ -7,7 +7,7 @@ link_empresa = "http://eclass.cl"
 logo_empresa = "/uploads/Screen Shot 2019-01-28 at 13.32.00.png"
 nombre_empresa = "eClass S.A. Chile"
 sueldo_ofrecido = "800.000 - 1.100.000"
-tags = []
+tags = ["fullstack"]
 title = "eClass busca Developer Nodejs + Reactjs"
 
 +++
