@@ -3,7 +3,6 @@ ciudad = "Las Condes"
 contacto = "sebastian@eclass.com - victor@eclass.com"
 date = "2019-01-28T03:00:00-03:00"
 description = "Perfil Full Stack JS, ReactJS, Nodejs, GraphQL."
-draft = true
 link_empresa = "http://eclass.cl"
 logo_empresa = "/uploads/Screen Shot 2019-01-28 at 13.32.00.png"
 nombre_empresa = "eClass S.A. Chile"
