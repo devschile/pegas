@@ -19,20 +19,19 @@ title = "Escaleno busca Backend developer (NodeJS + MongoDB)"
 * Capacidad de análisis y toma requerimientos (excluyente)
 * Proactividad
 
-**Horarios:** 
+**Horarios:**
 
-9:00 - 18:00
+* 9:00 - 18:00
 
-**Ubicación:** 
+**Ubicación:**
 
-Remoto y reuniones en Tucapel jimenez 56
+* Remoto y reuniones en Tucapel jimenez 56
 
-**Beneficios:** 
+**Beneficios:**
 
-\- Trabajo remoto
+* Trabajo remoto
+* Acceso a cursos y capacitación online
+* Cómodo ambiente de trabajo
+* Puedes acariciar al perro 👇🏼
 
-\- Acceso a cursos y capacitación online
-
-\- Cómodo ambiente de trabajo
-
-\- Puedes acariciar al perro
+![](https://i.imgur.com/GwCWvaC.png)
