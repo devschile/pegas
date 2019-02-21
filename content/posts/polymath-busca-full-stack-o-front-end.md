@@ -16,3 +16,5 @@ Polymath busca Full-Stack o Front-End (Visa sponsorship Barbados o Toronto)
 React + Redux, puntos extra si sabe de blockchain.
 
 (El puesto dice Full-Stack pero se aceptan Front-End también)
+
+Link: [https://polymath.bamboohr.com/jobs/view.php?id=55](https://polymath.bamboohr.com/jobs/view.php?id=55 "https://polymath.bamboohr.com/jobs/view.php?id=55")
