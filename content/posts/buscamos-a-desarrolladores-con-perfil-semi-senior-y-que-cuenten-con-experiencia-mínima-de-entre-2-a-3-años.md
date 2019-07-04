@@ -6,7 +6,7 @@ description = " Los candidatos deben poseer sólidos conocimientos en Ruby on Ra
 link_empresa = "https://www.routinguc.com/"
 logo_empresa = "/uploads/Screen Shot 2019-07-04 at 12.29.42.png"
 nombre_empresa = "Routing"
-sueldo_ofrecido = "Entre 1.4 a 1.7 según experiencia"
+sueldo_ofrecido = ""
 tags = ["fullstack", "Ruby", "javascript"]
 title = "Routing busca desarrolladores con perfil semi-senior, y que cuenten con experiencia mínima de entre 2 a 3 años"
 
@@ -51,5 +51,3 @@ La invitación es a formar parte de un equipo en pleno crecimiento donde prima l
 Enviar CV actualizado a [jessica.perez@routinguc.com](mailto:jessica.perez@routinguc.com) o [andres.mora@routinguc.com](mailto:andres.mora@routinguc.com).
 
 Gracias!
-
-> Se ofrece entre 1.4 a 1.7 según experiencia
