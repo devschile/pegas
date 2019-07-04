@@ -8,7 +8,7 @@ logo_empresa = "/uploads/Screen Shot 2019-07-04 at 12.29.42.png"
 nombre_empresa = "Routing"
 sueldo_ofrecido = "Entre 1.4 a 1.7 según experiencia"
 tags = ["fullstack", "Ruby", "javascript"]
-title = "Buscamos a desarrolladores con perfil semi-senior, y que cuenten con experiencia mínima de entre 2 a 3 años"
+title = "Routing busca desarrolladores con perfil semi-senior, y que cuenten con experiencia mínima de entre 2 a 3 años"
 
 +++
 Routing es una empresa líder en servicios tecnológicos orientados al apoyo en la toma de decisiones en el ámbito logístico y de transporte. Para estas labores, el equipo de Routing desarrolla e implementa sistemas de recolección de datos, optimización y visualización de la operación logística, especializándose en el área de ruteo vehicular, generando e implementando investigación de punta en distintas áreas de la ingeniería tales como investigación de operaciones, diseño de algoritmos, estructuras de datos, entre otros.
