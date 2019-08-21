@@ -3,7 +3,6 @@ ciudad = "Las Condes"
 contacto = "equipo@rgcorp.cl"
 date = "2019-08-21T00:00:00-04:00"
 description = "Buscamos a un desarrollador front-end que trabaje codo a codo con el resto del equipo (un desarrollador backend y otro fullstack) para que podamos generar un sistema para nuestros clientes internos y externos de clase mundial."
-draft = true
 link_empresa = "http://rgcorp.cl/"
 logo_empresa = "/uploads/Screen Shot 2019-08-21 at 16.25.57.png"
 nombre_empresa = "Rg Corp SpA"
