@@ -49,6 +49,7 @@ fields:
   name: ciudad
   label: Ciudad
 pages:
+- content/posts/ingeniero-backend.md
 - content/posts/ingeniero-backend-financiero.md
 - content/posts/desarrollador-java-semi-senior-full-time.md
 - content/posts/buscamos-un-desarrollador-java.md
