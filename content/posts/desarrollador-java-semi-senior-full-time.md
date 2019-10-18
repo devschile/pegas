@@ -8,7 +8,7 @@ link_empresa = "https://symbiose.cl/"
 logo_empresa = "/uploads/Screen Shot 2019-10-18 at 11.06.11.png"
 nombre_empresa = "Symbiose"
 sueldo_ofrecido = ""
-tags = []
+tags = ["backend"]
 title = "Desarrollador Java semi-senior Full Time"
 
 +++
