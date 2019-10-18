@@ -1,7 +1,7 @@
 +++
 ciudad = "Providencia"
 contacto = "postulaciones@symbiose.cl"
-date = "2019-10-18T02:00:00-03:00"
+date = "2019-10-18T13:00:00-03:00"
 description = ""
 link_empresa = "https://symbiose.cl/"
 logo_empresa = "/uploads/Screen Shot 2019-10-18 at 11.06.11.png"
