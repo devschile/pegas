@@ -7,7 +7,7 @@ link_empresa = "https://home.riskamerica.com/"
 logo_empresa = "/uploads/slack-imgs-1.png"
 nombre_empresa = "RiskAmerica"
 sueldo_ofrecido = "entre $1.200.000 y $1.800.000 líquido (puede ser más según seniority)"
-tags = ["frontend"]
+tags = ["frontend", "reactjs"]
 title = "Ingeniero FrontEnd"
 
 +++
