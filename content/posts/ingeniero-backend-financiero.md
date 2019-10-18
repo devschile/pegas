@@ -3,7 +3,6 @@ ciudad = "Providencia"
 contacto = "cvallejos@riskamerica.com"
 date = "2019-10-18T15:34:47-03:00"
 description = ""
-draft = true
 link_empresa = "https://home.riskamerica.com/"
 logo_empresa = "/uploads/slack-imgs-1.png"
 nombre_empresa = "RiskAmerica"
