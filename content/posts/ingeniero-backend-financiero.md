@@ -17,10 +17,10 @@ Nos encontramos en un proceso de expansión y buscamos Ingenieros de Software qu
 
 * Conocimiento en Mercado e instrumentos Financieros.
 * Debe tener conocimientos avanzados en PHP, Python o Java.
-* Experiencia con programación orientada a objetos 
+* Experiencia con programación orientada a objetos
 * Buena capacidad analítica y modelamiento
-* Conocimientos de Debugging 
-* Experiencia con Frameworks MVC (Ideal Laravel-Lumen) 
+* Conocimientos de Debugging
+* Experiencia con Frameworks MVC (Ideal Laravel-Lumen)
 
 ### Beneficios
 
@@ -28,7 +28,7 @@ Nos encontramos en un proceso de expansión y buscamos Ingenieros de Software qu
 * Incentivo al ahorro APV
 * Posibilidad de crecimiento profesional entre otros.
 * Se integrará a un equipo multidisciplinario
-* Cestimenta casual
+* Vestimenta casual
 * Dias administrativos
 
 Horario: 9:00-18:00 hrs
