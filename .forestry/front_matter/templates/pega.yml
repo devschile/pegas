@@ -49,6 +49,7 @@ fields:
   name: ciudad
   label: Ciudad
 pages:
+- content/posts/buscamos-un-desarrollador-java.md
 - content/posts/desarrollador-java-semi-senior-full-time.md
 - content/posts/se-busca-desarrollador-front-end.md
 - content/posts/buscamos-a-desarrolladores-con-perfil-semi-senior-y-que-cuenten-con-experiencia-mínima-de-entre-2-a-3-años.md
