@@ -1,13 +1,13 @@
 +++
 ciudad = "Santiago"
 contacto = "rodrigo.carmona@taisachile.cl"
-date = "2019-10-18T02:00:00-03:00"
+date = "2019-10-18T13:00:00-03:00"
 description = "Buscamos a un/a profesional que pueda gestionar su tiempo, que trabaje en equipo, que sepa mucho y que quiera seguir aprendiendo con nosotros"
 link_empresa = ""
 logo_empresa = "/uploads/Screen Shot 2019-10-18 at 12.08.34.png"
 nombre_empresa = "GrupoTaisa (Cardumen+Taisa) ​"
 sueldo_ofrecido = "entre $1.500.000 y $1.800.000 líquido"
-tags = ["backend"]
+tags = ["backend", "java"]
 title = "Buscamos un desarrollador Java"
 
 +++
