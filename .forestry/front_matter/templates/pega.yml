@@ -49,6 +49,7 @@ fields:
   name: ciudad
   label: Ciudad
 pages:
+- content/posts/ingeniero-de-software-jr.md
 - content/posts/ingeniero-frontend.md
 - content/posts/ingeniero-backend.md
 - content/posts/ingeniero-backend-financiero.md
