@@ -11,15 +11,15 @@ tags = ["fullstack"]
 title = "Walmart Chile busca Desarrollador Fullstack"
 
 +++
-Nombre de la Empresa: Walmart Chile S.A.
+**Nombre de la Empresa:** Walmart Chile S.A.
 
-Perfil Requerido: Desarrollador Fullstack
+**Perfil Requerido:** Desarrollador Fullstack
 
-Ubicación: Remoto de momento.
+**Ubicación**: Remoto de momento.
 
-Horarios: Lunes a Jueves de 08:30 a 18:00 hrs (flexible), Viernes de 9:00 a 13:00 (flexible)
+**Horarios**: Lunes a Jueves de 08:30 a 18:00 hrs (flexible), Viernes de 9:00 a 13:00 (flexible)
 
-Benefícios:
+**Benefícios:**
 
 · Seguro complementario de salud a tu sistema previsional
 
@@ -39,15 +39,15 @@ Benefícios:
 
 · Contribuimos a tus celebraciones con opciones flexibles de pagos de aguinaldo*
 
-Ambiente Laboral: Sé parte de un ambiente creativo, curioso y disruptivo y de un ecosistema de desarrollo de productos digitales de calidad, autónomo, auto-organizado y multifuncional que está creando el retail del futuro para que juntos ahorremos tiempo y dinero a nuestros clientes para que puedan vivir mejor.
+**Ambiente Laboral**: Sé parte de un ambiente creativo, curioso y disruptivo y de un ecosistema de desarrollo de productos digitales de calidad, autónomo, auto-organizado y multifuncional que está creando el retail del futuro para que juntos ahorremos tiempo y dinero a nuestros clientes para que puedan vivir mejor.
 
-Tipo de Contrato: Indefinido
+**Tipo de Contrato**: Indefinido
 
-Remuneración Aproximada: $1.600.000 – $3.200.000 líquido mensual + Bono según antecedentes y desempeño en proceso de selección
+**Remuneración Aproximada**: $1.600.000 – $3.200.000 líquido mensual + Bono según antecedentes y desempeño en proceso de selección
 
-Correo Electrónico: manuel.labarca@walmart.com (Enviar CV con RUT y copia a labarca.manu@gmail.com) 
+**Correo Electrónico**: manuel.labarca@walmart.com (Enviar CV con RUT y copia a labarca.manu@gmail.com)
 
-Lo que buscamos de ti:
+**Lo que buscamos de ti**:
 
 · Sientes pasión por codear.
 
@@ -75,7 +75,7 @@ Lo que buscamos de ti:
 
 · Capacidades de Liderazgo
 
-Además, Sería un plus a tu postulación si:
+**Además, Sería un plus a tu postulación si**:
 
 · Tienes experiencia en desarrollo de arquitecturas basadas en eventos
 
