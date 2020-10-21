@@ -1,7 +1,7 @@
 +++
 ciudad = "Santiago"
 contacto = "nicolas@tactech.cl"
-date = 2020-10-20T03:00:00Z
+date = 2020-02-07T03:00:00Z
 description = "Node.JS ReactJS MongoDB Manejo en AWS/AZURE SQL GIT"
 link_empresa = "https://tactech.cl/"
 logo_empresa = "/uploads/screen-shot-2020-10-21-at-11-16-11.png"
