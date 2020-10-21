@@ -1,6 +1,6 @@
 +++
 ciudad = "Santiago"
-contacto = "@Manu en Slack"
+contacto = "@Manu en Slack, manuel.labarca@walmart.com (Enviar CV con RUT y copia a labarca.manu@gmail.com)"
 date = 2020-10-21T14:00:00Z
 description = "Sé parte de un ambiente creativo, curioso y disruptivo y de un ecosistema de desarrollo de productos digitales de calidad, autónomo, auto-organizado y multifuncional que está creando el retail del futuro para que juntos ahorremos tiempo y dinero a nuestros clientes para que puedan vivir mejor."
 link_empresa = "https://www.walmartchile.cl/"
