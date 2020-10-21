@@ -1,6 +1,7 @@
 +++
+ciudad = "Providencia"
 contacto = "mariajose.yanez@agencialeche.cl"
-date = "2019-01-16T03:00:00-03:00"
+date = 2019-01-16T06:00:00Z
 description = "Senior / Semi Senior (3 años o más de experiencia)"
 link_empresa = "http://www.agencialeche.cl"
 logo_empresa = "/uploads/slack-imgs.png"
