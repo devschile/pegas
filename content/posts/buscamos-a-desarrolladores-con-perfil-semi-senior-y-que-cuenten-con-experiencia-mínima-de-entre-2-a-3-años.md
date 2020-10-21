@@ -1,7 +1,7 @@
 +++
 ciudad = "Providencia"
 contacto = "jessica.perez@routinguc.com o andres.mora@routinguc.com"
-date = 2019-07-04T04:00:00Z
+date = 2020-01-07T03:00:00Z
 description = " Los candidatos deben poseer sólidos conocimientos en Ruby on Rails. Se integrarán a nuestro equipo TI, en el que participarán de proyectos que también requieren el desarrollo de aplicaciones móviles."
 link_empresa = "https://www.routinguc.com/"
 logo_empresa = "/uploads/Screen Shot 2019-07-04 at 12.29.42.png"
