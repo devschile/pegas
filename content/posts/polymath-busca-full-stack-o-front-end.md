@@ -1,7 +1,7 @@
 +++
 ciudad = "Toronto o Barbados"
 contacto = "@narzerus"
-date = 2019-02-21T03:00:00Z
+date = 2019-09-02T04:00:00Z
 description = "(Visa sponsorship Barbados o Toronto)"
 link_empresa = "https://polymath.network/"
 logo_empresa = "/uploads/Screen Shot 2019-02-21 at 12.51.20.png"
