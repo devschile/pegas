@@ -7,7 +7,7 @@ link_empresa = "https://www.walmartchile.cl/"
 logo_empresa = "/uploads/walmart_chile_logo_1-svg.png"
 nombre_empresa = "Walmart Chile S.A."
 sueldo_ofrecido = "$1.600.000 – $3.200.000"
-tags = []
+tags = ["fullstack"]
 title = "Walmart Chile busca Desarrollador Fullstack"
 
 +++
