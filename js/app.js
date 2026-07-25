@@ -114,6 +114,13 @@
       card.querySelector('.badge-categoria').textContent = pega.categoria;
       card.querySelector('.badge-ubicacion').textContent = pega.ubicacion;
 
+      const remoteBadge = card.querySelector('.badge-remote');
+      if (pega.tags && pega.tags.includes('remote')) {
+        remoteBadge.textContent = '🏠 Remoto';
+      } else {
+        remoteBadge.remove();
+      }
+
       const sueldoBadge = card.querySelector('.badge-sueldo');
       if (pega.sueldo) {
         sueldoBadge.textContent = '💰 ' + pega.sueldo;

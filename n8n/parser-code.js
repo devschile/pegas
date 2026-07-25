@@ -66,6 +66,16 @@ function extraerSueldo(texto) {
   return null;
 }
 
+// --- Detección de tags (remote, etc) ---
+function detectarTags(titulo, ubicacion, lines) {
+  const tags = [];
+  const texto = [titulo, ubicacion, ...lines.slice(0, 6)].join(' ').toLowerCase();
+  if (/\bremote\b|\bremoto\b|\bteletrabajo\b|\bhome.?office\b|\bwork.?from.?home\b|\b100%?\s*remoto\b|\btrabajo\s*remoto\b|\bmodalidad\s*remot[ao]\b/i.test(texto)) {
+    tags.push('remote');
+  }
+  return tags.length > 0 ? tags.join(',') : null;
+}
+
 // --- Procesar cada email ---
 for (const item of items) {
   let body = item.json.textPlain || item.json.body || '';
@@ -112,6 +122,7 @@ for (const item of items) {
         sueldo: extraerSueldo(titulo + ' ' + (lines.slice(0, 6).join(' '))),
         descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,
         categoria: categorizar(titulo),
+        tags: detectarTags(titulo, ubicacion, lines),
         fuente: 'linkedin',
         email_origen: item.json.to || item.json.To || '',
         fecha_publicacion: new Date().toISOString()
