@@ -28,20 +28,18 @@
     countTotal.textContent = pegas.length.toLocaleString('es-CL');
 
     if (pegas.length === 0) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No hay pegas aún. ¡Vuelve pronto!</p></div>';
+      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>no hay pegas aún, ¡vuelve pronto!</p></div>';
       return;
     }
   } catch (err) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Error al cargar las pegas. Intenta recargar.</p></div>';
-    console.error('Error cargando data.json:', err);
+    list.innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>error al cargar las pegas</p></div>';
     return;
   }
 
   // === Poblar filtros ===
   categorias.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
+    opt.value = c; opt.textContent = c;
     filterCat.appendChild(opt);
   });
   fuentes.forEach(f => {
@@ -57,7 +55,7 @@
     countVisible.textContent = filtered.length.toLocaleString('es-CL');
 
     if (filtered.length === 0) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>Ninguna pega coincide con los filtros.</p></div>';
+      list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>ninguna pega coincide con los filtros</p></div>';
       return;
     }
 
@@ -71,13 +69,13 @@
       card.querySelector('.pega-link').href = pega.url;
       card.querySelector('.badge-categoria').textContent = pega.categoria;
       card.querySelector('.badge-ubicacion').textContent = pega.ubicacion;
-      card.querySelector('.badge-fuente').textContent = pega.fuente === 'linkedin' ? 'LinkedIn' : pega.fuente;
-      
-      // Sueldo — mostrar solo si existe
+
+      // Sueldo — solo si existe
       const sueldoBadge = card.querySelector('.badge-sueldo');
       if (pega.sueldo) {
         sueldoBadge.textContent = '💰 ' + pega.sueldo;
-        sueldoBadge.style.display = '';
+      } else {
+        sueldoBadge.remove();
       }
 
       // Data attributes para filtros
@@ -116,10 +114,10 @@
     const diff = now - d;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (days === 0) return 'Hoy';
-    if (days === 1) return 'Ayer';
-    if (days < 7) return `Hace ${days} días`;
-    if (days < 30) return `Hace ${Math.floor(days / 7)} sem`;
+    if (days === 0) return 'hoy';
+    if (days === 1) return 'ayer';
+    if (days < 7) return `hace ${days}d`;
+    if (days < 30) return `hace ${Math.floor(days / 7)}sem`;
     return d.toLocaleDateString('es-CL', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
