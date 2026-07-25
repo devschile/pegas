@@ -1,5 +1,5 @@
 /**
- * pega.devschile.cl — Frontend
+ * pegas.devschile.cl — Frontend
  * Carga data.json y renderiza con filtros y búsqueda
  */
 (async function () {
