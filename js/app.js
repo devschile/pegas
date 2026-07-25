@@ -1,8 +1,9 @@
 /**
  * pegas.devschile.cl — Frontend
- * Carga data.json y renderiza con filtros y búsqueda
+ * Carga data.json, renderiza con filtros, búsqueda y paginación (25 por página)
  */
 (async function () {
+  const PAGE_SIZE = 25;
   const list = document.getElementById('pegas-list');
   const searchInput = document.getElementById('search');
   const filterCat = document.getElementById('filter-categoria');
@@ -14,6 +15,9 @@
   let pegas = [];
   let categorias = [];
   let fuentes = [];
+  let currentPage = 1;
+  let filteredPegas = [];
+  let paginationEl = null;
 
   // === Cargar datos ===
   try {
@@ -49,17 +53,57 @@
     filterSrc.appendChild(opt);
   });
 
-  // === Renderizar ===
-  function render(filtered) {
-    list.innerHTML = '';
-    countVisible.textContent = filtered.length.toLocaleString('es-CL');
+  // === Crear contenedor de paginación ===
+  paginationEl = document.createElement('div');
+  paginationEl.className = 'pagination';
+  list.parentNode.insertBefore(paginationEl, list.nextSibling);
 
-    if (filtered.length === 0) {
+  // === Paginación ===
+  function renderPagination(totalFiltered) {
+    if (totalFiltered <= PAGE_SIZE) {
+      paginationEl.innerHTML = '';
+      return;
+    }
+
+    const totalPages = Math.ceil(totalFiltered / PAGE_SIZE);
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, totalFiltered);
+
+    paginationEl.innerHTML = `
+      <button id="btn-prev" ${currentPage === 1 ? 'disabled' : ''}>← anterior</button>
+      <span class="page-info">${start}–${end} de ${totalFiltered}</span>
+      <button id="btn-next" ${currentPage === totalPages ? 'disabled' : ''}>siguiente →</button>
+    `;
+
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        applyFilters();
+      }
+    });
+    document.getElementById('btn-next').addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        applyFilters();
+      }
+    });
+  }
+
+  // === Renderizar (solo página actual) ===
+  function renderPage() {
+    list.innerHTML = '';
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filteredPegas.slice(start, start + PAGE_SIZE);
+
+    countVisible.textContent = filteredPegas.length.toLocaleString('es-CL');
+
+    if (filteredPegas.length === 0) {
       list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>ninguna pega coincide con los filtros</p></div>';
       return;
     }
 
-    filtered.forEach(pega => {
+    pageItems.forEach(pega => {
       const card = template.content.cloneNode(true);
 
       card.querySelector('.pega-titulo').textContent = pega.titulo;
@@ -70,7 +114,6 @@
       card.querySelector('.badge-categoria').textContent = pega.categoria;
       card.querySelector('.badge-ubicacion').textContent = pega.ubicacion;
 
-      // Sueldo — solo si existe
       const sueldoBadge = card.querySelector('.badge-sueldo');
       if (pega.sueldo) {
         sueldoBadge.textContent = '💰 ' + pega.sueldo;
@@ -78,22 +121,23 @@
         sueldoBadge.remove();
       }
 
-      // Data attributes para filtros
       const article = card.querySelector('.pega-card');
       article.dataset.categoria = pega.categoria;
       article.dataset.fuente = pega.fuente;
 
       list.appendChild(card);
     });
+
+    renderPagination(filteredPegas.length);
   }
 
-  // === Filtrar ===
-  function filter() {
+  // === Aplicar filtros ===
+  function applyFilters() {
     const q = searchInput.value.toLowerCase().trim();
     const cat = filterCat.value;
     const src = filterSrc.value;
 
-    const filtered = pegas.filter(p => {
+    filteredPegas = pegas.filter(p => {
       if (cat && p.categoria !== cat) return false;
       if (src && p.fuente !== src) return false;
       if (q) {
@@ -103,7 +147,9 @@
       return true;
     });
 
-    render(filtered);
+    // Reset a página 1 al cambiar filtros
+    currentPage = 1;
+    renderPage();
   }
 
   // === Helpers ===
@@ -122,10 +168,11 @@
   }
 
   // === Event listeners ===
-  searchInput.addEventListener('input', filter);
-  filterCat.addEventListener('change', filter);
-  filterSrc.addEventListener('change', filter);
+  searchInput.addEventListener('input', applyFilters);
+  filterCat.addEventListener('change', applyFilters);
+  filterSrc.addEventListener('change', applyFilters);
 
   // === Render inicial ===
-  render(pegas);
+  filteredPegas = pegas;
+  renderPage();
 })();
