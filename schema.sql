@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS pegas (
     descripcion TEXT,
     categoria TEXT,
     ubicacion TEXT,
+    sueldo TEXT,
     fecha_publicacion TIMESTAMP,
     fuente TEXT NOT NULL DEFAULT 'linkedin',
     email_origen TEXT,
