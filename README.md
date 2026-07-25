@@ -1,4 +1,4 @@
-# Pega DevsChile
+# Pegas DevsChile
 
 Vitrina de ofertas de trabajo tech en Chile. Las pegas se obtienen parseando newsletters de LinkedIn Jobs (y en el futuro GetOnBoard y otras fuentes), se almacenan en PostgreSQL y se publican como sitio estático.
 
@@ -7,7 +7,7 @@ Vitrina de ofertas de trabajo tech en Chile. Las pegas se obtienen parseando new
 ```
 Gmail (newsletters LinkedIn) → n8n (parser + dedup) → PostgreSQL → Static Site (nginx)
                                                                       │
-                                                          pega.devschile.cl
+                                                          pegas.devschile.cl
 ```
 
 ### Componentes
@@ -79,7 +79,7 @@ DATABASE_URL=postgres://... node scripts/init-db.js
 
 ## Deploy
 
-Hosteado en Coolify como aplicación GitHub (`devschile/pega-devschile`).
+Hosteado en Coolify como aplicación GitHub (`devschile/pegas`).
 
 **Build:** Dockerfile multi-stage — la etapa de build ejecuta `init-db.js` + `generate-json.js` y copia `data.json` a la imagen nginx final.
 

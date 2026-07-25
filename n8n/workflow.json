@@ -1,5 +1,5 @@
 {
-  "name": "pega-devschile: LinkedIn Jobs → PostgreSQL → Deploy",
+  "name": "pegas: LinkedIn Jobs → PostgreSQL → Deploy",
   "nodes": [
     {
       "parameters": {
