@@ -91,3 +91,15 @@ Hosteado en Coolify como aplicación GitHub (`devschile/pegas`).
 ## Licencia
 
 MIT
+
+## Roadmap
+
+- [x] Parser de LinkedIn Jobs (emails)
+- [x] PostgreSQL + deduplicación por URL
+- [x] Frontend con buscador y filtros
+- [x] Notificación agrupada en Slack
+- [x] Detección de sueldo/rango salarial
+- [ ] **GetOnBoard** — API pública disponible en `https://www.getonbrd.com/api/v0` (ver `huemul/scripts/pegas.js` para referencia de integración)
+- [ ] Fuentes adicionales (Indeed, RemoteOK, We Work Remotely)
+- [ ] Auto-expiración de pegas antiguas
+- [ ] Dashboard de métricas
