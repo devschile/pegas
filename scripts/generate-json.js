@@ -1,11 +1,9 @@
 import pg from 'pg';
 import { writeFileSync, mkdirSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = resolve(__dirname, '..', 'data');
-const DATA_FILE = resolve(DATA_DIR, 'data.json');
+const outputPath = process.argv[2] || '/usr/share/nginx/html/data/data.json';
+const dataDir = dirname(outputPath);
 
 const pool = new pg.Pool({
   host: process.env.PGHOST || 'localhost',
@@ -18,12 +16,12 @@ const pool = new pg.Pool({
 });
 
 async function main() {
-  if (!process.env.PGHOST && !process.env.DATABASE_URL) {
-    console.error('❌ PGHOST o DATABASE_URL no configurada');
-    process.exit(1);
+  if (!process.env.PGHOST) {
+    console.error('PGHOST no configurada - saltando generacion de data.json');
+    process.exit(0); // Non-fatal for local dev
   }
 
-  console.log('🔌 Conectando a PostgreSQL...');
+  console.log('Conectando a PostgreSQL...');
   const client = await pool.connect();
 
   try {
@@ -48,7 +46,7 @@ async function main() {
         titulo: r.titulo,
         empleador: r.empleador || 'No especificado',
         descripcion: r.descripcion || '',
-        categoria: r.categoria || 'Sin categoría',
+        categoria: r.categoria || 'Sin categoria',
         ubicacion: r.ubicacion || 'Chile',
         sueldo: r.sueldo || null,
         fecha_publicacion: r.fecha_publicacion,
@@ -57,9 +55,9 @@ async function main() {
       })),
     };
 
-    mkdirSync(DATA_DIR, { recursive: true });
-    writeFileSync(DATA_FILE, JSON.stringify(output, null, 2));
-    console.log(`✅ ${output.total} pegas exportadas a data/data.json`);
+    mkdirSync(dataDir, { recursive: true });
+    writeFileSync(outputPath, JSON.stringify(output));
+    console.log(output.total + ' pegas exportadas a ' + outputPath);
   } finally {
     client.release();
     await pool.end();
@@ -67,6 +65,6 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error('❌ Error:', err.message);
+  console.error('Error:', err.message);
   process.exit(1);
 });
