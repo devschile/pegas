@@ -28,7 +28,7 @@ async function main() {
     const { rows } = await client.query(`
       SELECT 
         id, url, titulo, empleador, descripcion, 
-        categoria, ubicacion, sueldo, fecha_publicacion, 
+        categoria, ubicacion, sueldo, tags, fecha_publicacion, 
         fuente, fecha_creacion
       FROM pegas 
       WHERE activo = TRUE 
@@ -49,6 +49,7 @@ async function main() {
         categoria: r.categoria || 'Sin categoria',
         ubicacion: r.ubicacion || 'Chile',
         sueldo: r.sueldo || null,
+        tags: r.tags || null,
         fecha_publicacion: r.fecha_publicacion,
         fuente: r.fuente,
         fecha_creacion: r.fecha_creacion,
