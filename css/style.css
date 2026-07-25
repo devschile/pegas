@@ -138,6 +138,7 @@ header h1 { font-size: 2rem; margin-bottom: 0.25rem; }
 .badge-categoria { background: var(--purple); color: #fff; }
 .badge-ubicacion { background: var(--orange); color: #fff; }
 .badge-fuente { background: var(--green); color: #fff; }
+.badge-sueldo { background: #059669; color: #fff; font-size: 0.75rem; }
 
 .pega-descripcion {
   color: var(--text-muted);

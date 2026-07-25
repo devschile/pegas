@@ -72,6 +72,13 @@
       card.querySelector('.badge-categoria').textContent = pega.categoria;
       card.querySelector('.badge-ubicacion').textContent = pega.ubicacion;
       card.querySelector('.badge-fuente').textContent = pega.fuente === 'linkedin' ? 'LinkedIn' : pega.fuente;
+      
+      // Sueldo — mostrar solo si existe
+      const sueldoBadge = card.querySelector('.badge-sueldo');
+      if (pega.sueldo) {
+        sueldoBadge.textContent = '💰 ' + pega.sueldo;
+        sueldoBadge.style.display = '';
+      }
 
       // Data attributes para filtros
       const article = card.querySelector('.pega-card');

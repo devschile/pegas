@@ -4,6 +4,7 @@
  * de emails multipart/alternative con text/plain en quoted-printable.
  * 
  * Probado con 11/11 pegas de 3 emails reales (Julio 2026).
+ * v1.1: detección de sueldo/rango salarial en título y descripción.
  */
 
 const items = $input.all();
@@ -46,6 +47,24 @@ function categorizar(t) {
 
 // --- Badge patterns (se colocan donde iría la empresa) ---
 const BADGE_RE = /^(1 connection|\d+\+? connections|this company is actively hiring|actively hiring|apply with resume|easy apply|be an early applicant|promoted|no longer accepting)$/i;
+
+// --- Detección de sueldo/rango salarial ---
+function extraerSueldo(texto) {
+  if (!texto) return null;
+  // Pesos chilenos: $1.500.000, $1500000, CLP 1.500.000, CLP$1.5M
+  let m = texto.match(/(?:CLP\s*)?\$\s*[\d.,]+\s*(?:[.-]\s*(?:CLP\s*)?\$\s*[\d.,]+)?\s*(?:CLP|clp|pesos|l[ií]quido|bruto|liquido)?/i);
+  if (m) return m[0].trim();
+  // UF
+  m = texto.match(/UF\s*[\d.,]+/i);
+  if (m) return m[0].trim();
+  // USD / dólares
+  m = texto.match(/(?:USD|usd|U\$)\s*[\d.,]+/i);
+  if (m) return m[0].trim();
+  // Renta/Sueldo/Salario: $X
+  m = texto.match(/(?:renta|sueldo|salario|remuneraci[oó]n)\s*:?\s*(?:hasta|desde|entre)?\s*(?:CLP\s*)?\$?\s*[\d.,]+\s*(?:[.-]\s*(?:CLP\s*)?\$?\s*[\d.,]+)?\s*(?:CLP|clp|pesos|l[ií]quido|bruto)?/i);
+  if (m) return m[0].trim();
+  return null;
+}
 
 // --- Procesar cada email ---
 for (const item of items) {
@@ -90,6 +109,7 @@ for (const item of items) {
         url: urlLimpia,
         empleador: empleador || 'No especificado',
         ubicacion: ubicacion || 'Chile',
+        sueldo: extraerSueldo(titulo + ' ' + (lines.slice(0, 6).join(' '))),
         descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,
         categoria: categorizar(titulo),
         fuente: 'linkedin',
