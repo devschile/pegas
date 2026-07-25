@@ -1,6 +1,6 @@
-# Pegas DevsChile
+# Pegas devsChile()
 
-Vitrina de ofertas de trabajo tech en Chile. Las pegas se obtienen parseando newsletters de LinkedIn Jobs (y en el futuro GetOnBoard y otras fuentes), se almacenan en PostgreSQL y se publican como sitio estático.
+Vitrina de ofertas de trabajo tech en Chile. Las pegas se obtienen parseando newsletters de LinkedIn Jobs (y otras fuentes), se almacenan en PostgreSQL y se publican como sitio estático.
 
 ## Arquitectura
 

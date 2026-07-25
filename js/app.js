@@ -32,11 +32,11 @@
     countTotal.textContent = pegas.length.toLocaleString('es-CL');
 
     if (pegas.length === 0) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>no hay pegas aún, ¡vuelve pronto!</p></div>';
+      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No hay pegas aún, ¡Vuelve pronto!</p></div>';
       return;
     }
   } catch (err) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>error al cargar las pegas</p></div>';
+    list.innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><p>Error al cargar las pegas</p></div>';
     return;
   }
 
@@ -70,9 +70,9 @@
     const end = Math.min(currentPage * PAGE_SIZE, totalFiltered);
 
     paginationEl.innerHTML = `
-      <button id="btn-prev" ${currentPage === 1 ? 'disabled' : ''}>← anterior</button>
+      <button id="btn-prev" ${currentPage === 1 ? 'disabled' : ''}>← Anterior</button>
       <span class="page-info">${start}–${end} de ${totalFiltered}</span>
-      <button id="btn-next" ${currentPage === totalPages ? 'disabled' : ''}>siguiente →</button>
+      <button id="btn-next" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente →</button>
     `;
 
     document.getElementById('btn-prev').addEventListener('click', () => {
@@ -99,7 +99,7 @@
     countVisible.textContent = filteredPegas.length.toLocaleString('es-CL');
 
     if (filteredPegas.length === 0) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>ninguna pega coincide con los filtros</p></div>';
+      list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>Ninguna pega coincide con los filtros</p></div>';
       return;
     }
 
