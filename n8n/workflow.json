@@ -1,0 +1,193 @@
+{
+  "name": "pega-devschile: LinkedIn Jobs → PostgreSQL → Deploy",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "fromEmail": "jobs-listings@linkedin.com"
+        },
+        "options": {
+          "includeReplies": false,
+          "downloadAttachments": false
+        },
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 30,
+              "unit": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "gmail-trigger-1",
+      "name": "Gmail Trigger (cuenta 1)",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "fromEmail": "jobs-listings@linkedin.com"
+        },
+        "options": {
+          "includeReplies": false,
+          "downloadAttachments": false
+        },
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 30,
+              "unit": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "gmail-trigger-2",
+      "name": "Gmail Trigger (cuenta 2)",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [250, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// TODO: Parser específico para el newsletter de LinkedIn Jobs\n// Extrae del HTML del email:\n// - titulo: texto del link principal\n// - url: href del link (limpiar tracking params)\n// - empleador: nombre de la empresa\n// - descripcion: texto del snippet\n// - ubicacion: si está disponible\n// - categoria: inferir del título/descripción\n\nconst html = $input.item.json.html || $input.item.json.textHtml || $input.item.json.body;\n\n// Placeholder — ajustar con emails reales\nconst jobs = [];\n\n// Ejemplo de estructura esperada:\n// jobs.push({\n//   titulo: 'Desarrollador Full Stack',\n//   url: 'https://www.linkedin.com/jobs/view/12345',\n//   empleador: 'Empresa XYZ',\n//   descripcion: 'Buscamos desarrollador con experiencia en...',\n//   ubicacion: 'Santiago, Chile',\n//   categoria: 'Full Stack'\n// });\n\nreturn jobs.map(j => ({ json: j }));"
+      },
+      "id": "parser",
+      "name": "Parser HTML → Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion, fecha_publicacion, fuente, email_origen)\nVALUES ($1, $2, $3, $4, $5, $6, NOW(), 'linkedin', $7)\nON CONFLICT (url) DO NOTHING\nRETURNING id",
+        "additionalFields": {}
+      },
+      "id": "pg-insert",
+      "name": "PostgreSQL INSERT",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-inserted",
+      "name": "¿Pega nueva?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://coolify.devschile.cl/api/v1/applications/APP_UUID/deploy",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.COOLIFY_TOKEN }}"
+            }
+          ]
+        }
+      },
+      "id": "trigger-deploy",
+      "name": "Redeploy Static Site",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger (cuenta 1)": {
+      "main": [
+        [
+          {
+            "node": "Parser HTML → Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger (cuenta 2)": {
+      "main": [
+        [
+          {
+            "node": "Parser HTML → Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser HTML → Jobs": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL INSERT": {
+      "main": [
+        [
+          {
+            "node": "¿Pega nueva?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pega nueva?": {
+      "main": [
+        [
+          {
+            "node": "Redeploy Static Site",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "versionId": "1.0.0",
+  "active": false
+}
