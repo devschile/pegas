@@ -1,15 +1,15 @@
 {
-  "name": "pegas: LinkedIn Jobs → PostgreSQL → Deploy",
+  "name": "pegas: LinkedIn Jobs → PostgreSQL → Slack → Deploy",
   "nodes": [
     {
       "parameters": {
         "operation": "getAll",
-        "filters": {
-          "fromEmail": "jobs-listings@linkedin.com"
-        },
+        "labelIds": ["Label_PEGAS_LINKEDIN"],
         "options": {
           "includeReplies": false,
-          "downloadAttachments": false
+          "downloadAttachments": false,
+          "label": "READ_LABEL",
+          "readStatus": "unread"
         },
         "pollTimes": {
           "item": [
@@ -30,12 +30,12 @@
     {
       "parameters": {
         "operation": "getAll",
-        "filters": {
-          "fromEmail": "jobs-listings@linkedin.com"
-        },
+        "labelIds": ["Label_PEGAS_LINKEDIN"],
         "options": {
           "includeReplies": false,
-          "downloadAttachments": false
+          "downloadAttachments": false,
+          "label": "READ_LABEL",
+          "readStatus": "unread"
         },
         "pollTimes": {
           "item": [
@@ -55,10 +55,10 @@
     },
     {
       "parameters": {
-        "jsCode": "// TODO: Parser específico para el newsletter de LinkedIn Jobs\n// Extrae del HTML del email:\n// - titulo: texto del link principal\n// - url: href del link (limpiar tracking params)\n// - empleador: nombre de la empresa\n// - descripcion: texto del snippet\n// - ubicacion: si está disponible\n// - categoria: inferir del título/descripción\n\nconst html = $input.item.json.html || $input.item.json.textHtml || $input.item.json.body;\n\n// Placeholder — ajustar con emails reales\nconst jobs = [];\n\n// Ejemplo de estructura esperada:\n// jobs.push({\n//   titulo: 'Desarrollador Full Stack',\n//   url: 'https://www.linkedin.com/jobs/view/12345',\n//   empleador: 'Empresa XYZ',\n//   descripcion: 'Buscamos desarrollador con experiencia en...',\n//   ubicacion: 'Santiago, Chile',\n//   categoria: 'Full Stack'\n// });\n\nreturn jobs.map(j => ({ json: j }));"
+        "jsCode": "// Parser de LinkedIn Job Alert Digest\n// Ver n8n/parser-code.js para la versión standalone con tests\n\nconst items = $input.all();\nconst output = [];\n\nfunction decodeQP(str) {\n  str = str.replace(/=\\r?\\n/g, '');\n  const bytes = [];\n  let i = 0;\n  while (i < str.length) {\n    if (str[i] === '=' && i + 2 < str.length && /^[0-9A-Fa-f]{2}$/.test(str.substring(i+1, i+3))) {\n      bytes.push(parseInt(str.substring(i+1, i+3), 16));\n      i += 3;\n    } else {\n      bytes.push(str.charCodeAt(i));\n      i++;\n    }\n  }\n  try { return new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes)); }\n  catch (_) { return str; }\n}\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b/i.test(t)) return 'DevOps';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.desk\\b|\\bservice.desk\\b/i.test(t)) return 'Soporte';\n  return 'Otros';\n}\n\nconst BADGE_RE = /^(1 connection|\\d+\\+? connections|this company is actively hiring|actively hiring|apply with resume|easy apply|be an early applicant|promoted|no longer accepting)$/i;\n\nfor (const item of items) {\n  let body = item.json.textPlain || item.json.body || '';\n  if (typeof body === 'object' && body.content) body = body.content;\n  if (!body || body.length < 20) continue;\n\n  body = decodeQP(body);\n  const blocks = body.split(/\\n\\s*-{15,}\\s*\\n/);\n\n  for (let bi = 0; bi < blocks.length; bi++) {\n    let lines = blocks[bi].trim().split('\\n').map(l => l.trim()).filter(l => l.length > 0);\n    if (bi === 0) {\n      while (lines.length > 0 && /^(your job alert|new jobs match)/i.test(lines[0])) lines.shift();\n    }\n    if (/^(see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|©|linkedin and|learn why|help:)/i.test(lines[0])) continue;\n    if (lines.length < 3) continue;\n\n    const titulo = lines[0];\n    let empleador = lines[1] || '';\n    let ubicacion = lines[2] || '';\n    let url = '';\n    for (const l of lines) {\n      if (/^view job:\\s*/i.test(l)) { url = l.replace(/^view job:\\s*/i, '').trim(); break; }\n    }\n    if (!url || !titulo) continue;\n\n    if (BADGE_RE.test(empleador)) { empleador = lines[2] || ''; ubicacion = lines[3] || ''; }\n    if (BADGE_RE.test(ubicacion)) ubicacion = lines[3] || '';\n\n    const jid = url.match(/\\/jobs\\/view\\/(\\d+)/);\n    const urlLimpia = jid ? `https://www.linkedin.com/jobs/view/${jid[1]}/` : url.split('?')[0];\n\n    output.push({\n      json: {\n        titulo, url: urlLimpia,\n        empleador: empleador || 'No especificado',\n        ubicacion: ubicacion || 'Chile',\n        descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,\n        categoria: categorizar(titulo),\n        fuente: 'linkedin',\n        email_origen: item.json.to || item.json.To || '',\n        fecha_publicacion: new Date().toISOString()\n      }\n    });\n  }\n}\nreturn output;"
       },
       "id": "parser",
-      "name": "Parser HTML → Jobs",
+      "name": "Parser LinkedIn → Jobs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [450, 300]
@@ -66,7 +66,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion, fecha_publicacion, fuente, email_origen)\nVALUES ($1, $2, $3, $4, $5, $6, NOW(), 'linkedin', $7)\nON CONFLICT (url) DO NOTHING\nRETURNING id",
+        "query": "INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion, fecha_publicacion, fuente, email_origen)\nVALUES ($1, $2, $3, $4, $5, $6, NOW(), 'linkedin', $7)\nON CONFLICT (url) DO NOTHING\nRETURNING id, titulo, empleador, url, ubicacion, categoria",
         "additionalFields": {}
       },
       "id": "pg-insert",
@@ -80,7 +80,6 @@
         "conditions": {
           "options": {
             "caseSensitive": true,
-            "leftValue": "",
             "typeValidation": "strict"
           },
           "conditions": [
@@ -88,9 +87,7 @@
               "id": "condition-1",
               "leftValue": "={{ $json.id }}",
               "rightValue": "",
-              "operator": {
-                "type": "exists"
-              }
+              "operator": { "type": "exists" }
             }
           ],
           "combinator": "and"
@@ -104,8 +101,22 @@
     },
     {
       "parameters": {
+        "channelId": "C0R6AM4DP",
+        "text": "=🆕 *{{ $json.titulo }}*\n🏢 {{ $json.empleador }} · 📍 {{ $json.ubicacion }}\n🏷️ {{ $json.categoria }}\n🔗 {{ $json.url }}",
+        "otherOptions": {
+          "unfurlLinks": true
+        }
+      },
+      "id": "slack-notify",
+      "name": "Notificar en #pegas",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [1050, 250]
+    },
+    {
+      "parameters": {
         "method": "POST",
-        "url": "https://coolify.devschile.cl/api/v1/applications/APP_UUID/deploy",
+        "url": "https://coolify.devschile.cl/api/v1/applications/d1fmi194ygz7qjbtuzik5b0y/deploy",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -116,71 +127,39 @@
               "value": "Bearer {{ $env.COOLIFY_TOKEN }}"
             }
           ]
+        },
+        "options": {
+          "timeout": 60000
         }
       },
       "id": "trigger-deploy",
-      "name": "Redeploy Static Site",
+      "name": "Redeploy pegas.devschile.cl",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [1050, 300]
+      "position": [1250, 250]
     }
   ],
   "connections": {
     "Gmail Trigger (cuenta 1)": {
-      "main": [
-        [
-          {
-            "node": "Parser HTML → Jobs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Parser LinkedIn → Jobs", "type": "main", "index": 0 }]]
     },
     "Gmail Trigger (cuenta 2)": {
-      "main": [
-        [
-          {
-            "node": "Parser HTML → Jobs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Parser LinkedIn → Jobs", "type": "main", "index": 0 }]]
     },
-    "Parser HTML → Jobs": {
-      "main": [
-        [
-          {
-            "node": "PostgreSQL INSERT",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+    "Parser LinkedIn → Jobs": {
+      "main": [[{ "node": "PostgreSQL INSERT", "type": "main", "index": 0 }]]
     },
     "PostgreSQL INSERT": {
-      "main": [
-        [
-          {
-            "node": "¿Pega nueva?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "¿Pega nueva?", "type": "main", "index": 0 }]]
     },
     "¿Pega nueva?": {
       "main": [
-        [
-          {
-            "node": "Redeploy Static Site",
-            "type": "main",
-            "index": 0
-          }
-        ],
+        [{ "node": "Notificar en #pegas", "type": "main", "index": 0 }],
         []
       ]
+    },
+    "Notificar en #pegas": {
+      "main": [[{ "node": "Redeploy pegas.devschile.cl", "type": "main", "index": 0 }]]
     }
   },
   "settings": {
@@ -188,6 +167,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "1.0.0",
+  "versionId": "1.1.0",
   "active": false
 }
