@@ -5,21 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pegas DevsChile — Ofertas de trabajo tech</title>
   <meta name="description" content="Vitrina de ofertas de trabajo tech en Chile. Parseadas desde newsletters de LinkedIn y otras fuentes.">
+  <meta property="og:title" content="Pegas DevsChile — Ofertas de trabajo tech">
+  <meta property="og:description" content="Vitrina de ofertas de trabajo tech en Chile.">
+  <meta property="og:url" content="https://pegas.devschile.cl/">
+  <meta property="og:type" content="website">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💼</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>💼</text></svg>">
 </head>
 <body>
-  <header>
+  <header class="site-header">
     <div class="container">
-      <h1>💼 Pegas DevsChile</h1>
-      <p class="subtitle">Ofertas de trabajo tech parseadas desde newsletters</p>
+      <h1 class="site-title">💼 <span>Pegas</span> DevsChile</h1>
+      <p class="site-subtitle">ofertas de trabajo tech parseadas desde newsletters</p>
     </div>
   </header>
 
   <main class="container">
-    <!-- Filtros -->
     <section class="filters">
-      <input type="search" id="search" placeholder="🔍 Buscar por título, empresa o descripción..." autocomplete="off">
+      <input type="search" id="search" placeholder="Buscar por título, empresa o descripción..." autocomplete="off">
       <div class="filter-row">
         <select id="filter-categoria">
           <option value="">Todas las categorías</option>
@@ -29,26 +32,27 @@
         </select>
       </div>
       <div class="stats">
-        <span id="count-visible">0</span> de <span id="count-total">0</span> pegas
+        <strong id="count-visible">0</strong> de <strong id="count-total">0</strong> pegas
       </div>
     </section>
 
-    <!-- Listado -->
     <section id="pegas-list" class="pegas-list">
-      <div class="loading">Cargando pegas...</div>
+      <div class="loading">cargando pegas...</div>
     </section>
   </main>
 
-  <footer>
+  <footer class="site-footer">
     <div class="container">
-      <p>Hecho con ❤️ por <a href="https://devschile.cl">devsChile</a> · 
-      Datos desde <a href="https://linkedin.com">LinkedIn</a> y otras fuentes · 
-      <a href="https://github.com/devschile/pegas">GitHub</a></p>
+      <a href="https://devschile.cl">devsChile</a>
+      <span class="separator">·</span>
+      <a href="https://github.com/devschile/pegas">GitHub</a>
+      <span class="separator">·</span>
+      datos desde LinkedIn &amp; otras fuentes
     </div>
   </footer>
 
   <template id="pega-card">
-    <article class="pega-card" data-categoria="" data-fuente="">
+    <article class="pega-card">
       <div class="pega-header">
         <h2 class="pega-titulo"></h2>
         <span class="pega-fecha"></span>
@@ -56,14 +60,13 @@
       <div class="pega-meta">
         <span class="pega-empleador"></span>
         <span class="pega-badges">
-          <span class="badge badge-sueldo" style="display:none"></span>
+          <span class="badge badge-sueldo"></span>
           <span class="badge badge-categoria"></span>
           <span class="badge badge-ubicacion"></span>
-          <span class="badge badge-fuente"></span>
         </span>
       </div>
       <p class="pega-descripcion"></p>
-      <a class="pega-link" target="_blank" rel="noopener noreferrer">Ver oferta original →</a>
+      <a class="pega-link" target="_blank" rel="noopener noreferrer">ver oferta</a>
     </article>
   </template>
 
