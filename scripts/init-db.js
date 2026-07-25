@@ -3,10 +3,12 @@ import { readFileSync } from 'fs';
 
 const { Pool } = pg;
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgres://pega:p3g4_d3v5ch1l3_2026%21X@mawcbxmdv77ozzp84rk2iog0:5432/pega';
-
 const pool = new Pool({
-  connectionString: DATABASE_URL,
+  host: process.env.PGHOST || 'mawcbxmdv77ozzp84rk2iog0',
+  port: parseInt(process.env.PGPORT || '5432'),
+  database: process.env.PGDATABASE || 'pega',
+  user: process.env.PGUSER || 'pega',
+  password: process.env.PGPASSWORD || '',
   connectionTimeoutMillis: 10000,
 });
 

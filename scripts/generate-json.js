@@ -8,14 +8,18 @@ const DATA_DIR = resolve(__dirname, '..', 'data');
 const DATA_FILE = resolve(DATA_DIR, 'data.json');
 
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+  host: process.env.PGHOST || 'localhost',
+  port: parseInt(process.env.PGPORT || '5432'),
+  database: process.env.PGDATABASE || 'pega',
+  user: process.env.PGUSER || 'pega',
+  password: process.env.PGPASSWORD || '',
   max: 3,
   connectionTimeoutMillis: 10000,
 });
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    console.error('❌ DATABASE_URL no configurada');
+  if (!process.env.PGHOST && !process.env.DATABASE_URL) {
+    console.error('❌ PGHOST o DATABASE_URL no configurada');
     process.exit(1);
   }
 
