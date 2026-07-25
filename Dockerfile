@@ -8,6 +8,7 @@ FROM nginx:alpine
 RUN apk add --no-cache nodejs
 COPY --from=deps /app/node_modules /app/node_modules
 COPY scripts/ /app/scripts/
+COPY schema.sql /app/
 COPY package.json /app/
 COPY index.html css/ js/ /usr/share/nginx/html/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
