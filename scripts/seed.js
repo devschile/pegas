@@ -29,9 +29,16 @@ async function main() {
   const client = await pool.connect();
   let ok = 0, skip = 0;
   try {
-    // Limpiar datos corruptos anteriores
-    await client.query('TRUNCATE pegas RESTART IDENTITY');
-    
+    // Este seed solo debe correr una vez (bootstrap inicial). El entrypoint lo
+    // ejecuta en cada arranque/restart del contenedor, así que si no se corta
+    // acá, el TRUNCATE que tenía antes borraba TODA la tabla —incluyendo las
+    // pegas reales que n8n ya había insertado— cada vez que se reiniciaba.
+    const { rows: existing } = await client.query('SELECT COUNT(*) AS n FROM pegas');
+    if (parseInt(existing[0].n, 10) > 0) {
+      console.log(`[seed] Tabla pegas ya tiene ${existing[0].n} fila(s) — no se reseedea.`);
+      return;
+    }
+
     for (const [titulo, url, empleador, ubicacion, categoria, tags] of pegas) {
       const desc = `${titulo} en ${empleador}, ${ubicacion}`;
       try {

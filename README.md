@@ -35,7 +35,7 @@ Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detal
 2. **Parser/Fetch** → Extrae o normaliza título, empleador, link, descripción, categoría, sueldo, tags
 3. **Deduplicación** → Verifica contra PostgreSQL (UNIQUE en `url`, `ON CONFLICT DO NOTHING`)
 4. **INSERT** → Guarda nueva pega en la BD (nodo único compartido por ambas fuentes)
-5. **Slack + Redeploy** → Si hubo pegas nuevas, notifica a `#pegas` y n8n dispara redeploy en Coolify, regenerando `data.json`
+5. **Slack + Redeploy** → Si hubo pegas nuevas, notifica a `#trabajos` y n8n dispara redeploy en Coolify, regenerando `data.json`
 6. **Frontend** → `index.html` carga `data/data.json` y renderiza con filtros
 
 ## Estructura del repositorio

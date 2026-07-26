@@ -88,9 +88,14 @@ for (const item of items) {
   for (let bi = 0; bi < blocks.length; bi++) {
     let lines = blocks[bi].trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-    // Bloque 0: saltar header "Your job alert..." y "New jobs match..."
+    // Bloque 0: saltar líneas de header ("Your job alert...", "New jobs
+    // match...", "Jobs similar to X at Y <tracking url>", etc.) — una línea
+    // de título real nunca trae una URL cruda, así que eso también sirve
+    // de señal genérica para variantes de header futuras.
     if (bi === 0) {
-      while (lines.length > 0 && /^(your job alert|new jobs match)/i.test(lines[0])) lines.shift();
+      while (lines.length > 0 && (/^(your job alert|new jobs match|jobs similar to)/i.test(lines[0]) || /https?:\/\//i.test(lines[0]))) {
+        lines.shift();
+      }
     }
     // Saltar footer/upsell
     if (/^(see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|©|linkedin and|learn why|help:)/i.test(lines[0])) continue;
