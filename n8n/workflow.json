@@ -4,7 +4,9 @@
     {
       "parameters": {
         "operation": "getAll",
-        "labelIds": ["Label_PEGAS_LINKEDIN"],
+        "labelIds": [
+          "Label_PEGAS_LINKEDIN"
+        ],
         "options": {
           "includeReplies": false,
           "downloadAttachments": false,
@@ -21,53 +23,33 @@
           ]
         }
       },
-      "id": "gmail-trigger-1",
-      "name": "Gmail Trigger (cuenta 1)",
+      "id": "gmail-trigger",
+      "name": "Gmail Trigger",
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1,
-      "position": [250, 300]
+      "position": [
+        250,
+        300
+      ]
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "labelIds": ["Label_PEGAS_LINKEDIN"],
-        "options": {
-          "includeReplies": false,
-          "downloadAttachments": false,
-          "label": "READ_LABEL",
-          "readStatus": "unread"
-        },
-        "pollTimes": {
-          "item": [
-            {
-              "mode": "everyX",
-              "value": 30,
-              "unit": "minutes"
-            }
-          ]
-        }
-      },
-      "id": "gmail-trigger-2",
-      "name": "Gmail Trigger (cuenta 2)",
-      "type": "n8n-nodes-base.gmailTrigger",
-      "typeVersion": 1,
-      "position": [250, 500]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Parser de LinkedIn Job Alert Digest\n// Ver n8n/parser-code.js para la versión standalone con tests\n\nconst items = $input.all();\nconst output = [];\n\nfunction decodeQP(str) {\n  str = str.replace(/=\\r?\\n/g, '');\n  const bytes = [];\n  let i = 0;\n  while (i < str.length) {\n    if (str[i] === '=' && i + 2 < str.length && /^[0-9A-Fa-f]{2}$/.test(str.substring(i+1, i+3))) {\n      bytes.push(parseInt(str.substring(i+1, i+3), 16));\n      i += 3;\n    } else {\n      bytes.push(str.charCodeAt(i));\n      i++;\n    }\n  }\n  try { return new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes)); }\n  catch (_) { return str; }\n}\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b/i.test(t)) return 'DevOps';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.desk\\b|\\bservice.desk\\b/i.test(t)) return 'Soporte';\n  return 'Otros';\n}\n\nconst BADGE_RE = /^(1 connection|\\d+\\+? connections|this company is actively hiring|actively hiring|apply with resume|easy apply|be an early applicant|promoted|no longer accepting)$/i;\n\nfor (const item of items) {\n  let body = item.json.textPlain || item.json.body || '';\n  if (typeof body === 'object' && body.content) body = body.content;\n  if (!body || body.length < 20) continue;\n\n  body = decodeQP(body);\n  const blocks = body.split(/\\n\\s*-{15,}\\s*\\n/);\n\n  for (let bi = 0; bi < blocks.length; bi++) {\n    let lines = blocks[bi].trim().split('\\n').map(l => l.trim()).filter(l => l.length > 0);\n    if (bi === 0) {\n      while (lines.length > 0 && /^(your job alert|new jobs match)/i.test(lines[0])) lines.shift();\n    }\n    if (/^(see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|©|linkedin and|learn why|help:)/i.test(lines[0])) continue;\n    if (lines.length < 3) continue;\n\n    const titulo = lines[0];\n    let empleador = lines[1] || '';\n    let ubicacion = lines[2] || '';\n    let url = '';\n    for (const l of lines) {\n      if (/^view job:\\s*/i.test(l)) { url = l.replace(/^view job:\\s*/i, '').trim(); break; }\n    }\n    if (!url || !titulo) continue;\n\n    if (BADGE_RE.test(empleador)) { empleador = lines[2] || ''; ubicacion = lines[3] || ''; }\n    if (BADGE_RE.test(ubicacion)) ubicacion = lines[3] || '';\n\n    const jid = url.match(/\\/jobs\\/view\\/(\\d+)/);\n    const urlLimpia = jid ? `https://www.linkedin.com/jobs/view/${jid[1]}/` : url.split('?')[0];\n\n    output.push({\n      json: {\n        titulo, url: urlLimpia,\n        empleador: empleador || 'No especificado',\n        ubicacion: ubicacion || 'Chile',\n        descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,\n        categoria: categorizar(titulo),\n        fuente: 'linkedin',\n        email_origen: item.json.to || item.json.To || '',\n        fecha_publicacion: new Date().toISOString()\n      }\n    });\n  }\n}\nreturn output;"
+        "jsCode": "/**\n * Parser de LinkedIn Job Alert Digest — para n8n Code node\n * Extrae titulo, url (limpia), empleador, ubicacion, categoria\n * de emails multipart/alternative con text/plain en quoted-printable.\n * \n * Probado con 11/11 pegas de 3 emails reales (Julio 2026).\n * v1.1: detección de sueldo/rango salarial en título y descripción.\n */\n\nconst items = $input.all();\nconst output = [];\n\n// --- Quoted-printable decoder con soporte UTF-8 multi-byte ---\nfunction decodeQP(str) {\n  str = str.replace(/=\\r?\\n/g, '');\n  const bytes = [];\n  let i = 0;\n  while (i < str.length) {\n    if (str[i] === '=' && i + 2 < str.length && /^[0-9A-Fa-f]{2}$/.test(str.substring(i+1, i+3))) {\n      bytes.push(parseInt(str.substring(i+1, i+3), 16));\n      i += 3;\n    } else {\n      bytes.push(str.charCodeAt(i));\n      i++;\n    }\n  }\n  try { return new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes)); }\n  catch (_) { return str; }\n}\n\n// --- Categorización ---\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b/i.test(t)) return 'DevOps';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.desk\\b|\\bservice.desk\\b/i.test(t)) return 'Soporte';\n  return 'Otros';\n}\n\n// --- Badge patterns (se colocan donde iría la empresa) ---\nconst BADGE_RE = /^(1 connection|\\d+\\+? connections|this company is actively hiring|actively hiring|apply with resume|easy apply|be an early applicant|promoted|no longer accepting)$/i;\n\n// --- Detección de sueldo/rango salarial ---\nfunction extraerSueldo(texto) {\n  if (!texto) return null;\n  // Pesos chilenos: $1.500.000, $1500000, CLP 1.500.000, CLP$1.5M\n  let m = texto.match(/(?:CLP\\s*)?\\$\\s*[\\d.,]+\\s*(?:[.-]\\s*(?:CLP\\s*)?\\$\\s*[\\d.,]+)?\\s*(?:CLP|clp|pesos|l[ií]quido|bruto|liquido)?/i);\n  if (m) return m[0].trim();\n  // UF\n  m = texto.match(/UF\\s*[\\d.,]+/i);\n  if (m) return m[0].trim();\n  // USD / dólares\n  m = texto.match(/(?:USD|usd|U\\$)\\s*[\\d.,]+/i);\n  if (m) return m[0].trim();\n  // Renta/Sueldo/Salario: $X\n  m = texto.match(/(?:renta|sueldo|salario|remuneraci[oó]n)\\s*:?\\s*(?:hasta|desde|entre)?\\s*(?:CLP\\s*)?\\$?\\s*[\\d.,]+\\s*(?:[.-]\\s*(?:CLP\\s*)?\\$?\\s*[\\d.,]+)?\\s*(?:CLP|clp|pesos|l[ií]quido|bruto)?/i);\n  if (m) return m[0].trim();\n  return null;\n}\n\n// --- Detección de tags (remote, etc) ---\nfunction detectarTags(titulo, ubicacion, lines) {\n  const tags = [];\n  const texto = [titulo, ubicacion, ...lines.slice(0, 6)].join(' ').toLowerCase();\n  if (/\\bremote\\b|\\bremoto\\b|\\bteletrabajo\\b|\\bhome.?office\\b|\\bwork.?from.?home\\b|\\b100%?\\s*remoto\\b|\\btrabajo\\s*remoto\\b|\\bmodalidad\\s*remot[ao]\\b/i.test(texto)) {\n    tags.push('remote');\n  }\n  return tags.length > 0 ? tags.join(',') : null;\n}\n\n// --- Procesar cada email ---\nfor (const item of items) {\n  let body = item.json.textPlain || item.json.body || '';\n  if (typeof body === 'object' && body.content) body = body.content;\n  if (!body || body.length < 20) continue;\n\n  body = decodeQP(body);\n  const blocks = body.split(/\\n\\s*-{15,}\\s*\\n/);\n\n  for (let bi = 0; bi < blocks.length; bi++) {\n    let lines = blocks[bi].trim().split('\\n').map(l => l.trim()).filter(l => l.length > 0);\n\n    // Bloque 0: saltar líneas de header (\"Your job alert...\", \"New jobs\n    // match...\", \"Jobs similar to X at Y <tracking url>\", etc.) — una línea\n    // de título real nunca trae una URL cruda, así que eso también sirve\n    // de señal genérica para variantes de header futuras.\n    if (bi === 0) {\n      while (lines.length > 0 && (/^(your job alert|new jobs match|jobs similar to)/i.test(lines[0]) || /https?:\\/\\//i.test(lines[0]))) {\n        lines.shift();\n      }\n    }\n    // Saltar footer/upsell\n    if (/^(see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|©|linkedin and|learn why|help:)/i.test(lines[0])) continue;\n    if (lines.length < 3) continue;\n\n    const titulo = lines[0];\n    let empleador = lines[1] || '';\n    let ubicacion = lines[2] || '';\n    let url = '';\n    for (const l of lines) {\n      if (/^view job:\\s*/i.test(l)) { url = l.replace(/^view job:\\s*/i, '').trim(); break; }\n    }\n    if (!url || !titulo) continue;\n\n    // Desplazar si hay badge\n    if (BADGE_RE.test(empleador)) { empleador = lines[2] || ''; ubicacion = lines[3] || ''; }\n    if (BADGE_RE.test(ubicacion)) ubicacion = lines[3] || '';\n\n    // Limpiar URL\n    const jid = url.match(/\\/jobs\\/view\\/(\\d+)/);\n    const urlLimpia = jid ? `https://www.linkedin.com/jobs/view/${jid[1]}/` : url.split('?')[0];\n\n    output.push({\n      json: {\n        titulo,\n        url: urlLimpia,\n        empleador: empleador || 'No especificado',\n        ubicacion: ubicacion || 'Chile',\n        sueldo: extraerSueldo(titulo + ' ' + (lines.slice(0, 6).join(' '))),\n        descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,\n        categoria: categorizar(titulo),\n        tags: detectarTags(titulo, ubicacion, lines),\n        fuente: 'linkedin',\n        email_origen: item.json.to || item.json.To || '',\n        fecha_publicacion: new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
       },
       "id": "parser",
       "name": "Parser LinkedIn → Jobs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [450, 300]
+      "position": [
+        450,
+        300
+      ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion, sueldo, tags, fuente, email_origen, fecha_publicacion)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11::timestamptz, NOW()))\nON CONFLICT (url) DO NOTHING\nRETURNING id, titulo, empleador, url, ubicacion, categoria, sueldo, tags, fuente",
-        "additionalFields": {
+        "options": {
           "queryReplacement": "={{ [$json.url, $json.titulo, $json.empleador, $json.descripcion, $json.categoria, $json.ubicacion, $json.sueldo, $json.tags, $json.fuente, $json.email_origen, $json.fecha_publicacion] }}"
         }
       },
@@ -75,19 +57,30 @@
       "name": "PostgreSQL INSERT",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
-      "position": [650, 300]
+      "position": [
+        650,
+        300
+      ]
     },
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "hours", "hoursInterval": 6 }]
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
         }
       },
       "id": "getonbrd-schedule",
       "name": "GetOnBoard: cada 6h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
-      "position": [250, 700]
+      "position": [
+        250,
+        700
+      ]
     },
     {
       "parameters": {
@@ -97,7 +90,10 @@
       "name": "GetOnBoard: categorías",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [450, 700]
+      "position": [
+        450,
+        700
+      ]
     },
     {
       "parameters": {
@@ -105,22 +101,35 @@
         "url": "=https://www.getonbrd.com/api/v0/categories/{{ $json.category }}/jobs",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [{ "name": "per_page", "value": "50" }]
+          "parameters": [
+            {
+              "name": "per_page",
+              "value": "50"
+            }
+          ]
         },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "User-Agent", "value": "pegas-devschile-bot (+https://pegas.devschile.cl)" }
+            {
+              "name": "User-Agent",
+              "value": "pegas-devschile-bot (+https://pegas.devschile.cl)"
+            }
           ]
         },
-        "options": { "timeout": 20000 }
+        "options": {
+          "timeout": 20000
+        }
       },
       "id": "getonbrd-fetch-jobs",
       "name": "GetOnBoard: Jobs por categoría",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "continueOnFail": true,
-      "position": [650, 700]
+      "position": [
+        650,
+        700
+      ]
     },
     {
       "parameters": {
@@ -130,7 +139,10 @@
       "name": "GetOnBoard: filtrar + normalizar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [850, 700]
+      "position": [
+        850,
+        700
+      ]
     },
     {
       "parameters": {
@@ -140,7 +152,10 @@
       "name": "GetOnBoard: IDs de empresa únicas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1050, 700]
+      "position": [
+        1050,
+        700
+      ]
     },
     {
       "parameters": {
@@ -149,17 +164,25 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "User-Agent", "value": "pegas-devschile-bot (+https://pegas.devschile.cl)" }
+            {
+              "name": "User-Agent",
+              "value": "pegas-devschile-bot (+https://pegas.devschile.cl)"
+            }
           ]
         },
-        "options": { "timeout": 20000 }
+        "options": {
+          "timeout": 20000
+        }
       },
       "id": "getonbrd-fetch-company",
       "name": "GetOnBoard: Empresa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "continueOnFail": true,
-      "position": [1250, 700]
+      "position": [
+        1250,
+        700
+      ]
     },
     {
       "parameters": {
@@ -169,7 +192,10 @@
       "name": "GetOnBoard: combinar empresa",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1450, 700]
+      "position": [
+        1450,
+        700
+      ]
     },
     {
       "parameters": {
@@ -183,7 +209,9 @@
               "id": "condition-1",
               "leftValue": "={{ $json.id }}",
               "rightValue": "",
-              "operator": { "type": "exists" }
+              "operator": {
+                "type": "exists"
+              }
             }
           ],
           "combinator": "and"
@@ -193,36 +221,46 @@
       "name": "¿Pega nueva?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [850, 300]
+      "position": [
+        850,
+        300
+      ]
     },
     {
       "parameters": {
-        "jsCode": "// Agrupa todas las pegas nuevas en un solo mensaje de Slack\nconst pegas = $input.all();\nif (pegas.length === 0) return [];\n\nconst FUENTE_LABEL = { linkedin: 'LinkedIn', getonbrd: 'GetOnBoard' };\nconst plural = pegas.length > 1 ? 's' : '';\nlet msg = `📬 *${pegas.length} pega${plural} nueva${plural}*\\n`;\n\nfor (const item of pegas) {\n  const p = item.json;\n  msg += `\\n🆕 *${p.titulo}*`;\n  msg += `\\n🏢 ${p.empleador} · 📍 ${p.ubicacion}`;\n  msg += `\\n🏷️ ${p.categoria}${p.sueldo ? '  💰 ' + p.sueldo : ''}  ·  ${FUENTE_LABEL[p.fuente] || p.fuente}`;\n  msg += `\\n🔗 ${p.url}\\n`;\n}\n\nreturn [{ json: { text: msg, count: pegas.length } }];"
+        "jsCode": "// Agrupa todas las pegas nuevas en un solo mensaje de Slack\nconst pegas = $input.all();\nif (pegas.length === 0) return [];\n\nconst FUENTE_LABEL = { linkedin: 'LinkedIn', getonbrd: 'GetOnBoard' };\nconst plural = pegas.length > 1 ? 's' : '';\nlet msg = `📬 *${pegas.length} pega${plural} nueva${plural}*\\n`;\n\nfor (const item of pegas) {\n  const p = item.json;\n  msg += `\\n🆕 *${p.titulo}*`;\n  msg += `\\n🏢 ${p.empleador} · 📍 ${p.ubicacion}`;\n  msg += `\\n🏷️ ${p.categoria}${p.sueldo ? '  💰 ' + p.sueldo : ''}  ·  ${FUENTE_LABEL[p.fuente] || p.fuente}`;\n  msg += `\\n🔗 ${p.url}\\n`;\n}\n\nmsg += `\\nTodas las pegas en pegas.devschile.cl`;\n\nreturn [{ json: { text: msg, count: pegas.length } }];"
       },
       "id": "aggregate-slack",
       "name": "Agrupar notificación",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1050, 250]
+      "position": [
+        1050,
+        250
+      ]
     },
     {
       "parameters": {
         "channelId": "C0R6AM4DP",
         "text": "={{ $json.text }}",
         "otherOptions": {
-          "unfurlLinks": true
+          "unfurl_links": false,
+          "unfurl_media": false
         }
       },
       "id": "slack-notify",
-      "name": "Notificar en #pegas",
+      "name": "Notificar en #trabajos",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 1,
-      "position": [1250, 250]
+      "position": [
+        1250,
+        250
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://coolify.devschile.cl/api/v1/applications/kje083n02of5w3nh6llm7sot/deploy",
+        "url": "https://coolify.devschile.cl/api/v1/applications/kje083n02of5w3nh6llm7sot/restart",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -238,58 +276,160 @@
           "timeout": 60000
         }
       },
-      "id": "trigger-deploy",
-      "name": "Redeploy pegas.devschile.cl",
+      "id": "trigger-restart",
+      "name": "Restart pegas.devschile.cl",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [1450, 250]
+      "position": [
+        1450,
+        250
+      ]
     }
   ],
   "connections": {
-    "Gmail Trigger (cuenta 1)": {
-      "main": [[{ "node": "Parser LinkedIn → Jobs", "type": "main", "index": 0 }]]
-    },
-    "Gmail Trigger (cuenta 2)": {
-      "main": [[{ "node": "Parser LinkedIn → Jobs", "type": "main", "index": 0 }]]
-    },
     "Parser LinkedIn → Jobs": {
-      "main": [[{ "node": "PostgreSQL INSERT", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GetOnBoard: cada 6h": {
-      "main": [[{ "node": "GetOnBoard: categorías", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "GetOnBoard: categorías",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GetOnBoard: categorías": {
-      "main": [[{ "node": "GetOnBoard: Jobs por categoría", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "GetOnBoard: Jobs por categoría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GetOnBoard: Jobs por categoría": {
-      "main": [[{ "node": "GetOnBoard: filtrar + normalizar", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "GetOnBoard: filtrar + normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GetOnBoard: filtrar + normalizar": {
-      "main": [[{ "node": "GetOnBoard: IDs de empresa únicas", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "GetOnBoard: IDs de empresa únicas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GetOnBoard: IDs de empresa únicas": {
-      "main": [[{ "node": "GetOnBoard: Empresa", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "GetOnBoard: Empresa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GetOnBoard: Empresa": {
-      "main": [[{ "node": "GetOnBoard: combinar empresa", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "GetOnBoard: combinar empresa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GetOnBoard: combinar empresa": {
-      "main": [[{ "node": "PostgreSQL INSERT", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "PostgreSQL INSERT": {
-      "main": [[{ "node": "¿Pega nueva?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "¿Pega nueva?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "¿Pega nueva?": {
       "main": [
-        [{ "node": "Agrupar notificación", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Agrupar notificación",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
     "Agrupar notificación": {
-      "main": [[{ "node": "Notificar en #pegas", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Notificar en #pegas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Notificar en #pegas": {
-      "main": [[{ "node": "Redeploy pegas.devschile.cl", "type": "main", "index": 0 }]]
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parser LinkedIn → Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar en #trabajos": {
+      "main": [
+        [
+          {
+            "node": "Restart pegas.devschile.cl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
