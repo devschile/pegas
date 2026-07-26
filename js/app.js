@@ -78,13 +78,13 @@
     document.getElementById('btn-prev').addEventListener('click', () => {
       if (currentPage > 1) {
         currentPage--;
-        applyFilters();
+        renderPage();
       }
     });
     document.getElementById('btn-next').addEventListener('click', () => {
       if (currentPage < totalPages) {
         currentPage++;
-        applyFilters();
+        renderPage();
       }
     });
   }
