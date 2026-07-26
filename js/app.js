@@ -107,7 +107,7 @@
       const card = template.content.cloneNode(true);
 
       card.querySelector('.pega-titulo').textContent = pega.titulo;
-      card.querySelector('.pega-fecha').textContent = formatDate(pega.fecha_creacion);
+      card.querySelector('.pega-fecha').textContent = formatDate(pega.fecha_publicacion || pega.fecha_creacion);
       card.querySelector('.pega-empleador').textContent = pega.empleador;
       card.querySelector('.pega-descripcion').textContent = pega.descripcion;
       card.querySelector('.pega-link').href = pega.url;
