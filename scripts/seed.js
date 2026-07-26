@@ -34,6 +34,7 @@ async function main() {
     // acá, el TRUNCATE que tenía antes borraba TODA la tabla —incluyendo las
     // pegas reales que n8n ya había insertado— cada vez que se reiniciaba.
     const { rows: existing } = await client.query('SELECT COUNT(*) AS n FROM pegas');
+    console.log(`[seed][DEBUG] PGHOST=${process.env.PGHOST} PGDATABASE=${process.env.PGDATABASE} count raw=${JSON.stringify(existing[0])}`);
     if (parseInt(existing[0].n, 10) > 0) {
       console.log(`[seed] Tabla pegas ya tiene ${existing[0].n} fila(s) — no se reseedea.`);
       return;
