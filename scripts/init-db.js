@@ -25,7 +25,19 @@ async function main() {
     console.log('📝 Ejecutando schema.sql...');
     await client.query(schema);
     console.log('✅ Tabla creada correctamente');
-    
+
+    // CREATE TABLE IF NOT EXISTS no hace nada si la tabla ya existía de antes,
+    // así que columnas agregadas a schema.sql después del primer deploy (ej.
+    // sueldo, tags) nunca llegan a una BD que ya tenía la tabla creada. Se
+    // reconcilian acá explícitamente para que sea idempotente.
+    console.log('🔧 Verificando columnas...');
+    await client.query(`
+      ALTER TABLE pegas ADD COLUMN IF NOT EXISTS sueldo TEXT;
+      ALTER TABLE pegas ADD COLUMN IF NOT EXISTS tags TEXT;
+      ALTER TABLE pegas ADD COLUMN IF NOT EXISTS fecha_actualizacion TIMESTAMP DEFAULT NOW();
+    `);
+    console.log('✅ Columnas al día');
+
     // Verificar
     const { rows: tables } = await client.query(`
       SELECT table_name FROM information_schema.tables 
