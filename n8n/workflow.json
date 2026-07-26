@@ -66,14 +66,110 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion, sueldo, fecha_publicacion, fuente, email_origen)\nVALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), 'linkedin', $8)\nON CONFLICT (url) DO NOTHING\nRETURNING id, titulo, empleador, url, ubicacion, categoria, sueldo",
-        "additionalFields": {}
+        "query": "INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion, sueldo, tags, fuente, email_origen, fecha_publicacion)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11::timestamptz, NOW()))\nON CONFLICT (url) DO NOTHING\nRETURNING id, titulo, empleador, url, ubicacion, categoria, sueldo, tags, fuente",
+        "additionalFields": {
+          "queryReplacement": "={{ [$json.url, $json.titulo, $json.empleador, $json.descripcion, $json.categoria, $json.ubicacion, $json.sueldo, $json.tags, $json.fuente, $json.email_origen, $json.fecha_publicacion] }}"
+        }
       },
       "id": "pg-insert",
       "name": "PostgreSQL INSERT",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 6 }]
+        }
+      },
+      "id": "getonbrd-schedule",
+      "name": "GetOnBoard: cada 6h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Categorías de GetOnBoard relevantes para developers/tech.\n// API pública v0, sin autenticación: https://www.getonbrd.com/api/v0/categories\nconst CATEGORIAS = [\n  'programming',\n  'mobile-developer',\n  'sysadmin-devops-qa',\n  'data-science-analytics',\n  'machine-learning-ai',\n  'cybersecurity'\n];\nreturn CATEGORIAS.map(category => ({ json: { category } }));"
+      },
+      "id": "getonbrd-categories",
+      "name": "GetOnBoard: categorías",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 700]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.getonbrd.com/api/v0/categories/{{ $json.category }}/jobs",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "per_page", "value": "50" }]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "User-Agent", "value": "pegas-devschile-bot (+https://pegas.devschile.cl)" }
+          ]
+        },
+        "options": { "timeout": 20000 }
+      },
+      "id": "getonbrd-fetch-jobs",
+      "name": "GetOnBoard: Jobs por categoría",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "continueOnFail": true,
+      "position": [650, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza jobs de GetOnBoard (API pública v0, sin auth) al esquema de \"pegas\".\n// Filtra a Chile o remoto: GetOnBoard es una plataforma LatAm, así que su tag\n// \"Remote\" es mayormente remoto-LatAm-friendly (a diferencia de RemoteOK/WWR,\n// que son globales/US-centric y no se incluyeron por eso).\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  return 'Otros';\n}\n\n// Fallback por categoría de GetOnBoard cuando el título no matchea ningún patrón\nconst CATEGORIA_FALLBACK = {\n  'Mobile Developer': 'Mobile',\n  'SysAdmin / DevOps / QA': 'DevOps',\n  'Data Science / Analytics': 'Data',\n  'Machine Learning & AI': 'Data',\n  'Cybersecurity': 'Ciberseguridad'\n};\n\nconst vistos = new Set();\nconst output = [];\n\nfor (const item of items) {\n  const body = item.json;\n  const jobs = (body && body.data) || [];\n\n  for (const job of jobs) {\n    const id = job.id;\n    if (!id || vistos.has(id)) continue;\n    vistos.add(id);\n\n    const a = job.attributes || {};\n    const countries = a.countries || [];\n    const esChile = countries.includes('Chile');\n    const esRemoto = a.remote === true || countries.includes('Remote');\n    if (!esChile && !esRemoto) continue; // fuera de alcance: ni Chile ni remoto\n\n    const titulo = a.title || '';\n    if (!titulo) continue;\n\n    const catTitulo = categorizar(titulo);\n    const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[a.category_name] || 'Otros');\n    const ubicacion = esChile ? 'Chile' : (countries[0] || 'Remoto');\n    const sueldo = (a.min_salary && a.max_salary) ? `USD ${a.min_salary} - ${a.max_salary} /mes` : null;\n\n    const tags = [];\n    if (esRemoto) tags.push('remote');\n\n    output.push({\n      json: {\n        company_id: (a.company && a.company.data && a.company.data.id) || null,\n        titulo,\n        url: (job.links && job.links.public_url) || `https://www.getonbrd.com/jobs/${id}`,\n        ubicacion,\n        categoria,\n        sueldo,\n        tags: tags.length ? tags.join(',') : null,\n        descripcion: `${titulo}${ubicacion ? ', ' + ubicacion : ''}`,\n        fuente: 'getonbrd',\n        email_origen: null,\n        fecha_publicacion: a.published_at ? new Date(a.published_at * 1000).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;"
+      },
+      "id": "getonbrd-normalize",
+      "name": "GetOnBoard: filtrar + normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "// IDs de empresa únicos, para resolver el nombre con una sola llamada por empresa\n// (en vez de una por cada pega).\nconst items = $input.all();\nconst ids = new Set();\nfor (const item of items) {\n  if (item.json.company_id) ids.add(item.json.company_id);\n}\nreturn Array.from(ids).map(company_id => ({ json: { company_id } }));"
+      },
+      "id": "getonbrd-company-ids",
+      "name": "GetOnBoard: IDs de empresa únicas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 700]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.getonbrd.com/api/v0/companies/{{ $json.company_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "User-Agent", "value": "pegas-devschile-bot (+https://pegas.devschile.cl)" }
+          ]
+        },
+        "options": { "timeout": 20000 }
+      },
+      "id": "getonbrd-fetch-company",
+      "name": "GetOnBoard: Empresa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "continueOnFail": true,
+      "position": [1250, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combina el nombre real de la empresa (paso anterior) con las pegas ya\n// filtradas/normalizadas (\"GetOnBoard: filtrar + normalizar\") y deja el\n// resultado listo para el mismo INSERT que usa LinkedIn.\nconst companies = $input.all();\nconst nombrePorId = {};\nfor (const c of companies) {\n  const data = c.json && c.json.data;\n  if (data && data.id) nombrePorId[data.id] = (data.attributes && data.attributes.name) || null;\n}\n\nconst pegas = $('GetOnBoard: filtrar + normalizar').all();\nreturn pegas.map(p => {\n  const json = { ...p.json };\n  json.empleador = (json.company_id && nombrePorId[json.company_id]) || 'No especificado';\n  delete json.company_id;\n  return { json };\n});"
+      },
+      "id": "getonbrd-merge-company",
+      "name": "GetOnBoard: combinar empresa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 700]
     },
     {
       "parameters": {
@@ -101,7 +197,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Agrupa todas las pegas nuevas en un solo mensaje de Slack\nconst pegas = $input.all();\nif (pegas.length === 0) return [];\n\nconst plural = pegas.length > 1 ? 's' : '';\nlet msg = `📬 *${pegas.length} pega${plural} nueva${plural} desde LinkedIn*\\n`;\n\nfor (const item of pegas) {\n  const p = item.json;\n  msg += `\\n🆕 *${p.titulo}*`;\n  msg += `\\n🏢 ${p.empleador} · 📍 ${p.ubicacion}`;\n  msg += `\\n🏷️ ${p.categoria}${p.sueldo ? '  💰 ' + p.sueldo : ''}`;\n  msg += `\\n🔗 ${p.url}\\n`;\n}\n\nreturn [{ json: { text: msg, count: pegas.length } }];"
+        "jsCode": "// Agrupa todas las pegas nuevas en un solo mensaje de Slack\nconst pegas = $input.all();\nif (pegas.length === 0) return [];\n\nconst FUENTE_LABEL = { linkedin: 'LinkedIn', getonbrd: 'GetOnBoard' };\nconst plural = pegas.length > 1 ? 's' : '';\nlet msg = `📬 *${pegas.length} pega${plural} nueva${plural}*\\n`;\n\nfor (const item of pegas) {\n  const p = item.json;\n  msg += `\\n🆕 *${p.titulo}*`;\n  msg += `\\n🏢 ${p.empleador} · 📍 ${p.ubicacion}`;\n  msg += `\\n🏷️ ${p.categoria}${p.sueldo ? '  💰 ' + p.sueldo : ''}  ·  ${FUENTE_LABEL[p.fuente] || p.fuente}`;\n  msg += `\\n🔗 ${p.url}\\n`;\n}\n\nreturn [{ json: { text: msg, count: pegas.length } }];"
       },
       "id": "aggregate-slack",
       "name": "Agrupar notificación",
@@ -126,7 +222,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://coolify.devschile.cl/api/v1/applications/d1fmi194ygz7qjbtuzik5b0y/deploy",
+        "url": "https://coolify.devschile.cl/api/v1/applications/kje083n02of5w3nh6llm7sot/deploy",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -157,6 +253,27 @@
       "main": [[{ "node": "Parser LinkedIn → Jobs", "type": "main", "index": 0 }]]
     },
     "Parser LinkedIn → Jobs": {
+      "main": [[{ "node": "PostgreSQL INSERT", "type": "main", "index": 0 }]]
+    },
+    "GetOnBoard: cada 6h": {
+      "main": [[{ "node": "GetOnBoard: categorías", "type": "main", "index": 0 }]]
+    },
+    "GetOnBoard: categorías": {
+      "main": [[{ "node": "GetOnBoard: Jobs por categoría", "type": "main", "index": 0 }]]
+    },
+    "GetOnBoard: Jobs por categoría": {
+      "main": [[{ "node": "GetOnBoard: filtrar + normalizar", "type": "main", "index": 0 }]]
+    },
+    "GetOnBoard: filtrar + normalizar": {
+      "main": [[{ "node": "GetOnBoard: IDs de empresa únicas", "type": "main", "index": 0 }]]
+    },
+    "GetOnBoard: IDs de empresa únicas": {
+      "main": [[{ "node": "GetOnBoard: Empresa", "type": "main", "index": 0 }]]
+    },
+    "GetOnBoard: Empresa": {
+      "main": [[{ "node": "GetOnBoard: combinar empresa", "type": "main", "index": 0 }]]
+    },
+    "GetOnBoard: combinar empresa": {
       "main": [[{ "node": "PostgreSQL INSERT", "type": "main", "index": 0 }]]
     },
     "PostgreSQL INSERT": {
