@@ -30,9 +30,9 @@ async function main() {
         id, url, titulo, empleador, descripcion, 
         categoria, ubicacion, sueldo, tags, fecha_publicacion, 
         fuente, fecha_creacion
-      FROM pegas 
-      WHERE activo = TRUE 
-      ORDER BY fecha_creacion DESC
+      FROM pegas
+      WHERE activo = TRUE
+      ORDER BY COALESCE(fecha_publicacion, fecha_creacion) DESC
     `);
 
     const output = {
