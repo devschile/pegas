@@ -34,13 +34,13 @@ function categorizar(t) {
   if (/\bfront.?end\b|frontend|\breact\b|\bvue\b|\bangular\b|\bui.ux\b|\bcss\b|\bhtml\b|\btypescript\b|\bjavascript\b|\bjs\b/i.test(t)) return 'Frontend';
   if (/\bback.?end\b|backend|\bnode\b|\bpython\b|\bdjango\b|\bflask\b|\bgo\b|\bgolang\b|\brust\b|\bjava\b|\bspring\b|\bquarkus\b|\.net\b|\bc#\b|\bphp\b|\blaravel\b|\brails\b|\bruby\b/i.test(t)) return 'Backend';
   if (/\bfull.?stack\b|fullstack/i.test(t)) return 'Full Stack';
-  if (/\bdevops\b|\bsre\b|\binfra\b|\bcloud\b|\baws\b|\bazure\b|\bgcp\b|\bkubernetes\b|\bdocker\b|\bterraform\b/i.test(t)) return 'DevOps';
-  if (/\bdata\b|\banalytics\b|\banalist[ao]s?\b|\banalyst\b|\bmachine.?learning\b|\bml\b|\bai\b|\binteligencia\b|\bartificial\b|\betl\b|\bpower.bi\b|\btableau\b|\blooker\b/i.test(t)) return 'Data';
+  if (/\bdevops\b|\bsre\b|\binfra\b|\bcloud\b|\baws\b|\bazure\b|\bgcp\b|\bkubernetes\b|\bdocker\b|\bterraform\b|\bdeploy(ment)?\b/i.test(t)) return 'DevOps';
+  if (/\bdata\b|\banalytics\b|\banalist[ao]s?\b|\banalyst\b|\bmachine.?learning\b|\bml\b|\bai\b|\bia\b|\binteligencia\b|\bartificial\b|\betl\b|\bpower.bi\b|\btableau\b|\blooker\b/i.test(t)) return 'Data';
   if (/\bmobile\b|\bandroid\b|\bios\b|\bswift\b|\bkotlin\b|\bflutter\b|\breact.native\b/i.test(t)) return 'Mobile';
   if (/\bqa\b|\btester\b|\btesting\b|\bcalidad\b|\bquality\b/i.test(t)) return 'QA';
   if (/\bsecurity\b|\bseguridad\b|\bciberseguridad\b|\bpentest\b/i.test(t)) return 'Ciberseguridad';
   if (/\bproject.manager\b|\bscrum.master\b|\bproduct.manager\b|\bproduct.owner\b|\bagile\b|\bjefe\b|\bgerente\b|\blider\b|\blead\b|\btech.lead\b|\bmanager\b|\bdirector\b|\bcoordinador\b/i.test(t)) return 'Gestión';
-  if (/\bdiseñ|\bdesigner\b|\bfigma\b|\bsketch\b|\bphotoshop\b|\billustrator\b/i.test(t)) return 'Diseño';
+  if (/\bdiseñ|\bdesigner\b|\bux\b|\bui\b|\bfigma\b|\bsketch\b|\bphotoshop\b|\billustrator\b/i.test(t)) return 'Diseño';
   if (/\bsoporte\b|\bsupport\b|\bhelp.desk\b|\bservice.desk\b/i.test(t)) return 'Soporte';
   return 'Otros';
 }
