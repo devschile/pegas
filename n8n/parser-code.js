@@ -78,7 +78,10 @@ function detectarTags(titulo, ubicacion, lines) {
 
 // --- Procesar cada email ---
 for (const item of items) {
-  let body = item.json.textPlain || item.json.body || '';
+  // Con el Gmail Trigger en modo "simple: false" el campo real es `text`
+  // (y `html` de respaldo) -- `textPlain`/`body` se dejan como fallback
+  // por si alguna vez cambia el modo del nodo.
+  let body = item.json.text || item.json.textPlain || item.json.body || item.json.html || '';
   if (typeof body === 'object' && body.content) body = body.content;
   if (!body || body.length < 20) continue;
 
