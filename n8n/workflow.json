@@ -195,7 +195,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Digest 2x/dia: junta TODAS las pegas nuevas desde el ultimo aviso\n// (de cualquier fuente) en un solo mensaje, maximo 5 listadas.\nconst items = $input.all();\nif (items.length === 0) return [];\n\nconst MAX_SHOW = 5;\nconst total = items.length;\nconst shown = items.slice(0, MAX_SHOW);\n\nconst plural = total === 1 ? '' : 's';\nlet msg = `Hay *${total}* pega${plural} nueva${plural}:\\n`;\nfor (const item of shown) {\n  msg += `- ${item.json.titulo}\\n`;\n}\nmsg += `Revisa todas en pegas.devschile.cl`;\n\nconst lastFechaCreacion = items[items.length - 1].json.fecha_creacion;\n\nreturn [{ json: { text: msg, count: total, lastFechaCreacion } }];"
+        "jsCode": "// Digest 2x/dia: junta TODAS las pegas nuevas desde el ultimo aviso\n// (de cualquier fuente) en un solo mensaje, maximo 5 listadas.\n//\n// OJO: el nodo Postgres de n8n, cuando el SELECT no encuentra filas,\n// igual emite 1 item falso {success:true} en vez de un array vacio\n// (mismo comportamiento que ON CONFLICT DO NOTHING sin RETURNING).\n// Por eso filtramos por la presencia de \"titulo\", no por items.length.\nconst items = $input.all().filter(item => item.json && item.json.titulo);\nif (items.length === 0) return [];\n\nconst MAX_SHOW = 5;\nconst total = items.length;\nconst shown = items.slice(0, MAX_SHOW);\n\nconst plural = total === 1 ? '' : 's';\nlet msg = `Hay *${total}* pega${plural} nueva${plural}:\\n`;\nfor (const item of shown) {\n  msg += `- ${item.json.titulo}\\n`;\n}\nmsg += `Revisa todas en pegas.devschile.cl`;\n\nconst lastFechaCreacion = items[items.length - 1].json.fecha_creacion;\n\nreturn [{ json: { text: msg, count: total, lastFechaCreacion } }];"
       },
       "id": "beb8e580-9963-49a3-a675-816617ec6288",
       "name": "Agrupar notificación",
@@ -585,10 +585,11 @@
     }
   },
   "settings": {
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "America/Santiago"
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "4a5351b5-f78b-43a5-8174-f81bec3130d2",
+  "versionId": "3d67733e-a828-493e-b32c-7661be9081c7",
   "active": true
 }
