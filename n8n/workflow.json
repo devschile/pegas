@@ -7,38 +7,39 @@
           "item": [
             {
               "mode": "everyX",
-              "value": 30,
-              "unit": "minutes"
+              "value": 6,
+              "unit": "hours"
             }
           ]
         },
+        "simple": false,
         "filters": {
           "labelIds": [
             "Label_4696622709759586902"
           ]
         },
-        "simple": false
+        "options": {}
       },
-      "id": "gmail-trigger",
+      "id": "cb7c8d7c-f12c-499a-b969-87a301518b52",
       "name": "Gmail Trigger",
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1,
       "position": [
-        250,
-        300
+        -1168,
+        -112
       ]
     },
     {
       "parameters": {
-        "jsCode": "/**\n * Parser de LinkedIn Job Alert Digest — para n8n Code node\n * Extrae titulo, url (limpia), empleador, ubicacion, categoria\n * de emails multipart/alternative con text/plain en quoted-printable.\n * \n * Probado con 11/11 pegas de 3 emails reales (Julio 2026).\n * v1.1: detección de sueldo/rango salarial en título y descripción.\n */\n\nconst items = $input.all();\nconst output = [];\n\n// --- Quoted-printable decoder con soporte UTF-8 multi-byte ---\nfunction decodeQP(str) {\n  str = str.replace(/=\\r?\\n/g, '');\n  const bytes = [];\n  let i = 0;\n  while (i < str.length) {\n    if (str[i] === '=' && i + 2 < str.length && /^[0-9A-Fa-f]{2}$/.test(str.substring(i+1, i+3))) {\n      bytes.push(parseInt(str.substring(i+1, i+3), 16));\n      i += 3;\n    } else {\n      bytes.push(str.charCodeAt(i));\n      i++;\n    }\n  }\n  try { return new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes)); }\n  catch (_) { return str; }\n}\n\n// --- Categorización ---\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.desk\\b|\\bservice.desk\\b/i.test(t)) return 'Soporte';\n  return 'Otros';\n}\n\n// --- Badge patterns (se colocan donde iría la empresa) ---\nconst BADGE_RE = /^(1 connection|\\d+\\+? connections|this company is actively hiring|actively hiring|apply with resume|easy apply|be an early applicant|promoted|no longer accepting)$/i;\n\n// --- Detección de sueldo/rango salarial ---\nfunction extraerSueldo(texto) {\n  if (!texto) return null;\n  // Pesos chilenos: $1.500.000, $1500000, CLP 1.500.000, CLP$1.5M\n  let m = texto.match(/(?:CLP\\s*)?\\$\\s*[\\d.,]+\\s*(?:[.-]\\s*(?:CLP\\s*)?\\$\\s*[\\d.,]+)?\\s*(?:CLP|clp|pesos|l[ií]quido|bruto|liquido)?/i);\n  if (m) return m[0].trim();\n  // UF\n  m = texto.match(/UF\\s*[\\d.,]+/i);\n  if (m) return m[0].trim();\n  // USD / dólares\n  m = texto.match(/(?:USD|usd|U\\$)\\s*[\\d.,]+/i);\n  if (m) return m[0].trim();\n  // Renta/Sueldo/Salario: $X\n  m = texto.match(/(?:renta|sueldo|salario|remuneraci[oó]n)\\s*:?\\s*(?:hasta|desde|entre)?\\s*(?:CLP\\s*)?\\$?\\s*[\\d.,]+\\s*(?:[.-]\\s*(?:CLP\\s*)?\\$?\\s*[\\d.,]+)?\\s*(?:CLP|clp|pesos|l[ií]quido|bruto)?/i);\n  if (m) return m[0].trim();\n  return null;\n}\n\n// --- Detección de tags (remote, etc) ---\nfunction detectarTags(titulo, ubicacion, lines) {\n  const tags = [];\n  const texto = [titulo, ubicacion, ...lines.slice(0, 6)].join(' ').toLowerCase();\n  if (/\\bremote\\b|\\bremoto\\b|\\bteletrabajo\\b|\\bhome.?office\\b|\\bwork.?from.?home\\b|\\b100%?\\s*remoto\\b|\\btrabajo\\s*remoto\\b|\\bmodalidad\\s*remot[ao]\\b/i.test(texto)) {\n    tags.push('remote');\n  }\n  return tags.length > 0 ? tags.join(',') : null;\n}\n\n// --- Procesar cada email ---\nfor (const item of items) {\n  // Con el Gmail Trigger en modo \"simple: false\" el campo real es `text`\n  // (y `html` de respaldo) -- `textPlain`/`body` se dejan como fallback\n  // por si alguna vez cambia el modo del nodo.\n  let body = item.json.text || item.json.textPlain || item.json.body || item.json.html || '';\n  if (typeof body === 'object' && body.content) body = body.content;\n  if (!body || body.length < 20) continue;\n\n  body = decodeQP(body);\n  const blocks = body.split(/\\n\\s*-{15,}\\s*\\n/);\n\n  for (let bi = 0; bi < blocks.length; bi++) {\n    let lines = blocks[bi].trim().split('\\n').map(l => l.trim()).filter(l => l.length > 0);\n\n    // Bloque 0: saltar líneas de header (\"Your job alert...\", \"New jobs\n    // match...\", \"Jobs similar to X at Y <tracking url>\", etc.) — una línea\n    // de título real nunca trae una URL cruda, así que eso también sirve\n    // de señal genérica para variantes de header futuras.\n    if (bi === 0) {\n      while (lines.length > 0 && (/^(your job alert|new jobs match|jobs similar to)/i.test(lines[0]) || /https?:\\/\\//i.test(lines[0]))) {\n        lines.shift();\n      }\n    }\n    // Saltar footer/upsell\n    if (/^(see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|©|linkedin and|learn why|help:)/i.test(lines[0])) continue;\n    if (lines.length < 3) continue;\n\n    const titulo = lines[0];\n    let empleador = lines[1] || '';\n    let ubicacion = lines[2] || '';\n    let url = '';\n    for (const l of lines) {\n      if (/^view job:\\s*/i.test(l)) { url = l.replace(/^view job:\\s*/i, '').trim(); break; }\n    }\n    if (!url || !titulo) continue;\n\n    // Desplazar si hay badge\n    if (BADGE_RE.test(empleador)) { empleador = lines[2] || ''; ubicacion = lines[3] || ''; }\n    if (BADGE_RE.test(ubicacion)) ubicacion = lines[3] || '';\n\n    // Limpiar URL\n    const jid = url.match(/\\/jobs\\/view\\/(\\d+)/);\n    const urlLimpia = jid ? `https://www.linkedin.com/jobs/view/${jid[1]}/` : url.split('?')[0];\n\n    output.push({\n      json: {\n        titulo,\n        url: urlLimpia,\n        empleador: empleador || 'No especificado',\n        ubicacion: ubicacion || 'Chile',\n        sueldo: extraerSueldo(titulo + ' ' + (lines.slice(0, 6).join(' '))),\n        descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,\n        categoria: categorizar(titulo),\n        tags: detectarTags(titulo, ubicacion, lines),\n        fuente: 'linkedin',\n        email_origen: item.json.to || item.json.To || '',\n        fecha_publicacion: new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
+        "jsCode": "/*\n* Parser de LinkedIn Job Alert Digest — para n8n Code node\n * Extrae titulo, url (limpia), empleador, ubicacion, categoria\n * de emails multipart/alternative con text/plain en quoted-printable.\n *\n * Probado con 11/11 pegas de 3 emails reales (Julio 2026).\n * v1.1: detección de sueldo/rango salarial en título y descripción.\n */\n\nconst items = $input.all();\nconst output = [];\n\n// --- Quoted-printable decoder con soporte UTF-8 multi-byte ---\nfunction decodeQP(str) {\n  str = str.replace(/=\\r?\\n/g, '');\n  const bytes = [];\n  let i = 0;\n  while (i < str.length) {\n    if (str[i] === '=' && i + 2 < str.length && /^[0-9A-Fa-f]{2}$/.test(str.substring(i+1, i+3))) {\n      bytes.push(parseInt(str.substring(i+1, i+3), 16));\n      i += 3;\n    } else {\n      bytes.push(str.charCodeAt(i));\n      i++;\n    }\n  }\n  try { return new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes)); }\n  catch (_) { return str; }\n}\n\n// --- Categorización ---\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.desk\\b|\\bservice.desk\\b/i.test(t)) return 'Soporte';\n  return 'Otros';\n}\n\n// --- Badge patterns (se colocan donde iría la empresa) ---\nconst BADGE_RE = /^(1 connection|\\d+\\+? connections|this company is actively hiring|actively hiring|apply with resume|easy apply|be an early applicant|promoted|no longer accepting)$/i;\n\n// --- Detección de sueldo/rango salarial ---\nfunction extraerSueldo(texto) {\n  if (!texto) return null;\n  // Pesos chilenos: $1.500.000, $1500000, CLP 1.500.000, CLP$1.5M\n  let m = texto.match(/(?:CLP\\s*)?\\$\\s*[\\d.,]+\\s*(?:[.-]\\s*(?:CLP\\s*)?\\$\\s*[\\d.,]+)?\\s*(?:CLP|clp|pesos|l[ií]quido|bruto|liquido)?/i);\n  if (m) return m[0].trim();\n  // UF\n  m = texto.match(/UF\\s*[\\d.,]+/i);\n  if (m) return m[0].trim();\n  // USD / dólares\n  m = texto.match(/(?:USD|usd|U\\$)\\s*[\\d.,]+/i);\n  if (m) return m[0].trim();\n  // Renta/Sueldo/Salario: $X\n  m = texto.match(/(?:renta|sueldo|salario|remuneraci[oó]n)\\s*:?\\s*(?:hasta|desde|entre)?\\s*(?:CLP\\s*)?\\$?\\s*[\\d.,]+\\s*(?:[.-]\\s*(?:CLP\\s*)?\\$?\\s*[\\d.,]+)?\\s*(?:CLP|clp|pesos|l[ií]quido|bruto)?/i);\n  if (m) return m[0].trim();\n  return null;\n}\n\n// --- Detección de tags (remote, etc) ---\nfunction detectarTags(titulo, ubicacion, lines) {\n  const tags = [];\n  const texto = [titulo, ubicacion, ...lines.slice(0, 6)].join(' ').toLowerCase();\n  if (/\\bremote\\b|\\bremoto\\b|\\bteletrabajo\\b|\\bhome.?office\\b|\\bwork.?from.?home\\b|\\b100%?\\s*remoto\\b|\\btrabajo\\s*remoto\\b|\\bmodalidad\\s*remot[ao]\\b/i.test(texto)) {\n    tags.push('remote');\n  }\n  return tags.length > 0 ? tags.join(',') : null;\n}\n\n// --- Procesar cada email ---\nfor (const item of items) {\n  // Con el Gmail Trigger en modo \"simple: false\" el campo real es `text`\n  // (y `html` de respaldo) -- `textPlain`/`body` se dejan como fallback\n  // por si alguna vez cambia el modo del nodo.\n  let body = item.json.text || item.json.textPlain || item.json.body || item.json.html || '';\n  if (typeof body === 'object' && body.content) body = body.content;\n  if (!body || body.length < 20) continue;\n\n  body = decodeQP(body);\n  const blocks = body.split(/\\n\\s*-{15,}\\s*\\n/);\n\n  for (let bi = 0; bi < blocks.length; bi++) {\n    let lines = blocks[bi].trim().split('\\n').map(l => l.trim()).filter(l => l.length > 0);\n\n    // Bloque 0: saltar líneas de header (\"Your job alert...\", \"New jobs\n    // match...\", \"Jobs similar to X at Y <tracking url>\", etc.) — una línea\n    // de título real nunca trae una URL cruda, así que eso también sirve\n    // de señal genérica para variantes de header futuras.\n    if (bi === 0) {\n      while (lines.length > 0 && (/^(your job alert|new jobs match|jobs similar to)/i.test(lines[0]) || /https?:\\/\\//i.test(lines[0]))) {\n        lines.shift();\n      }\n    }\n    // Saltar footer/upsell\n    if (/^(see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|©|linkedin and|learn why|help:)/i.test(lines[0])) continue;\n    if (lines.length < 3) continue;\n\n    const titulo = lines[0];\n    let empleador = lines[1] || '';\n    let ubicacion = lines[2] || '';\n    let url = '';\n    for (const l of lines) {\n      if (/^view job:\\s*/i.test(l)) { url = l.replace(/^view job:\\s*/i, '').trim(); break; }\n    }\n    if (!url || !titulo) continue;\n\n    // Desplazar si hay badge\n    if (BADGE_RE.test(empleador)) { empleador = lines[2] || ''; ubicacion = lines[3] || ''; }\n    if (BADGE_RE.test(ubicacion)) ubicacion = lines[3] || '';\n\n    // Limpiar URL\n    const jid = url.match(/\\/jobs\\/view\\/(\\d+)/);\n    const urlLimpia = jid ? `https://www.linkedin.com/jobs/view/${jid[1]}/` : url.split('?')[0];\n\n    output.push({\n      json: {\n        titulo,\n        url: urlLimpia,\n        empleador: empleador || 'No especificado',\n        ubicacion: ubicacion || 'Chile',\n        sueldo: extraerSueldo(titulo + ' ' + (lines.slice(0, 6).join(' '))),\n        descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,\n        categoria: categorizar(titulo),\n        tags: detectarTags(titulo, ubicacion, lines),\n        fuente: 'linkedin',\n        email_origen: item.json.to || item.json.To || '',\n        fecha_publicacion: new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;"
       },
-      "id": "parser",
+      "id": "bedc8b1a-8660-47be-9bbc-38794c5b4abf",
       "name": "Parser LinkedIn → Jobs",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        450,
-        300
+        -976,
+        -112
       ]
     },
     {
@@ -46,16 +47,17 @@
         "operation": "executeQuery",
         "query": "INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion, sueldo, tags, fuente, email_origen, fecha_publicacion)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11::timestamptz, NOW()))\nON CONFLICT (url) DO NOTHING\nRETURNING id, titulo, empleador, url, ubicacion, categoria, sueldo, tags, fuente",
         "options": {
+          "queryBatching": "independently",
           "queryReplacement": "={{ [$json.url, $json.titulo, $json.empleador, $json.descripcion, $json.categoria, $json.ubicacion, $json.sueldo, $json.tags, $json.fuente, $json.email_origen, $json.fecha_publicacion] }}"
         }
       },
-      "id": "pg-insert",
+      "id": "dbf2290c-7637-4129-91ad-c1c2ea644e51",
       "name": "PostgreSQL INSERT",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
-        650,
-        300
+        -768,
+        -112
       ]
     },
     {
@@ -69,31 +71,30 @@
           ]
         }
       },
-      "id": "getonbrd-schedule",
+      "id": "7f43d740-dcbd-47f6-9d92-ba1a7988bdd7",
       "name": "GetOnBoard: cada 6h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1,
       "position": [
-        250,
-        700
+        -1168,
+        304
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Categorías de GetOnBoard relevantes para developers/tech + diseño.\n// API pública v0, sin autenticación: https://www.getonbrd.com/api/v0/categories\nconst CATEGORIAS = [\n  'programming',\n  'mobile-developer',\n  'sysadmin-devops-qa',\n  'data-science-analytics',\n  'machine-learning-ai',\n  'cybersecurity',\n  'design-ux'\n];\nreturn CATEGORIAS.map(category => ({ json: { category } }));"
+        "jsCode": "// Categorías de GetOnBoard relevantes para developers/tech + diseño.\n// API pública v0, sin autenticación: https://www.getonbrd.com/api/v0/categories\nconst CATEGORIAS = [\n  'programming',\n  'mobile-developer',\n  'sysadmin-devops-qa',\n  'data-science-analytics',\n  'machine-learning-ai',\n  'cybersecurity',\n  'design-ux'\n];\nreturn CATEGORIAS.map(category => ({ json: { category } }));\n"
       },
-      "id": "getonbrd-categories",
+      "id": "d45dc7ce-f5cb-4734-b37b-f87d765002c8",
       "name": "GetOnBoard: categorías",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        450,
-        700
+        -976,
+        304
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "=https://www.getonbrd.com/api/v0/categories/{{ $json.category }}/jobs",
         "sendQuery": true,
         "queryParameters": {
@@ -117,45 +118,44 @@
           "timeout": 20000
         }
       },
-      "id": "getonbrd-fetch-jobs",
+      "id": "57642d2c-09f6-4e64-8aed-244ce61bcee5",
       "name": "GetOnBoard: Jobs por categoría",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "continueOnFail": true,
       "position": [
-        650,
-        700
-      ]
+        -768,
+        304
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "// Normaliza jobs de GetOnBoard (API pública v0, sin auth) al esquema de \"pegas\".\n// Filtra a Chile o remoto: GetOnBoard es una plataforma LatAm, así que su tag\n// \"Remote\" es mayormente remoto-LatAm-friendly (a diferencia de RemoteOK/WWR,\n// que son globales/US-centric y no se incluyeron por eso).\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n  return 'Otros';\n}\n\n// Fallback por categoría de GetOnBoard cuando el título no matchea ningún patrón\nconst CATEGORIA_FALLBACK = {\n  'Mobile Developer': 'Mobile',\n  'SysAdmin / DevOps / QA': 'DevOps',\n  'Data Science / Analytics': 'Data',\n  'Machine Learning & AI': 'Data',\n  'Cybersecurity': 'Ciberseguridad',\n  'Design / UX': 'Diseño'\n};\n\nconst vistos = new Set();\nconst output = [];\n\nfor (const item of items) {\n  const body = item.json;\n  const jobs = (body && body.data) || [];\n\n  for (const job of jobs) {\n    const id = job.id;\n    if (!id || vistos.has(id)) continue;\n    vistos.add(id);\n\n    const a = job.attributes || {};\n    const countries = a.countries || [];\n    const esChile = countries.includes('Chile');\n    const esRemoto = a.remote === true || countries.includes('Remote');\n    if (!esChile && !esRemoto) continue; // fuera de alcance: ni Chile ni remoto\n\n    const titulo = a.title || '';\n    if (!titulo) continue;\n\n    const catTitulo = categorizar(titulo);\n    const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[a.category_name] || 'Otros');\n    const ubicacion = esChile ? 'Chile' : (countries[0] || 'Remoto');\n    const sueldo = (a.min_salary && a.max_salary) ? `USD ${a.min_salary} - ${a.max_salary} /mes` : null;\n\n    const tags = [];\n    if (esRemoto) tags.push('remote');\n\n    output.push({\n      json: {\n        company_id: (a.company && a.company.data && a.company.data.id) || null,\n        titulo,\n        url: (job.links && job.links.public_url) || `https://www.getonbrd.com/jobs/${id}`,\n        ubicacion,\n        categoria,\n        sueldo,\n        tags: tags.length ? tags.join(',') : null,\n        descripcion: `${titulo}${ubicacion ? ', ' + ubicacion : ''}`,\n        fuente: 'getonbrd',\n        email_origen: null,\n        fecha_publicacion: a.published_at ? new Date(a.published_at * 1000).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;"
+        "jsCode": "// Normaliza jobs de GetOnBoard (API pública v0, sin auth) al esquema de \"pegas\".\n// Filtra a Chile o remoto: GetOnBoard es una plataforma LatAm, así que su tag\n// \"Remote\" es mayormente remoto-LatAm-friendly (a diferencia de RemoteOK/WWR,\n// que son globales/US-centric y no se incluyeron por eso).\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n  return 'Otros';\n}\n\nconst CATEGORIA_FALLBACK = {\n  'Mobile Developer': 'Mobile',\n  'SysAdmin / DevOps / QA': 'DevOps',\n  'Data Science / Analytics': 'Data',\n  'Machine Learning & AI': 'Data',\n  'Cybersecurity': 'Ciberseguridad',\n  'Design / UX': 'Diseño'\n};\n\nconst vistos = new Set();\nconst output = [];\n\nfor (const item of items) {\n  const body = item.json;\n  const jobs = (body && body.data) || [];\n\n  for (const job of jobs) {\n    const id = job.id;\n    if (!id || vistos.has(id)) continue;\n    vistos.add(id);\n\n    const a = job.attributes || {};\n    const countries = a.countries || [];\n    const esChile = countries.includes('Chile');\n    const esRemoto = a.remote === true || countries.includes('Remote');\n    if (!esChile && !esRemoto) continue;\n\n    const titulo = a.title || '';\n    if (!titulo) continue;\n\n    const catTitulo = categorizar(titulo);\n    const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[a.category_name] || 'Otros');\n    const ubicacion = esChile ? 'Chile' : (countries[0] || 'Remoto');\n    const sueldo = (a.min_salary && a.max_salary) ? `USD ${a.min_salary} - ${a.max_salary} /mes` : null;\n\n    const tags = [];\n    if (esRemoto) tags.push('remote');\n\n    output.push({\n      json: {\n        company_id: (a.company && a.company.data && a.company.data.id) || null,\n        titulo,\n        url: (job.links && job.links.public_url) || `https://www.getonbrd.com/jobs/${id}`,\n        ubicacion,\n        categoria,\n        sueldo,\n        tags: tags.length ? tags.join(',') : null,\n        descripcion: `${titulo}${ubicacion ? ', ' + ubicacion : ''}`,\n        fuente: 'getonbrd',\n        email_origen: null,\n        fecha_publicacion: a.published_at ? new Date(a.published_at * 1000).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
       },
-      "id": "getonbrd-normalize",
+      "id": "91567214-3687-4518-8b22-15eafcddf0fd",
       "name": "GetOnBoard: filtrar + normalizar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        850,
-        700
+        -576,
+        304
       ]
     },
     {
       "parameters": {
         "jsCode": "// IDs de empresa únicos, para resolver el nombre con una sola llamada por empresa\n// (en vez de una por cada pega).\nconst items = $input.all();\nconst ids = new Set();\nfor (const item of items) {\n  if (item.json.company_id) ids.add(item.json.company_id);\n}\nreturn Array.from(ids).map(company_id => ({ json: { company_id } }));"
       },
-      "id": "getonbrd-company-ids",
+      "id": "6e14951e-fc7a-433d-a4a9-a697727d1c72",
       "name": "GetOnBoard: IDs de empresa únicas",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1050,
-        700
+        -368,
+        304
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "=https://www.getonbrd.com/api/v0/companies/{{ $json.company_id }}",
         "sendHeaders": true,
         "headerParameters": {
@@ -170,95 +170,65 @@
           "timeout": 20000
         }
       },
-      "id": "getonbrd-fetch-company",
+      "id": "0bf0847d-22a2-437b-a1cd-08209d3ed556",
       "name": "GetOnBoard: Empresa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "continueOnFail": true,
       "position": [
-        1250,
-        700
-      ]
+        -176,
+        304
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "// Combina el nombre real de la empresa (paso anterior) con las pegas ya\n// filtradas/normalizadas (\"GetOnBoard: filtrar + normalizar\") y deja el\n// resultado listo para el mismo INSERT que usa LinkedIn.\n// OJO: la respuesta de /companies/{id} devuelve data.id como SLUG (ej. \"tcit\"),\n// no el ID numérico que se pidió -- por eso el match es posicional, no por key.\nconst companies = $input.all();\nconst companyIds = $('GetOnBoard: IDs de empresa únicas').all().map(i => i.json.company_id);\nconst nombrePorId = {};\ncompanies.forEach((c, idx) => {\n  const data = c.json && c.json.data;\n  if (data) nombrePorId[companyIds[idx]] = (data.attributes && data.attributes.name) || null;\n});\n\nconst pegas = $('GetOnBoard: filtrar + normalizar').all();\nreturn pegas.map(p => {\n  const json = { ...p.json };\n  json.empleador = (json.company_id && nombrePorId[json.company_id]) || 'No especificado';\n  delete json.company_id;\n  return { json };\n});"
+        "jsCode": "// Combina el nombre real de la empresa (paso anterior) con las pegas ya\n// filtradas/normalizadas (\"GetOnBoard: filtrar + normalizar\") y deja el\n// resultado listo para el mismo INSERT que usa LinkedIn.\n// OJO: la respuesta de /companies/{id} devuelve data.id como SLUG (ej. \"tcit\"),\n// no el ID numérico que se pidió -- por eso el match es posicional, no por key.\nconst companies = $input.all();\nconst companyIds = $('GetOnBoard: IDs de empresa únicas').all().map(i => i.json.company_id);\nconst nombrePorId = {};\ncompanies.forEach((c, idx) => {\n  const data = c.json && c.json.data;\n  if (data) nombrePorId[companyIds[idx]] = (data.attributes && data.attributes.name) || null;\n});\n\nconst pegas = $('GetOnBoard: filtrar + normalizar').all();\nreturn pegas.map(p => {\n  const json = { ...p.json };\n  json.empleador = (json.company_id && nombrePorId[json.company_id]) || 'No especificado';\n  delete json.company_id;\n  return { json };\n});\n"
       },
-      "id": "getonbrd-merge-company",
+      "id": "4a822158-a5cb-4cc1-b087-8259fb54fc70",
       "name": "GetOnBoard: combinar empresa",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1450,
-        700
+        32,
+        304
       ]
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition-1",
-              "leftValue": "={{ $json.id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "exists"
-              }
-            }
-          ],
-          "combinator": "and"
-        }
+        "jsCode": "// Digest 2x/dia: junta TODAS las pegas nuevas desde el ultimo aviso\n// (de cualquier fuente) en un solo mensaje, maximo 5 listadas.\nconst items = $input.all();\nif (items.length === 0) return [];\n\nconst MAX_SHOW = 5;\nconst total = items.length;\nconst shown = items.slice(0, MAX_SHOW);\n\nconst plural = total === 1 ? '' : 's';\nlet msg = `Hay *${total}* pega${plural} nueva${plural}:\\n`;\nfor (const item of shown) {\n  msg += `- ${item.json.titulo}\\n`;\n}\nmsg += `Revisa todas en pegas.devschile.cl`;\n\nconst lastFechaCreacion = items[items.length - 1].json.fecha_creacion;\n\nreturn [{ json: { text: msg, count: total, lastFechaCreacion } }];"
       },
-      "id": "check-inserted",
-      "name": "¿Pega nueva?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        850,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Agrupa las pegas nuevas en un solo mensaje de Slack (máximo 5 avisos\n// listados, con contador si hay más).\nconst pegas = $input.all().filter(item => item.json.id);\nif (pegas.length === 0) return [];\n\nconst MAX_SHOW = 5;\nconst total = pegas.length;\nconst shown = pegas.slice(0, MAX_SHOW);\n\nconst FUENTE_LABEL = { linkedin: 'LinkedIn', getonbrd: 'GetOnBoard' };\nconst plural = shown.length > 1 ? 's' : '';\nlet msg = total > MAX_SHOW\n  ? `📬 *${shown.length} pegas nuevas (de ${total})*\\n`\n  : `📬 *${total} pega${plural} nueva${plural}*\\n`;\n\nfor (const item of shown) {\n  const p = item.json;\n  msg += `\\n🆕 *${p.titulo}*`;\n  msg += `\\n🏢 ${p.empleador} · 📍 ${p.ubicacion}`;\n  msg += `\\n🏷️ ${p.categoria}${p.sueldo ? '  💰 ' + p.sueldo : ''}  ·  ${FUENTE_LABEL[p.fuente] || p.fuente}`;\n  msg += `\\n🔗 ${p.url}\\n`;\n}\nmsg += `\\nRevisa todas en pegas.devschile.cl`;\n\nreturn [{ json: { text: msg, count: total } }];"
-      },
-      "id": "aggregate-slack",
+      "id": "beb8e580-9963-49a3-a675-816617ec6288",
       "name": "Agrupar notificación",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1050,
-        250
+        -368,
+        -160
       ]
     },
     {
       "parameters": {
-        "channelId": "C0R6AM4DP",
+        "channel": "#trabajos",
         "text": "={{ $json.text }}",
         "otherOptions": {
           "unfurl_links": false,
           "unfurl_media": false
-        }
+        },
+        "attachments": []
       },
-      "id": "slack-notify",
+      "id": "c4226207-9144-4fc1-8a6c-4ca5a5509b58",
       "name": "Notificar en #trabajos",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 1,
       "position": [
-        1250,
-        250
+        -176,
+        -160
       ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://coolify.devschile.cl/api/v1/applications/kje083n02of5w3nh6llm7sot/restart",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -272,13 +242,146 @@
           "timeout": 60000
         }
       },
-      "id": "trigger-restart",
+      "id": "8da9c8a4-5844-45fa-97f3-6f3e1df1c92e",
       "name": "Restart pegas.devschile.cl",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        1450,
-        250
+        32,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            },
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 18,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "281dd07d-3b65-4e00-9df0-c9c2958906ed",
+      "name": "Notificación 2x/día",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\n// Primera corrida: si nunca se avisó, arrancar desde hace 24h para no\n// mandar de golpe todo el historico.\nconst cutoff = staticData.lastNotifiedAt || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();\nreturn [{ json: { cutoff } }];"
+      },
+      "id": "2901efec-cb63-4b74-86b6-8e8691288ade",
+      "name": "Leer último aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, titulo, empleador, ubicacion, categoria, sueldo, fuente, url, fecha_creacion\nFROM pegas\nWHERE activo = TRUE AND fecha_creacion > $1::timestamptz\nORDER BY fecha_creacion ASC",
+        "options": {
+          "queryReplacement": "={{ [$json.cutoff] }}"
+        }
+      },
+      "id": "17c1421b-2b63-4245-a569-b396319c5335",
+      "name": "Pegas sin notificar",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst items = $input.all();\nstaticData.lastNotifiedAt = (items[0] && items[0].json.lastFechaCreacion) || new Date().toISOString();\nreturn items;"
+      },
+      "id": "6b4c0078-c8b3-446d-b375-ad59b3a2e504",
+      "name": "Marcar notificadas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtra a solo las filas realmente insertadas (RETURNING con ON CONFLICT\n// DO NOTHING deja pasar solo las nuevas). Si no hay nuevas, 0 items y el\n// restart se salta solo (no hace falta gatillarlo).\nreturn $input.all().filter(item => item.json.id);"
+      },
+      "id": "c6b219cb-428f-4e1c-9abb-5aa8b28c685d",
+      "name": "¿Insertó pegas nuevas?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.workingnomads.com/api/exposed_jobs/",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "location",
+              "value": "latin-america,chile"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "pegas-devschile-bot (+https://pegas.devschile.cl)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "a3f62e25-8fc4-4510-a244-c513f108b089",
+      "name": "WorkingNomads: Jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "continueOnFail": true,
+      "position": [
+        -976,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza jobs de WorkingNomads (API publica /api/exposed_jobs/, sin auth)\n// al esquema de \"pegas\". El filtro location=latin-america,chile ya lo aplica\n// la API del lado del servidor, asi que aca solo mapeamos campos.\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b/i.test(t)) return 'Diseño';\n  return 'Otros';\n}\n\nconst CATEGORIA_FALLBACK = {\n  'Development': 'Otros',\n  'DevOps / SysAdmin': 'DevOps',\n  'Design': 'Diseño',\n  'Data Science': 'Data',\n  'Product': 'Gestión',\n  'Management': 'Gestión'\n};\n\nconst output = [];\nfor (const item of items) {\n  const jobs = Array.isArray(item.json) ? item.json : [];\n  for (const j of jobs) {\n    const titulo = j.title || '';\n    if (!titulo || !j.url) continue;\n\n    const catTitulo = categorizar(titulo);\n    const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[j.category_name] || 'Otros');\n    const ubicacion = /\\bchile\\b/i.test(j.location || '') ? 'Chile' : 'Remoto';\n\n    output.push({\n      json: {\n        titulo,\n        url: j.url,\n        empleador: j.company_name || 'No especificado',\n        ubicacion,\n        categoria,\n        sueldo: null,\n        tags: 'remote',\n        descripcion: `${titulo}, ${ubicacion}`,\n        fuente: 'workingnomads',\n        email_origen: null,\n        fecha_publicacion: j.pub_date ? new Date(j.pub_date).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;"
+      },
+      "id": "4d0b0e24-9e88-4e7f-8243-d0df1cdc7bd7",
+      "name": "WorkingNomads: normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        500
       ]
     }
   ],
@@ -299,6 +402,11 @@
         [
           {
             "node": "GetOnBoard: categorías",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WorkingNomads: Jobs",
             "type": "main",
             "index": 0
           }
@@ -375,30 +483,23 @@
       "main": [
         [
           {
-            "node": "¿Pega nueva?",
+            "node": "¿Insertó pegas nuevas?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "¿Pega nueva?": {
-      "main": [
-        [
-          {
-            "node": "Agrupar notificación",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
     "Agrupar notificación": {
       "main": [
         [
           {
-            "node": "Notificar en #pegas",
+            "node": "Notificar en #trabajos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Marcar notificadas",
             "type": "main",
             "index": 0
           }
@@ -416,11 +517,66 @@
         ]
       ]
     },
-    "Notificar en #trabajos": {
+    "¿Insertó pegas nuevas?": {
       "main": [
         [
           {
             "node": "Restart pegas.devschile.cl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificación 2x/día": {
+      "main": [
+        [
+          {
+            "node": "Leer último aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer último aviso": {
+      "main": [
+        [
+          {
+            "node": "Pegas sin notificar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pegas sin notificar": {
+      "main": [
+        [
+          {
+            "node": "Agrupar notificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WorkingNomads: Jobs": {
+      "main": [
+        [
+          {
+            "node": "WorkingNomads: normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WorkingNomads: normalizar": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
             "type": "main",
             "index": 0
           }
@@ -433,6 +589,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "1.1.0",
-  "active": false
+  "versionId": "4a5351b5-f78b-43a5-8174-f81bec3130d2",
+  "active": true
 }
