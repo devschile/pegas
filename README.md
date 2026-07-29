@@ -6,8 +6,8 @@ Vitrina de ofertas de trabajo tech en Chile. Las pegas se obtienen parseando new
 
 ```
 Gmail (newsletters LinkedIn) ─┐
-                               ├─→ n8n (parser + dedup) → PostgreSQL → Static Site (nginx)
-GetOnBoard (API pública v0)  ─┘                                          │
+GetOnBoard (API pública v0)   ├─→ n8n (parser + dedup) → PostgreSQL → Static Site (nginx)
+WorkingNomads (API pública)  ─┘                                          │
                                                               pegas.devschile.cl
 ```
 
@@ -24,19 +24,21 @@ GetOnBoard (API pública v0)  ─┘                                          �
 
 | Fuente | Método | Frecuencia | Filtro |
 |--------|--------|------------|--------|
-| **LinkedIn** | Parseo de newsletter por email (2 casillas Gmail) | Cada 30 min (Gmail Trigger) | Todas las categorías tech detectadas por keyword |
+| **LinkedIn** | Parseo de newsletter por email (2 casillas Gmail) | Cada 6h (Gmail Trigger) | Todas las categorías tech detectadas por keyword |
 | **GetOnBoard** | API pública v0 (sin auth), `n8n/test-getonbrd.js` valida el filtro | Cada 6h (Schedule Trigger) | Categorías dev/tech (`programming`, `mobile-developer`, `sysadmin-devops-qa`, `data-science-analytics`, `machine-learning-ai`, `cybersecurity`) + solo `countries` incluye `Chile` o `Remote` |
+| **WorkingNomads** | API pública `/api/exposed_jobs/` (sin auth) | Cada 6h (junto a GetOnBoard) | `location=latin-america,chile`; todas remotas (`tags: remote`) |
 
-Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detalle y razones): RemoteOK (global/US-centric, exige backlink por ToS), We Work Remotely y Remotive (sin foco LatAm), Laborum/Computrabajo/BuscoJobs Chile/beBee/JobLeads (sin API ni RSS públicos — beBee y JobLeads bloquean `/api/` por robots.txt), FinderHR (es un headhunter manual, no un job board), Himalayas (API pública real pero volumen masivo y global, requiere filtro geográfico más fino antes de sumarla). Google no es una fuente: no tiene API pública de empleos, solo agrega `schema.org/JobPosting` de otros sitios — ver roadmap para la idea de agregar ese schema a nuestras propias pegas.
+Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detalle y razones): RemoteOK (global/US-centric, exige backlink por ToS), We Work Remotely y Remotive (sin foco LatAm), Laborum/Computrabajo/BuscoJobs Chile/beBee/JobLeads (sin API ni RSS públicos — beBee y JobLeads bloquean `/api/` por robots.txt), FinderHR (es un headhunter manual, no un job board), Himalayas (API pública real pero volumen masivo y global, requiere filtro geográfico más fino antes de sumarla). Otras evaluadas en julio 2026: it-hunter.cl (bloqueado por Cloudflare, challenge JS), AcidLabs y OPTION/careers-page.com (portales de una sola empresa, sin API pública descubierta — AcidLabs es HTML plano de Odoo, OPTION es un SPA Vue/Manatal), INACAP/emplea.inacap.cl (SPA de Reqlut con token de sesión en la URL, sin resultados sin JS). Google no es una fuente: no tiene API pública de empleos, solo agrega `schema.org/JobPosting` de otros sitios — ver roadmap para la idea de agregar ese schema a nuestras propias pegas.
 
 ### Flujo de datos
 
-1. **Trigger** → Gmail Trigger (LinkedIn, cada 30 min) o Schedule Trigger (GetOnBoard, cada 6h)
+1. **Trigger** → Gmail Trigger (LinkedIn) o Schedule Trigger (GetOnBoard + WorkingNomads), los tres cada 6h
 2. **Parser/Fetch** → Extrae o normaliza título, empleador, link, descripción, categoría, sueldo, tags
 3. **Deduplicación** → Verifica contra PostgreSQL (UNIQUE en `url`, `ON CONFLICT DO NOTHING`)
-4. **INSERT** → Guarda nueva pega en la BD (nodo único compartido por ambas fuentes)
-5. **Slack + Redeploy** → Si hubo pegas nuevas, notifica a `#trabajos` y n8n dispara redeploy en Coolify, regenerando `data.json`
-6. **Frontend** → `index.html` carga `data/data.json` y renderiza con filtros
+4. **INSERT** → Guarda nueva pega en la BD (nodo único compartido por las tres fuentes)
+5. **Redeploy en tiempo real** → Si hubo pegas nuevas en esa corrida, n8n dispara restart en Coolify de inmediato, regenerando `data.json`
+6. **Digest de Slack (2x/día)** → A las 9:00 y 18:00, un trigger aparte junta en la BD todas las pegas nuevas desde el último aviso (de cualquier fuente, tracking vía static data del workflow) y manda un solo mensaje a `#trabajos` con hasta 5 listadas
+7. **Frontend** → `index.html` carga `data/data.json` y renderiza con filtros
 
 ## Estructura del repositorio
 
@@ -111,9 +113,10 @@ MIT
 - [x] Parser de LinkedIn Jobs (emails)
 - [x] PostgreSQL + deduplicación por URL
 - [x] Frontend con buscador y filtros
-- [x] Notificación agrupada en Slack
 - [x] Detección de sueldo/rango salarial
 - [x] **GetOnBoard** — API pública v0, sin auth, filtrada a Chile/Remoto (nodos `getonbrd-*` en `n8n/workflow.json`, validado con `n8n/test-getonbrd.js`)
+- [x] **WorkingNomads** — API pública `/api/exposed_jobs/`, sin auth, filtrada a LatAm/Chile
+- [x] Digest de Slack 2x/día (9:00 y 18:00) en vez de notificar en cada corrida — evita saturar el canal
 - [ ] Fuentes adicionales — evaluadas y descartadas por ahora: ver tabla "Fuentes de pegas" más arriba. Candidata más viable a futuro: Himalayas (API pública real, pero requiere filtro geográfico más fino por su volumen global)
 - [ ] Auto-expiración de pegas antiguas
 - [ ] Dashboard de métricas
