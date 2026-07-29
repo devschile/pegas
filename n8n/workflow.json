@@ -195,7 +195,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Digest 2x/dia: junta TODAS las pegas nuevas desde el ultimo aviso\n// (de cualquier fuente) en un solo mensaje, maximo 5 listadas.\n//\n// OJO: el nodo Postgres de n8n, cuando el SELECT no encuentra filas,\n// igual emite 1 item falso {success:true} en vez de un array vacio\n// (mismo comportamiento que ON CONFLICT DO NOTHING sin RETURNING).\n// Por eso filtramos por la presencia de \"titulo\", no por items.length.\nconst items = $input.all().filter(item => item.json && item.json.titulo);\nif (items.length === 0) return [];\n\nconst MAX_SHOW = 5;\nconst total = items.length;\nconst shown = items.slice(0, MAX_SHOW);\n\nconst plural = total === 1 ? '' : 's';\nlet msg = `Hay *${total}* pega${plural} nueva${plural}:\\n`;\nfor (const item of shown) {\n  msg += `- ${item.json.titulo}\\n`;\n}\nmsg += `Revisa todas en pegas.devschile.cl`;\n\nconst lastFechaCreacion = items[items.length - 1].json.fecha_creacion;\n\nreturn [{ json: { text: msg, count: total, lastFechaCreacion } }];"
+        "jsCode": "// Digest 2x/dia: junta TODAS las pegas nuevas desde el ultimo aviso\n// (de cualquier fuente) en un solo mensaje, maximo 5 con detalle.\n//\n// OJO: el nodo Postgres de n8n, cuando el SELECT no encuentra filas,\n// igual emite 1 item falso {success:true} en vez de un array vacio\n// (mismo comportamiento que ON CONFLICT DO NOTHING sin RETURNING).\n// Por eso filtramos por la presencia de \"titulo\", no por items.length.\nconst items = $input.all().filter(item => item.json && item.json.titulo);\nif (items.length === 0) return [];\n\nconst MAX_SHOW = 5;\nconst total = items.length;\nconst shown = items.slice(0, MAX_SHOW);\n\nconst FUENTE_LABEL = { linkedin: 'LinkedIn', getonbrd: 'GetOnBoard', workingnomads: 'WorkingNomads' };\nconst plural = total === 1 ? '' : 's';\nlet msg = `Hay *${total}* pega${plural} nueva${plural}:\\n\\n`;\n\nfor (const item of shown) {\n  const p = item.json;\n  msg += `:new: ${p.titulo}\\n`;\n  msg += `:office: ${p.empleador || 'No especificado'} · :round_pushpin: ${p.ubicacion || 'Chile'}\\n`;\n  msg += `:label: ${p.categoria || 'Otros'}  ·  ${FUENTE_LABEL[p.fuente] || p.fuente}\\n`;\n  msg += `:link: ${p.url}\\n\\n`;\n}\n\nmsg += `Revisa todas en pegas.devschile.cl`;\n\nconst lastFechaCreacion = items[items.length - 1].json.fecha_creacion;\n\nreturn [{ json: { text: msg, count: total, lastFechaCreacion } }];"
       },
       "id": "beb8e580-9963-49a3-a675-816617ec6288",
       "name": "Agrupar notificación",
@@ -590,6 +590,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "3d67733e-a828-493e-b32c-7661be9081c7",
+  "versionId": "507c67df-c98e-40bb-868a-d1ac6133dc84",
   "active": true
 }
