@@ -267,7 +267,7 @@
             {
               "field": "days",
               "daysInterval": 1,
-              "triggerAtHour": 18,
+              "triggerAtHour": 15,
               "triggerAtMinute": 0
             }
           ]
@@ -593,6 +593,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "243db863-08d5-4472-9339-e9bfc5e3b5a9",
+  "versionId": "2672c388-c916-4309-be84-29d317ffeb26",
   "active": true
 }
