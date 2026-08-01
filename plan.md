@@ -20,12 +20,13 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - En cada tarjeta del sitio se muestra su fuente de origen, y las fechas incluyen día y hora además de la referencia relativa.
 - Corregido que los cambios de frontend quedaran invisibles por caché del navegador: los archivos ahora llevan una versión derivada de su contenido.
 - Corregido el parseo de los correos de LinkedIn, que guardaba encabezados del email como si fueran ofertas y además tapaba avisos reales. Se limpiaron los registros afectados y se reescribieron los tests, que antes no cubrían el parser en uso.
+- Aislados los pasos del flujo de ingesta para que el fallo de uno no bloquee a los demás: antes, si un paso fallaba, se abortaba toda la corrida completa aunque otras partes ya hubieran terminado bien (la misma causa raíz del problema anterior con la fuente nueva). Se agregó además un aviso específico para estos fallos aislados.
 
 ## Pendiente
 
 - Confirmar que el despliegue automático desde el repositorio funcione de punta a punta (hoy a veces requiere disparo manual).
 - Revisar si queda alguna instancia vieja o duplicada del sitio que se pueda dar de baja.
-- Confirmar en el próximo ciclo que la fuente de pegas agregada más recientemente sigue funcionando sin errores. Nunca ha llegado a ejecutarse por un error encadenado que ya fue corregido.
+- Confirmar en el próximo ciclo que la fuente de pegas agregada más recientemente sigue funcionando sin errores.
 - Evaluar sumar más fuentes de pegas.
 - Agregar datos estructurados a las pegas para mejorar el posicionamiento en buscadores.
 - Auto-expiración de pegas antiguas.
