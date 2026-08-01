@@ -221,20 +221,23 @@ h1, h2, h3, h4, h5, h6 {
 .pega-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  color: var(--accent);
+  gap: 0.35rem;
+  background: #22c55e;
+  color: #06210f;
   text-decoration: none;
   font-size: 0.82rem;
-  font-weight: 600;
-  transition: gap 0.2s, color 0.2s;
+  font-weight: 700;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  transition: background-color 0.2s, gap 0.2s, transform 0.15s;
 }
-.pega-link:hover { color: var(--accent-hover); gap: 0.5rem; }
+.pega-link:hover { background: #4ade80; gap: 0.5rem; transform: translateY(-1px); }
 .pega-link::after { content: '→'; font-size: 0.9em; }
 
 .pega-footer {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 0.75rem;
 }
 
