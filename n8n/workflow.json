@@ -40,7 +40,8 @@
       "position": [
         -976,
         -112
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -58,7 +59,8 @@
       "position": [
         -768,
         -112
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -91,7 +93,8 @@
       "position": [
         -976,
         304
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -139,7 +142,8 @@
       "position": [
         -576,
         304
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -152,7 +156,8 @@
       "position": [
         -368,
         304
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -191,7 +196,8 @@
       "position": [
         32,
         304
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -204,7 +210,8 @@
       "position": [
         -368,
         -160
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -291,7 +298,8 @@
       "position": [
         -976,
         700
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -308,7 +316,8 @@
       "position": [
         -768,
         700
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -321,7 +330,8 @@
       "position": [
         -176,
         800
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -383,7 +393,8 @@
       "position": [
         -768,
         500
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -416,6 +427,38 @@
         460,
         -320
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aviso de un fallo aislado en un paso de ingestion/digest. Estos nodos\n// tienen onError=continueErrorOutput: un fallo aca NO frena el resto del\n// workflow, esa rama simplemente aporta 0 items. Este es el aviso de que\n// igual paso, para no depender de mirar los logs.\nconst item = $input.first();\nconst nodo = $prevNode ? $prevNode.name : 'desconocido';\nconst detalle = (item && item.json && (item.json.error || item.json.message)) || 'sin detalle';\nlet msg = ':warning: *Un paso de la ingestión falló* (el resto siguió corriendo)\\n\\n';\nmsg += '```\\n';\nmsg += `Nodo    ${nodo}\\n`;\nmsg += `Error   ${String(detalle).slice(0, 220)}\\n`;\nmsg += '```';\nreturn [{ json: { text: msg } }];"
+      },
+      "id": "alerta-ingest-code",
+      "name": "Armar aviso de fallo aislado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "<SLACK_MEMBER_ID>",
+        "text": "={{ $json.text }}",
+        "otherOptions": {
+          "unfurl_links": false,
+          "unfurl_media": false
+        },
+        "attachments": []
+      },
+      "id": "alerta-ingest-slack",
+      "name": "Avisar fallo aislado",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        -480
+      ]
     }
   ],
   "connections": {
@@ -424,6 +467,13 @@
         [
           {
             "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
             "type": "main",
             "index": 0
           }
@@ -454,6 +504,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -476,6 +533,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -484,6 +548,13 @@
         [
           {
             "node": "GetOnBoard: Empresa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
             "type": "main",
             "index": 0
           }
@@ -509,6 +580,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -517,6 +595,13 @@
         [
           {
             "node": "¿Insertó pegas nuevas?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
             "type": "main",
             "index": 0
           }
@@ -533,6 +618,13 @@
           },
           {
             "node": "Marcar notificadas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
             "type": "main",
             "index": 0
           }
@@ -580,6 +672,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -588,6 +687,13 @@
         [
           {
             "node": "Agrupar notificación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
             "type": "main",
             "index": 0
           }
@@ -610,6 +716,13 @@
         [
           {
             "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
             "type": "main",
             "index": 0
           }
@@ -638,6 +751,29 @@
           }
         ]
       ]
+    },
+    "Armar aviso de fallo aislado": {
+      "main": [
+        [
+          {
+            "node": "Avisar fallo aislado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar notificadas": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -647,6 +783,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "ef2277b9-deb4-4e5a-9cb6-f00274eb4b92",
+  "versionId": "a746609b-f01d-457c-870f-71990a15afa5",
   "active": true
 }
