@@ -249,7 +249,10 @@
       "position": [
         32,
         -160
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2
     },
     {
       "parameters": {
@@ -590,6 +593,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "bf9d0ba0-b2fc-4f96-8e16-5d9957cf79c3",
+  "versionId": "f6906c26-93be-46fb-8cdc-db1950f75f93",
   "active": true
 }
