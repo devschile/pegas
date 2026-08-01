@@ -250,9 +250,7 @@
         32,
         -160
       ],
-      "onError": "continueRegularOutput",
-      "retryOnFail": true,
-      "maxTries": 2
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -385,6 +383,38 @@
       "position": [
         -768,
         500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $input.first().json || {};\nconst detalle = (e.error && (e.error.message || e.error.description)) || 'sin detalle';\nlet msg = ':rotating_light: *No se pudo refrescar pegas.devschile.cl*\\n\\n```\\n';\nmsg += `Error   ${String(detalle).slice(0, 220)}\\n`;\nmsg += '```\\nLas pegas quedaron guardadas, pero el sitio no se actualizó.';\nreturn [{ json: { text: msg } }];"
+      },
+      "id": "alerta-restart-code",
+      "name": "Armar aviso de restart",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "<SLACK_MEMBER_ID>",
+        "text": "={{ $json.text }}",
+        "otherOptions": {
+          "unfurl_links": false,
+          "unfurl_media": false
+        },
+        "attachments": []
+      },
+      "id": "alerta-restart-slack",
+      "name": "Avisar fallo de restart",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        460,
+        -320
       ]
     }
   ],
@@ -585,14 +615,38 @@
           }
         ]
       ]
+    },
+    "Restart pegas.devschile.cl": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Armar aviso de restart",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar aviso de restart": {
+      "main": [
+        [
+          {
+            "node": "Avisar fallo de restart",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
     "callerPolicy": "workflowsFromSameOwner",
-    "timezone": "America/Santiago"
+    "timezone": "America/Santiago",
+    "errorWorkflow": "<ID_WORKFLOW_ALERTA>"
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "2672c388-c916-4309-be84-29d317ffeb26",
+  "versionId": "b6003dfc-5755-4ebd-8e7d-5e019ec81955",
   "active": true
 }
