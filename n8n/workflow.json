@@ -6,9 +6,8 @@
         "pollTimes": {
           "item": [
             {
-              "mode": "everyX",
-              "value": 6,
-              "unit": "hours"
+              "mode": "custom",
+              "cronExpression": "0 */6 * * *"
             }
           ]
         },
@@ -67,8 +66,8 @@
         "rule": {
           "interval": [
             {
-              "field": "hours",
-              "hoursInterval": 6
+              "field": "cronExpression",
+              "expression": "0 */6 * * *"
             }
           ]
         }
@@ -753,6 +752,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "ff017e79-a2c8-40d6-ac0d-d6b715e52e5d",
+  "versionId": "e013d8d7-e0b7-4ed6-a7c1-8e641a975c31",
   "active": true
 }
