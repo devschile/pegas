@@ -11,21 +11,27 @@ const items = $input.all();
 const output = [];
 
 // --- Quoted-printable decoder con soporte UTF-8 multi-byte ---
+// El campo `text` que entrega el Gmail Trigger (con simple:false) ya viene
+// decodificado -- no es quoted-printable real. Confirmado con datos reales:
+// los pocos "=XX" sueltos que aparecen son coincidencia de query strings en
+// URLs (p.ej. "trackingId=72BF...", "geoId=104621616"), no bytes
+// codificados. La version anterior de este decoder reinterpretaba TODO el
+// texto como bytes crudos (via charCodeAt), así que cualquier tilde ya
+// presente en el texto (é, ú, ñ) se corrompía en U+FFFD al pasar por
+// TextDecoder.
+//
+// Por eso ahora solo se decodifican RACHAS de 2+ "=XX" consecutivos --
+// eso es lo que produce un caracter UTF-8 multi-byte real (p.ej. =C3=A9).
+// Un "=XX" aislado se deja como texto literal, y cualquier caracter que no
+// sea parte de una racha pasa intacto, sin reinterpretarse como byte.
 function decodeQP(str) {
   str = str.replace(/=\r?\n/g, '');
-  const bytes = [];
-  let i = 0;
-  while (i < str.length) {
-    if (str[i] === '=' && i + 2 < str.length && /^[0-9A-Fa-f]{2}$/.test(str.substring(i+1, i+3))) {
-      bytes.push(parseInt(str.substring(i+1, i+3), 16));
-      i += 3;
-    } else {
-      bytes.push(str.charCodeAt(i));
-      i++;
-    }
-  }
-  try { return new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes)); }
-  catch (_) { return str; }
+  return str.replace(/(?:=[0-9A-Fa-f]{2}){2,}/g, run => {
+    const bytes = [];
+    for (let i = 0; i < run.length; i += 3) bytes.push(parseInt(run.substring(i + 1, i + 3), 16));
+    try { return new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes)); }
+    catch (_) { return run; }
+  });
 }
 
 // --- Categorización ---
@@ -49,8 +55,9 @@ function categorizar(t) {
 // Insignias que LinkedIn intercala entre la ubicacion y el "View job:".
 // Se toleran sufijos (el texto real es "Apply with resume & profile", que con
 // el anclaje de fin anterior nunca matcheaba) y variantes con numero
-// ("1 connection", "77 school alumni").
-const BADGE_RE = /^(\d+\+?\s+(connections?|school alumni|alumni|applicants?)|this company is actively hiring|actively hiring|actively reviewing applicants|apply with resume.*|easy apply|be an early applicant|promoted|viewed|no longer accepting.*)$/i;
+// ("1 connection", "77 school alumni"). "school alum" (sin "ni") se ve en
+// producción -- el propio texto plano de LinkedIn a veces trunca la palabra.
+const BADGE_RE = /^(\d+\+?\s+(connections?|school alum(?:ni)?|alumni|applicants?)|this company is actively hiring|actively hiring|actively reviewing applicants|apply with resume.*|easy apply|be an early applicant|promoted|viewed|no longer accepting.*)$/i;
 
 // Lineas de encabezado/seccion del email: nunca son el titulo de un aviso.
 // Sirven de red de seguridad: si LinkedIn agrega una insignia nueva que

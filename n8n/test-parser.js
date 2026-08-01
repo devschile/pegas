@@ -48,6 +48,16 @@ const conInsignias = [
   'View job: https://www.linkedin.com/comm/jobs/view/4437345845/?trackingId=xxx',
 ].join('\n');
 
+// Variante truncada real: LinkedIn a veces corta "alumni" a "alum" en el
+// texto plano (visto en producción, id de pega 2865).
+const conInsigniaTruncada = [
+  'Subgerente de Tecnologías de la Información',
+  'IT Hunter',
+  'Santiago Metropolitan Region, Chile',
+  '1 school alum',
+  'View job: https://www.linkedin.com/comm/jobs/view/4445174770/?trackingId=xxx',
+].join('\n');
+
 const conInsigniaApply = [
   'Ingeniero/a de desarrollo',
   'EVA-Learning',
@@ -69,7 +79,18 @@ const linkDeSeccion = [
   'View job: https://www.linkedin.com/comm/jobs/view/4445611892/?trackingId=xxx',
 ].join('\n');
 
-const email = [conEncabezado, conInsignias, conInsigniaApply, linkDeSeccion].join(SEP);
+// El texto que entrega Gmail (simple:false) ya viene con tildes reales, y las
+// URLs traen query strings tipo "trackingId=72BF..." que coinciden con el
+// patron "=XX" pero no son bytes codificados. Con el decoder viejo, la tilde
+// ya-decodificada se reinterpretaba como byte crudo y se rompia en U+FFFD.
+const conAcentos = [
+  'Técnico/a de Soporte',
+  'Itaú Chile',
+  'Las Condes',
+  'View job: https://www.linkedin.com/comm/jobs/view/4445002662/?trackingId=72BFRscdS46k',
+].join('\n');
+
+const email = [conEncabezado, conInsignias, conInsigniaTruncada, conInsigniaApply, linkDeSeccion, conAcentos].join(SEP);
 const pegas = parsear([email]);
 
 let fallas = 0;
@@ -82,12 +103,12 @@ function chequear(nombre, condicion, detalle = '') {
   }
 }
 
-console.log(`\nParser: ${pegas.length} pegas extraidas de 4 bloques\n`);
+console.log(`\nParser: ${pegas.length} pegas extraidas de 6 bloques\n`);
 
 const porUrl = Object.fromEntries(pegas.map(p => [p.url, p]));
 const u = id => `https://www.linkedin.com/jobs/view/${id}/`;
 
-chequear('extrae una pega por bloque', pegas.length === 4, `fueron ${pegas.length}`);
+chequear('extrae una pega por bloque', pegas.length === 6, `fueron ${pegas.length}`);
 
 const latam = porUrl[u('4445002661')];
 chequear('ignora los encabezados y toma el aviso real',
@@ -103,6 +124,16 @@ const eva = porUrl[u('4444589934')];
 chequear('salta la insignia "Apply with resume & profile"',
   eva && eva.titulo === 'Ingeniero/a de desarrollo' && eva.ubicacion === 'Santiago',
   eva ? `titulo="${eva.titulo}" ubicacion="${eva.ubicacion}"` : 'no se extrajo');
+
+const itHunter = porUrl[u('4445174770')];
+chequear('salta la insignia truncada "1 school alum" (sin "ni")',
+  itHunter && itHunter.titulo === 'Subgerente de Tecnologías de la Información' && itHunter.empleador === 'IT Hunter',
+  itHunter ? `titulo="${itHunter.titulo}" empleador="${itHunter.empleador}"` : 'no se extrajo');
+
+const itau = porUrl[u('4445002662')];
+chequear('no corrompe tildes ya presentes ni las confunde con "=XX" de una URL',
+  itau && itau.titulo === 'Técnico/a de Soporte' && itau.empleador === 'Itaú Chile',
+  itau ? `titulo="${itau.titulo}" empleador="${itau.empleador}"` : 'no se extrajo');
 
 const agenda = porUrl[u('4445611892')];
 chequear('ignora el link de seccion "View all jobs:"',
