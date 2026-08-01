@@ -201,7 +201,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Digest 2x/dia: resume las pegas nuevas desde el ultimo aviso agrupadas por\n// categoria. Antes se listaban 3 pegas con detalle, pero con una mediana de\n// ~24 pegas por envio eso mostraba una muestra arbitraria (y ademas las mas\n// viejas del lote, por el ORDER BY ASC de la query).\n//\n// OJO: el nodo Postgres de n8n, cuando el SELECT no encuentra filas, igual\n// emite 1 item falso {success:true} en vez de un array vacio. Por eso\n// filtramos por la presencia de \"titulo\", no por items.length.\nconst items = $input.all().filter(item => item.json && item.json.titulo).map(i => i.json);\nif (items.length === 0) return [];\n\nconst total = items.length;\nconst esUno = total === 1;\nconst pegas = esUno ? 'pega nueva' : 'pegas nuevas';\n\nconst aperturas = esUno\n  ? [`Hay *1* ${pegas}`, `Llegó *1* ${pegas}`, `Se sumó *1* ${pegas}`,\n     `Cayó *1* ${pegas}`, `Tenemos *1* ${pegas}`, `Apareció *1* ${pegas}`,\n     `*1* ${pegas} en la vitrina`]\n  : [`Hay *${total}* ${pegas}`, `Llegaron *${total}* ${pegas}`, `Se sumaron *${total}* ${pegas}`,\n     `Cayeron *${total}* ${pegas}`, `Tenemos *${total}* ${pegas}`, `Aparecieron *${total}* ${pegas}`,\n     `*${total}* ${pegas} en la vitrina`];\n\nconst cierres = esUno\n  ? ['Mírala en pegas.devschile.cl', 'Revísala en pegas.devschile.cl',\n     'Échale un ojo en pegas.devschile.cl', 'Está en pegas.devschile.cl',\n     'Pásate por pegas.devschile.cl']\n  : ['Míralas todas en pegas.devschile.cl', 'Revísalas en pegas.devschile.cl',\n     'Échales un ojo en pegas.devschile.cl', 'Están todas en pegas.devschile.cl',\n     'El listado completo en pegas.devschile.cl', 'Pásate por pegas.devschile.cl'];\n\nconst azar = arr => arr[Math.floor(Math.random() * arr.length)];\n\nconst conteo = {};\nfor (const p of items) {\n  const cat = p.categoria || 'Otros';\n  conteo[cat] = (conteo[cat] || 0) + 1;\n}\nconst filas = Object.entries(conteo).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));\n\nconst ancho = Math.max(...filas.map(([k]) => k.length));\nconst maxN = filas[0][1];\n// Con una sola categoria la barra siempre saldria llena, asi que no se dibuja.\nconst conBarras = filas.length > 1;\n\nlet msg = `${azar(aperturas)}:\\n\\n\\`\\`\\`\\n`;\nfor (const [cat, n] of filas) {\n  const barra = conBarras ? '  ' + '█'.repeat(Math.max(1, Math.round((n / maxN) * 14))) : '';\n  msg += `${cat.padEnd(ancho)} ${String(n).padStart(3)}${barra}\\n`;\n}\nmsg += `\\`\\`\\`\\n${azar(cierres)}`;\n\nconst lastFechaCreacion = items[items.length - 1].fecha_creacion;\nreturn [{ json: { text: msg, count: total, lastFechaCreacion } }];"
+        "jsCode": "// Digest 2x/dia: resume las pegas nuevas desde el ultimo aviso agrupadas por\n// categoria. Antes se listaban 3 pegas con detalle, pero con una mediana de\n// ~24 pegas por envio eso mostraba una muestra arbitraria (y ademas las mas\n// viejas del lote, por el ORDER BY ASC de la query).\n//\n// OJO: el nodo Postgres de n8n, cuando el SELECT no encuentra filas, igual\n// emite 1 item falso {success:true} en vez de un array vacio. Por eso\n// filtramos por la presencia de \"titulo\", no por items.length.\nconst items = $input.all().filter(item => item.json && item.json.titulo).map(i => i.json);\nif (items.length === 0) return [];\n\nconst total = items.length;\nconst esUno = total === 1;\nconst pegas = esUno ? 'pega nueva' : 'pegas nuevas';\n\nconst aperturas = esUno\n  ? [`Hay *1* ${pegas}`, `Llegó *1* ${pegas}`, `Se sumó *1* ${pegas}`,\n     `Cayó *1* ${pegas}`, `Tenemos *1* ${pegas}`, `Apareció *1* ${pegas}`,\n     `*1* ${pegas} en la vitrina`]\n  : [`Hay *${total}* ${pegas}`, `Llegaron *${total}* ${pegas}`, `Se sumaron *${total}* ${pegas}`,\n     `Cayeron *${total}* ${pegas}`, `Tenemos *${total}* ${pegas}`, `Aparecieron *${total}* ${pegas}`,\n     `*${total}* ${pegas} en la vitrina`];\n\nconst cierres = esUno\n  ? ['Mírala en pegas.devschile.cl', 'Revísala en pegas.devschile.cl',\n     'Échale un ojo en pegas.devschile.cl', 'Está en pegas.devschile.cl',\n     'Pásate por pegas.devschile.cl']\n  : ['Míralas todas en pegas.devschile.cl', 'Revísalas en pegas.devschile.cl',\n     'Échales un ojo en pegas.devschile.cl', 'Están todas en pegas.devschile.cl',\n     'El listado completo en pegas.devschile.cl', 'Pásate por pegas.devschile.cl'];\n\nconst azar = arr => arr[Math.floor(Math.random() * arr.length)];\n\nconst conteo = {};\nfor (const p of items) {\n  const cat = p.categoria || 'Otros';\n  conteo[cat] = (conteo[cat] || 0) + 1;\n}\nconst filas = Object.entries(conteo).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));\n\nconst ancho = Math.max(...filas.map(([k]) => k.length));\nconst maxN = filas[0][1];\n// Con una sola categoria la barra siempre saldria llena, asi que no se dibuja.\nconst conBarras = filas.length > 1;\n\nlet msg = `${azar(aperturas)}:\\n\\n\\`\\`\\`\\n`;\nfor (const [cat, n] of filas) {\n  const barra = conBarras ? '  ' + '█'.repeat(Math.max(1, Math.round((n / maxN) * 14))) : '';\n  msg += `${cat.padEnd(ancho)} ${String(n).padStart(3)}${barra}\\n`;\n}\nmsg += `\\`\\`\\`\\n${azar(cierres)}`;\n\nconst ids = items.map(p => p.id);\nreturn [{ json: { text: msg, count: total, ids } }];"
       },
       "id": "beb8e580-9963-49a3-a675-816617ec6288",
       "name": "Agrupar notificación",
@@ -289,25 +289,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\n// Primera corrida: si nunca se avisó, arrancar desde hace 24h para no\n// mandar de golpe todo el historico.\nconst cutoff = staticData.lastNotifiedAt || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();\nreturn [{ json: { cutoff } }];"
-      },
-      "id": "2901efec-cb63-4b74-86b6-8e8691288ade",
-      "name": "Leer último aviso",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -976,
-        700
-      ],
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, titulo, empleador, ubicacion, categoria, sueldo, fuente, url, fecha_creacion\nFROM pegas\nWHERE activo = TRUE AND fecha_creacion > $1::timestamptz\nORDER BY fecha_creacion ASC",
-        "options": {
-          "queryReplacement": "={{ [$json.cutoff] }}"
-        }
+        "query": "SELECT id, titulo, empleador, ubicacion, categoria, sueldo, fuente, url, fecha_creacion\nFROM pegas\nWHERE activo = TRUE AND NOT notificado_en_digest\nORDER BY fecha_creacion ASC",
+        "options": {}
       },
       "id": "17c1421b-2b63-4245-a569-b396319c5335",
       "name": "Pegas sin notificar",
@@ -321,11 +305,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst items = $input.all();\nstaticData.lastNotifiedAt = (items[0] && items[0].json.lastFechaCreacion) || new Date().toISOString();\nreturn items;"
+        "operation": "executeQuery",
+        "query": "UPDATE pegas SET notificado_en_digest = TRUE WHERE id = ANY($1::int[])",
+        "options": {
+          "queryReplacement": "={{ [$json.ids] }}"
+        }
       },
       "id": "6b4c0078-c8b3-446d-b375-ad59b3a2e504",
       "name": "Marcar notificadas",
-      "type": "n8n-nodes-base.code",
+      "type": "n8n-nodes-base.postgres",
       "typeVersion": 2,
       "position": [
         -176,
@@ -384,7 +372,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normaliza jobs de WorkingNomads (API publica /api/exposed_jobs/, sin auth)\n// al esquema de \"pegas\". El filtro location=latin-america,chile ya lo aplica\n// la API del lado del servidor, asi que aca solo mapeamos campos.\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b/i.test(t)) return 'Diseño';\n  return 'Otros';\n}\n\nconst CATEGORIA_FALLBACK = {\n  'Development': 'Otros',\n  'DevOps / SysAdmin': 'DevOps',\n  'Design': 'Diseño',\n  'Data Science': 'Data',\n  'Product': 'Gestión',\n  'Management': 'Gestión'\n};\n\nconst output = [];\nfor (const item of items) {\n  const jobs = Array.isArray(item.json) ? item.json : [];\n  for (const j of jobs) {\n    const titulo = j.title || '';\n    if (!titulo || !j.url) continue;\n\n    const catTitulo = categorizar(titulo);\n    const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[j.category_name] || 'Otros');\n    const ubicacion = /\\bchile\\b/i.test(j.location || '') ? 'Chile' : 'Remoto';\n\n    output.push({\n      json: {\n        titulo,\n        url: j.url,\n        empleador: j.company_name || 'No especificado',\n        ubicacion,\n        categoria,\n        sueldo: null,\n        tags: 'remote',\n        descripcion: `${titulo}, ${ubicacion}`,\n        fuente: 'workingnomads',\n        email_origen: null,\n        fecha_publicacion: j.pub_date ? new Date(j.pub_date).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;"
+        "jsCode": "// Normaliza jobs de WorkingNomads (API publica /api/exposed_jobs/, sin auth)\n// al esquema de \"pegas\". El filtro location=latin-america,chile ya lo aplica\n// la API del lado del servidor, asi que aca solo mapeamos campos.\n//\n// OJO: la API devuelve un array JSON top-level, y el nodo HTTP Request de\n// n8n separa automaticamente cada elemento en un item distinto -- item.json\n// YA ES un job individual, no un array de jobs. (Bug real detectado en\n// produccion: con Array.isArray(item.json) siempre daba false, así que esta\n// fuente nunca insertó nada desde que se agregó.)\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b/i.test(t)) return 'Diseño';\n  return 'Otros';\n}\n\nconst CATEGORIA_FALLBACK = {\n  'Development': 'Otros',\n  'DevOps / SysAdmin': 'DevOps',\n  'Design': 'Diseño',\n  'Data Science': 'Data',\n  'Product': 'Gestión',\n  'Management': 'Gestión'\n};\n\nconst output = [];\nfor (const item of items) {\n  const j = item.json;\n  if (!j || typeof j !== 'object' || Array.isArray(j)) continue;\n\n  const titulo = j.title || '';\n  if (!titulo || !j.url) continue;\n\n  const catTitulo = categorizar(titulo);\n  const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[j.category_name] || 'Otros');\n  const ubicacion = /\\bchile\\b/i.test(j.location || '') ? 'Chile' : 'Remoto';\n\n  output.push({\n    json: {\n      titulo,\n      url: j.url,\n      empleador: j.company_name || 'No especificado',\n      ubicacion,\n      categoria,\n      sueldo: null,\n      tags: 'remote',\n      descripcion: `${titulo}, ${ubicacion}`,\n      fuente: 'workingnomads',\n      email_origen: null,\n      fecha_publicacion: j.pub_date ? new Date(j.pub_date).toISOString() : new Date().toISOString()\n    }\n  });\n}\n\nreturn output;"
       },
       "id": "4d0b0e24-9e88-4e7f-8243-d0df1cdc7bd7",
       "name": "WorkingNomads: normalizar",
@@ -657,25 +645,7 @@
       "main": [
         [
           {
-            "node": "Leer último aviso",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Leer último aviso": {
-      "main": [
-        [
-          {
             "node": "Pegas sin notificar",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Armar aviso de fallo aislado",
             "type": "main",
             "index": 0
           }
@@ -783,6 +753,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "c53da3eb-e7b9-4d6c-a40b-55e7accf4e27",
+  "versionId": "ff017e79-a2c8-40d6-ac0d-d6b715e52e5d",
   "active": true
 }
