@@ -46,7 +46,16 @@ function categorizar(t) {
 }
 
 // --- Badge patterns (se colocan donde iría la empresa) ---
-const BADGE_RE = /^(1 connection|\d+\+? connections|this company is actively hiring|actively hiring|apply with resume|easy apply|be an early applicant|promoted|no longer accepting)$/i;
+// Insignias que LinkedIn intercala entre la ubicacion y el "View job:".
+// Se toleran sufijos (el texto real es "Apply with resume & profile", que con
+// el anclaje de fin anterior nunca matcheaba) y variantes con numero
+// ("1 connection", "77 school alumni").
+const BADGE_RE = /^(\d+\+?\s+(connections?|school alumni|alumni|applicants?)|this company is actively hiring|actively hiring|actively reviewing applicants|apply with resume.*|easy apply|be an early applicant|promoted|viewed|no longer accepting.*)$/i;
+
+// Lineas de encabezado/seccion del email: nunca son el titulo de un aviso.
+// Sirven de red de seguridad: si LinkedIn agrega una insignia nueva que
+// BADGE_RE no conozca, el bloque se descarta en vez de guardarse corrido.
+const NO_ES_TITULO_RE = /^(your job alert|\d+\+?\s+new jobs match|new jobs match|jobs similar to|results from the new|view all jobs|see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|learn why|help:)/i;
 
 // --- Detección de sueldo/rango salarial ---
 function extraerSueldo(texto) {
@@ -89,53 +98,62 @@ for (const item of items) {
   const blocks = body.split(/\n\s*-{15,}\s*\n/);
 
   for (let bi = 0; bi < blocks.length; bi++) {
-    let lines = blocks[bi].trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const lines = blocks[bi].trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length < 4) continue;
 
-    // Bloque 0: saltar líneas de header ("Your job alert...", "New jobs
-    // match...", "Jobs similar to X at Y <tracking url>", etc.) — una línea
-    // de título real nunca trae una URL cruda, así que eso también sirve
-    // de señal genérica para variantes de header futuras.
-    if (bi === 0) {
-      while (lines.length > 0 && (/^(your job alert|new jobs match|jobs similar to)/i.test(lines[0]) || /https?:\/\//i.test(lines[0]))) {
-        lines.shift();
+    // Un aviso real SIEMPRE termina en "View job: <url>", precedido por
+    // titulo / empresa / ubicacion. Antes se leia el bloque desde arriba y se
+    // saltaban los encabezados por patron, pero cada variante nueva del email
+    // ("28 new jobs match your preferences.", "Results from the new AI-powered
+    // job search", "View all jobs: ...") se colaba como si fuera una pega, y
+    // encima se robaba la URL del aviso real que venia abajo.
+    //
+    // Anclando en "View job:" y leyendo hacia arriba, todo lo que este por
+    // encima del aviso es irrelevante por construccion: no hay lista de
+    // encabezados que mantener.
+    for (let i = 0; i < lines.length; i++) {
+      if (!/^view job:\s*/i.test(lines[i])) continue;
+
+      const url = lines[i].replace(/^view job:\s*/i, '').trim();
+      if (!url) continue;
+
+      // Hacia arriba: descartar badges y lineas con URL (son links de seccion,
+      // tipo "View all jobs: ..."), hasta juntar ubicacion, empresa y titulo.
+      const campos = [];
+      for (let j = i - 1; j >= 0 && campos.length < 3; j--) {
+        const l = lines[j];
+        if (/^view job:\s*/i.test(l)) break;   // llegamos al aviso anterior
+        if (BADGE_RE.test(l)) continue;
+        if (/https?:\/\//i.test(l)) continue;
+        campos.push(l);
       }
+      if (campos.length < 3) continue;
+
+      const [ubicacion, empleador, titulo] = campos;
+      // Si alguno de los tres huele a encabezado, el bloque quedo corrido
+      // (insignia desconocida). Mejor descartarlo que guardar basura.
+      if (!titulo || [titulo, empleador, ubicacion].some(c => NO_ES_TITULO_RE.test(c))) continue;
+
+      const jid = url.match(/\/jobs\/view\/(\d+)/);
+      const urlLimpia = jid ? `https://www.linkedin.com/jobs/view/${jid[1]}/` : url.split('?')[0];
+
+      const contexto = [titulo, empleador, ubicacion].join(' ');
+      output.push({
+        json: {
+          titulo,
+          url: urlLimpia,
+          empleador: empleador || 'No especificado',
+          ubicacion: ubicacion || 'Chile',
+          sueldo: extraerSueldo(contexto),
+          descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,
+          categoria: categorizar(titulo),
+          tags: detectarTags(titulo, ubicacion, lines),
+          fuente: 'linkedin',
+          email_origen: item.json.to || item.json.To || '',
+          fecha_publicacion: new Date().toISOString()
+        }
+      });
     }
-    // Saltar footer/upsell
-    if (/^(see all jobs|stand out|this email was|you are receiving|manage your|unsubscribe|©|linkedin and|learn why|help:)/i.test(lines[0])) continue;
-    if (lines.length < 3) continue;
-
-    const titulo = lines[0];
-    let empleador = lines[1] || '';
-    let ubicacion = lines[2] || '';
-    let url = '';
-    for (const l of lines) {
-      if (/^view job:\s*/i.test(l)) { url = l.replace(/^view job:\s*/i, '').trim(); break; }
-    }
-    if (!url || !titulo) continue;
-
-    // Desplazar si hay badge
-    if (BADGE_RE.test(empleador)) { empleador = lines[2] || ''; ubicacion = lines[3] || ''; }
-    if (BADGE_RE.test(ubicacion)) ubicacion = lines[3] || '';
-
-    // Limpiar URL
-    const jid = url.match(/\/jobs\/view\/(\d+)/);
-    const urlLimpia = jid ? `https://www.linkedin.com/jobs/view/${jid[1]}/` : url.split('?')[0];
-
-    output.push({
-      json: {
-        titulo,
-        url: urlLimpia,
-        empleador: empleador || 'No especificado',
-        ubicacion: ubicacion || 'Chile',
-        sueldo: extraerSueldo(titulo + ' ' + (lines.slice(0, 6).join(' '))),
-        descripcion: `${titulo} en ${empleador || 'empresa'}${ubicacion ? ', ' + ubicacion : ''}`,
-        categoria: categorizar(titulo),
-        tags: detectarTags(titulo, ubicacion, lines),
-        fuente: 'linkedin',
-        email_origen: item.json.to || item.json.To || '',
-        fecha_publicacion: new Date().toISOString()
-      }
-    });
   }
 }
 
