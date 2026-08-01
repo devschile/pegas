@@ -35,6 +35,8 @@ async function main() {
       ALTER TABLE pegas ADD COLUMN IF NOT EXISTS sueldo TEXT;
       ALTER TABLE pegas ADD COLUMN IF NOT EXISTS tags TEXT;
       ALTER TABLE pegas ADD COLUMN IF NOT EXISTS fecha_actualizacion TIMESTAMP DEFAULT NOW();
+      ALTER TABLE pegas ADD COLUMN IF NOT EXISTS notificado_en_digest BOOLEAN NOT NULL DEFAULT FALSE;
+      CREATE INDEX IF NOT EXISTS idx_pegas_notificado ON pegas(notificado_en_digest) WHERE NOT notificado_en_digest;
     `);
     console.log('✅ Columnas al día');
 
