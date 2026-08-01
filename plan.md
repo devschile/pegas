@@ -14,26 +14,16 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - Corregido un bug donde el resumen podía mostrar un aviso vacío o incorrecto cuando no había pegas nuevas, y ajustado el horario para que corra en la zona horaria correcta.
 - Recuperadas manualmente algunas pegas que se habían perdido por un problema puntual de sincronización de un disparador automático.
 - Investigadas y descartadas varias fuentes adicionales candidatas — sin API pública utilizable, bloqueadas por protección anti-bots, o de una sola empresa (detalle en el README).
-- Arreglado el refresco automático del sitio, que llevaba tiempo fallando en silencio: las pegas se guardaban pero el sitio no se actualizaba solo. Se había diagnosticado mal varias veces como un problema de credenciales.
-- El resumen del chat pasó a agrupar por categoría en vez de listar avisos sueltos: con decenas de pegas por envío, mostrar unas pocas daba una muestra arbitraria y poco útil.
-- Agregado aviso automático por mensaje directo cuando el flujo falla, para no volver a tener errores pasando desapercibidos.
-- En cada tarjeta del sitio se muestra su fuente de origen, y las fechas incluyen día y hora además de la referencia relativa.
-- Corregido que los cambios de frontend quedaran invisibles por caché del navegador: los archivos ahora llevan una versión derivada de su contenido.
-- Corregido el parseo de los correos de LinkedIn, que guardaba encabezados del email como si fueran ofertas y además tapaba avisos reales. Se limpiaron los registros afectados y se reescribieron los tests, que antes no cubrían el parser en uso.
-- Aislados los pasos del flujo de ingesta para que el fallo de uno no bloquee a los demás: antes, si un paso fallaba, se abortaba toda la corrida completa aunque otras partes ya hubieran terminado bien (la misma causa raíz del problema anterior con la fuente nueva). Se agregó además un aviso específico para estos fallos aislados.
 
 ## Pendiente
 
 - Confirmar que el despliegue automático desde el repositorio funcione de punta a punta (hoy a veces requiere disparo manual).
 - Revisar si queda alguna instancia vieja o duplicada del sitio que se pueda dar de baja.
+- Cerrar issues abiertos en GitHub.
 - Confirmar en el próximo ciclo que la fuente de pegas agregada más recientemente sigue funcionando sin errores.
 - Evaluar sumar más fuentes de pegas.
+- Evaluar reemplazar el parseo de newsletters por email de LinkedIn por su API directamente (si es que ofrece una accesible para este uso). El parseo de emails es fundamentalmente frágil: cada vez que LinkedIn cambia el formato del newsletter hay que ajustar el parser, y ya tuvo varios bugs de esa naturaleza. El riesgo conocido es que la API de empleos de LinkedIn suele requerir partnership aprobado, no acceso self-service — hay que confirmar si existe alguna vía utilizable antes de invertir en esto.
 - Agregar datos estructurados a las pegas para mejorar el posicionamiento en buscadores.
 - Auto-expiración de pegas antiguas.
 - Dashboard de métricas.
 - Evaluar migrar el frontend a un enfoque con renderizado en servidor para mejorar SEO e indexabilidad (cambio de arquitectura grande, no es urgente).
-
-## Notas operativas
-
-- El aviso de fallos solo funciona si su automatización está habilitada. Si se deshabilita, no llegan alertas y tampoco hay señal de que dejaron de llegar.
-- Un reinicio del sitio refresca el contenido, pero no aplica cambios de frontend: para eso hace falta un despliegue completo.
