@@ -234,7 +234,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{ $env.COOLIFY_TOKEN }}"
+              "value": "=Bearer {{ $env.COOLIFY_TOKEN }}"
             }
           ]
         },
@@ -593,6 +593,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "f6906c26-93be-46fb-8cdc-db1950f75f93",
+  "versionId": "503adf31-0216-4752-b87f-aa2c14565666",
   "active": true
 }
