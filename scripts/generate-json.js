@@ -32,7 +32,14 @@ async function main() {
         fuente, fecha_creacion
       FROM pegas
       WHERE activo = TRUE
-      ORDER BY COALESCE(fecha_publicacion, fecha_creacion) DESC
+      -- No solo la fecha de publicacion: fuentes como WorkingNomads traen
+      -- pub_date real de cuando la oferta se publico originalmente (puede
+      -- ser de semanas atras), y con COALESCE solo esa fecha una pega recien
+      -- ingerida hoy quedaba enterrada al fondo del listado. GREATEST usa la
+      -- fecha de publicacion cuando es la mas reciente (caso normal de
+      -- LinkedIn/GetOnBoard, donde ambas fechas casi coinciden) pero cae a la
+      -- fecha de ingesta cuando esta es mas nueva (fuentes con historial).
+      ORDER BY GREATEST(COALESCE(fecha_publicacion, fecha_creacion), fecha_creacion) DESC
     `);
 
     const output = {
