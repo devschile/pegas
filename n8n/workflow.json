@@ -446,6 +446,54 @@
         -360,
         -480
       ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pipeline_heartbeat (fuente, ultima_corrida) VALUES ('gmail', NOW())\nON CONFLICT (fuente) DO UPDATE SET ultima_corrida = NOW()",
+        "options": {}
+      },
+      "id": "latido-gmail",
+      "name": "Latido: gmail",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        -260
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pipeline_heartbeat (fuente, ultima_corrida) VALUES ('getonbrd_cron', NOW())\nON CONFLICT (fuente) DO UPDATE SET ultima_corrida = NOW()",
+        "options": {}
+      },
+      "id": "latido-getonbrd",
+      "name": "Latido: getonbrd_cron",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        460
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pipeline_heartbeat (fuente, ultima_corrida) VALUES ('digest', NOW())\nON CONFLICT (fuente) DO UPDATE SET ultima_corrida = NOW()",
+        "options": {}
+      },
+      "id": "latido-digest",
+      "name": "Latido: digest",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -976,
+        860
+      ],
+      "onError": "continueErrorOutput"
     }
   ],
   "connections": {
@@ -477,6 +525,11 @@
           },
           {
             "node": "WorkingNomads: Jobs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Latido: getonbrd_cron",
             "type": "main",
             "index": 0
           }
@@ -625,6 +678,11 @@
             "node": "Parser LinkedIn → Jobs",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Latido: gmail",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -645,6 +703,11 @@
         [
           {
             "node": "Pegas sin notificar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Latido: digest",
             "type": "main",
             "index": 0
           }
@@ -752,6 +815,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "e013d8d7-e0b7-4ed6-a7c1-8e641a975c31",
+  "versionId": "24957703-a897-4422-88f3-45bf7a714b07",
   "active": true
 }

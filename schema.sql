@@ -26,3 +26,15 @@ CREATE INDEX IF NOT EXISTS idx_pegas_categoria ON pegas(categoria);
 CREATE INDEX IF NOT EXISTS idx_pegas_fecha ON pegas(fecha_creacion DESC);
 CREATE INDEX IF NOT EXISTS idx_pegas_activo ON pegas(activo);
 CREATE INDEX IF NOT EXISTS idx_pegas_notificado ON pegas(notificado_en_digest) WHERE NOT notificado_en_digest;
+
+-- Registra la última vez que cada disparador del pipeline (Gmail, GetOnBoard
+-- + WorkingNomads, digest de Slack) efectivamente corrió, sin importar si
+-- encontró datos nuevos o no. Vive en la base -- no en estado interno de
+-- n8n -- porque ese estado se demostró frágil (se pierde con ediciones del
+-- workflow) y porque un trigger puede dejar de dispararse en silencio sin
+-- que nada lo note. Un chequeo periódico aparte compara ultima_corrida
+-- contra el intervalo esperado de cada fuente y avisa si alguna se atrasó.
+CREATE TABLE IF NOT EXISTS pipeline_heartbeat (
+    fuente TEXT PRIMARY KEY,
+    ultima_corrida TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
