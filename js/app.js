@@ -12,6 +12,14 @@
   const countTotal = document.getElementById('count-total');
   const template = document.getElementById('pega-card');
 
+  // Nombre "bonito" por fuente; para fuentes nuevas cae al valor crudo
+  const FUENTE_LABEL = {
+    linkedin: 'LinkedIn',
+    getonbrd: 'GetOnBoard',
+    workingnomads: 'WorkingNomads',
+  };
+  const labelFuente = f => FUENTE_LABEL[f] || f;
+
   let pegas = [];
   let categorias = [];
   let fuentes = [];
@@ -49,7 +57,7 @@
   fuentes.forEach(f => {
     const opt = document.createElement('option');
     opt.value = f;
-    opt.textContent = f === 'linkedin' ? 'LinkedIn' : f;
+    opt.textContent = labelFuente(f);
     filterSrc.appendChild(opt);
   });
 
@@ -111,6 +119,7 @@
       card.querySelector('.pega-empleador').textContent = pega.empleador;
       card.querySelector('.pega-descripcion').textContent = pega.descripcion;
       card.querySelector('.pega-link').href = pega.url;
+      card.querySelector('.pega-fuente').textContent = labelFuente(pega.fuente);
       card.querySelector('.badge-categoria').textContent = pega.categoria;
       card.querySelector('.badge-ubicacion').textContent = pega.ubicacion;
 
@@ -160,18 +169,31 @@
   }
 
   // === Helpers ===
+  // "(hoy) 31/07/2026 14:05" — el prefijo relativo solo aparece si es reciente
   function formatDate(iso) {
     if (!iso) return '';
     const d = new Date(iso);
-    const now = new Date();
-    const diff = now - d;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (isNaN(d)) return '';
 
-    if (days === 0) return 'hoy';
+    const pad = n => String(n).padStart(2, '0');
+    const fecha = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+    const hora = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+    const rel = relativeLabel(d);
+    return rel ? `(${rel}) ${fecha} ${hora}` : `${fecha} ${hora}`;
+  }
+
+  function relativeLabel(d) {
+    // Diferencia por día calendario, no por horas transcurridas: algo publicado
+    // ayer a las 23:00 no debe decir "hoy" solo porque pasaron 2 horas.
+    const soloDia = x => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+    const days = Math.round((soloDia(new Date()) - soloDia(d)) / 86400000);
+
+    if (days <= 0) return 'hoy';
     if (days === 1) return 'ayer';
     if (days < 7) return `hace ${days}d`;
     if (days < 30) return `hace ${Math.floor(days / 7)}sem`;
-    return d.toLocaleDateString('es-CL', { year: 'numeric', month: 'short', day: 'numeric' });
+    return null;
   }
 
   // === Event listeners ===

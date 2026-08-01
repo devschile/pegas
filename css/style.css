@@ -231,6 +231,20 @@ h1, h2, h3, h4, h5, h6 {
 .pega-link:hover { color: var(--accent-hover); gap: 0.5rem; }
 .pega-link::after { content: '→'; font-size: 0.9em; }
 
+.pega-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.pega-fuente {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
 /* === Pagination === */
 .pagination {
   display: flex;
