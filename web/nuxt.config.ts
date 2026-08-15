@@ -21,4 +21,15 @@ export default defineNuxtConfig({
       ],
     },
   },
+
+  vite: {
+    ssr: {
+      // Los componentes de Stencil (@devschile/chucao) usan import() dinamico
+      // hacia chunks internos compartidos (p-*.js) resueltos con rutas
+      // relativas dentro de node_modules. Externalizados, Nitro no logra
+      // resolver esos chunks en runtime (500 "Cannot find module .../p-*.js").
+      // Sin externalizar, Rollup los empaqueta enteros en el server bundle.
+      noExternal: ['@devschile/chucao'],
+    },
+  },
 });
