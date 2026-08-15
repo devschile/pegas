@@ -494,6 +494,108 @@
         860
       ],
       "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://jobicy.com/api/v2/remote-jobs",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "count",
+              "value": "50"
+            },
+            {
+              "name": "geo",
+              "value": "latam"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "pegas-devschile-bot (+https://pegas.devschile.cl)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "8e670af4-ce7b-4411-81e9-06eb360e1016",
+      "name": "Jobicy: Jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "continueOnFail": true,
+      "position": [
+        -976,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza jobs de Jobicy (API publica v2, sin auth) al esquema de \"pegas\".\n// geo=latam ya filtra del lado del servidor a avisos remotos LatAm-friendly\n// (confirmado con la API: /remote-jobs?get=locations expone un geoSlug\n// \"latam\" dedicado), asi que aca solo mapeamos campos -- mismo enfoque que\n// WorkingNomads, que tambien filtra location del lado del servidor.\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b/i.test(t)) return 'Diseño';\n  return 'Otros';\n}\n\nconst output = [];\nfor (const item of items) {\n  const jobs = (item.json && item.json.jobs) || [];\n  for (const j of jobs) {\n    const titulo = j.jobTitle || '';\n    if (!titulo || !j.url) continue;\n\n    const geo = j.jobGeo || '';\n    const ubicacion = /\\bchile\\b/i.test(geo) ? 'Chile' : 'Remoto';\n\n    output.push({\n      json: {\n        titulo,\n        url: j.url,\n        empleador: j.companyName || 'No especificado',\n        ubicacion,\n        categoria: categorizar(titulo),\n        sueldo: null,\n        tags: 'remote',\n        descripcion: `${titulo}, ${ubicacion}`,\n        fuente: 'jobicy',\n        email_origen: null,\n        fecha_publicacion: j.pubDate ? new Date(j.pubDate).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
+      },
+      "id": "7550d940-a1fe-4e85-9545-5ef184a6e8b8",
+      "name": "Jobicy: normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        1080
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://himalayas.app/jobs/api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "pegas-devschile-bot (+https://pegas.devschile.cl)"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "7ba623d2-b33a-4dbf-9f32-047a40ad3191",
+      "name": "Himalayas: Jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "continueOnFail": true,
+      "position": [
+        -976,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normaliza jobs de Himalayas (API publica /jobs/api, sin auth) al esquema\n// de \"pegas\". A diferencia de Jobicy, esta API no tiene filtro de pais del\n// lado del servidor (probado: parametros como country/location/region no\n// cambian el resultado), asi que el filtro LatAm/Chile se hace aca contra\n// \"locationRestrictions\". Un array vacio significa \"sin restriccion\"\n// (remoto mundial, se acepta -- mismo criterio que el flag remote:true de\n// GetOnBoard).\nconst items = $input.all();\n\nconst LATAM = ['Chile', 'Argentina', 'Brazil', 'Mexico', 'Colombia', 'Peru',\n  'Uruguay', 'Ecuador', 'Bolivia', 'Paraguay', 'Venezuela', 'Costa Rica',\n  'Panama', 'Guatemala', 'Honduras', 'El Salvador', 'Nicaragua',\n  'Dominican Republic', 'Latin America'];\n\nfunction categorizar(t) {\n  t = t.toLowerCase();\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bphp\\b|\\blaravel\\b|\\brails\\b|\\bruby\\b/i.test(t)) return 'Backend';\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b/i.test(t)) return 'DevOps';\n  if (/\\bqa\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t)) return 'QA';\n  if (/\\bdata\\b|\\banalytics\\b|\\banalist[ao]s?\\b|\\banalyst\\b|\\bmachine.?learning\\b|\\bml\\b|\\bai\\b|\\bia\\b|\\binteligencia\\b|\\bartificial\\b|\\betl\\b|\\bpower.bi\\b|\\btableau\\b|\\blooker\\b/i.test(t)) return 'Data';\n  if (/\\bmobile\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n  if (/\\bsecurity\\b|\\bseguridad\\b|\\bciberseguridad\\b|\\bpentest\\b/i.test(t)) return 'Ciberseguridad';\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\blider\\b|\\blead\\b|\\btech.lead\\b|\\bmanager\\b|\\bdirector\\b/i.test(t)) return 'Gestión';\n  if (/\\bdiseñ|\\bdesigner\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b/i.test(t)) return 'Diseño';\n  return 'Otros';\n}\n\n// Bug real de la API: en ~50% de los avisos de una muestra, \"companyName\"\n// viene literalmente como el string \"name\" (placeholder roto del lado de\n// Himalayas), en vez del nombre real o venir vacio. \"companySlug\" si trae\n// el dato correcto en esos casos, asi que se arma un nombre legible desde\n// ahi como fallback.\nfunction nombreEmpresa(j) {\n  if (j.companyName && j.companyName !== 'name') return j.companyName;\n  if (j.companySlug) {\n    return j.companySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');\n  }\n  return null;\n}\n\nconst output = [];\nfor (const item of items) {\n  const jobs = (item.json && item.json.jobs) || [];\n  for (const j of jobs) {\n    const restricciones = j.locationRestrictions || [];\n    const chile = restricciones.includes('Chile');\n    const latam = chile || restricciones.some(r => LATAM.includes(r));\n    const abierto = restricciones.length === 0;\n    if (!latam && !abierto) continue;\n\n    const titulo = j.title || '';\n    const url = j.applicationLink || j.guid;\n    if (!titulo || !url) continue;\n\n    const ubicacion = chile ? 'Chile' : 'Remoto';\n    const sueldo = (j.minSalary && j.maxSalary)\n      ? `USD ${j.minSalary} - ${j.maxSalary} /${j.salaryPeriod === 'monthly' ? 'mes' : 'año'}`\n      : null;\n\n    output.push({\n      json: {\n        titulo,\n        url,\n        empleador: nombreEmpresa(j) || 'No especificado',\n        ubicacion,\n        categoria: categorizar(titulo),\n        sueldo,\n        tags: 'remote',\n        descripcion: `${titulo}, ${ubicacion}`,\n        fuente: 'himalayas',\n        email_origen: null,\n        fecha_publicacion: j.pubDate ? new Date(j.pubDate * 1000).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
+      },
+      "id": "8d74f679-fec9-4b05-bbc1-a92634977948",
+      "name": "Himalayas: filtrar + normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        1280
+      ],
+      "onError": "continueErrorOutput"
     }
   ],
   "connections": {
@@ -525,6 +627,16 @@
           },
           {
             "node": "WorkingNomads: Jobs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Jobicy: Jobs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Himalayas: Jobs",
             "type": "main",
             "index": 0
           },
@@ -744,6 +856,64 @@
       ]
     },
     "WorkingNomads: normalizar": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jobicy: Jobs": {
+      "main": [
+        [
+          {
+            "node": "Jobicy: normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jobicy: normalizar": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar aviso de fallo aislado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Himalayas: Jobs": {
+      "main": [
+        [
+          {
+            "node": "Himalayas: filtrar + normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Himalayas: filtrar + normalizar": {
       "main": [
         [
           {
