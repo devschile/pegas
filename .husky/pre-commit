@@ -1,0 +1,6 @@
+staged=$(git diff --cached --name-only)
+
+if echo "$staged" | grep -q '^web/'; then
+  echo "web/: corriendo tests con cobertura..."
+  (cd web && pnpm run test:coverage) || exit 1
+fi
