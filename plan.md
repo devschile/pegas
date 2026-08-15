@@ -27,3 +27,14 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - Auto-expiración de pegas antiguas.
 - Dashboard de métricas.
 - Evaluar migrar el frontend a un enfoque con renderizado en servidor para mejorar SEO e indexabilidad (cambio de arquitectura grande, no es urgente).
+
+## Monetización
+
+El sitio ya tiene tráfico y contenido diferenciado (agregación multi-fuente que no existe en un solo lugar). La idea es capturar valor de dos lados: empresas que quieren publicar/destacar pegas, y candidatos que quieren mejores herramientas de búsqueda. Puntos a explorar, sin orden de prioridad definido todavía salvo el primero:
+
+- **API de pegas (primer paso).** Hoy no existe una API real: el frontend estático consume un `data.json` regenerado en cada deploy, que no sirve para clientes dinámicos. Hay que exponer una API propia que sirva de base para todo lo demás — consumida por el nuevo frontend (Nuxt SSR + chucao), el bot de Slack, y potenciales integraciones de terceros. Debe cubrir como mínimo lo que hoy hace `data.json` (listar/filtrar pegas) y dejar el camino abierto para lo pagado (crear pega autenticado, destacar, eventos de tracking).
+- **Publicación de pegas por empresas.** Formulario propio (autenticado) en vez de depender solo de las fuentes agregadas — permite cobrar por publicación directa.
+- **Ranking / destacados.** Pegas patrocinadas con posición prioritaria o badge visual en el listado.
+- **Tracking tipo ecommerce con PostHog.** Ya está instalado para analytics del sitio; falta modelarlo como funnel (impresión de pega → click → postulación) en vez de solo pageviews, para poder mostrarle métricas a una empresa que paga.
+- **Sistema de registro.** Cuentas para empresas (publicar/gestionar pegas) y candidatos (alertas personalizadas, guardar pegas).
+- **Suscripción paga.** Planes para empresas (publicar, destacar, ver métricas) y quizás un plan para candidatos (alertas curadas, acceso anticipado).
