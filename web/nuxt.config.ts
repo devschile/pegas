@@ -2,13 +2,45 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  modules: ['motion-v/nuxt', '@nuxtjs/seo'],
+
+  css: ['~/assets/css/main.css'],
+
+  // Config base de @nuxtjs/seo (sitemap, robots, meta por defecto,
+  // schema.org): sin esto los modulos no saben bajo que dominio/nombre
+  // generar URLs absolutas, OG tags, etc.
+  site: {
+    url: 'https://pegas.devschile.cl',
+    name: 'Pegas devsChile()',
+    description: 'Vitrina de ofertas de trabajo tech en Chile y remoto LatAm, agregadas desde LinkedIn, GetOnBoard, WorkingNomads, Jobicy e Himalayas.',
+    defaultLocale: 'es',
+  },
+
+  // URLs dinamicas (pegas individuales, categorias): no hay rutas fisicas
+  // que rastrear, asi que se registra el endpoint que las genera a partir
+  // del mismo data.json (ver server/api/__sitemap__/urls.ts).
+  sitemap: {
+    sources: ['/api/__sitemap__/urls'],
+  },
+
+  // No generamos imagenes OG por pagina (requeriria un template propio y
+  // renderizado via navegador headless en cada request/build) -- se usa un
+  // og:image estatico fijo en su lugar (ver useSeoMeta en cada pagina).
+  ogImage: {
+    enabled: false,
+  },
 
   runtimeConfig: {
     public: {
-      // Fuente de datos actual: el data.json estatico del pipeline existente
+      // Fuente de datos actual: el data.json estático del pipeline existente
       // (ver scripts/generate-json.js). Reemplazar por la URL de la API REST
-      // cuando exista -- ver app/composables/usePegas.ts.
+      // cuando exista -- ver app/composables/useJobs.ts.
       dataJsonUrl: 'https://pegas.devschile.cl/data/data.json',
+      // Mismo proyecto de PostHog que ya usa el sitio estatico actual
+      // (index.html), para no partir el analytics en dos durante la
+      // convivencia de ambos frontends.
+      posthogKey: 'phc_pMbrDFcoVoYS9kqBRmgLEzdTjuNXYqV4sypn7YsnFuY4',
+      posthogHost: 'https://us.i.posthog.com',
     },
   },
 
@@ -18,6 +50,8 @@ export default defineNuxtConfig({
         // Pineado a la version instalada de @devschile/chucao (package.json)
         // para que el CSS y los componentes no se desincronicen.
         { rel: 'stylesheet', href: 'https://static.devschile.cl/chucao/1.5.1/chucao.css' },
+        // Mismo favicon (emoji como SVG) que el sitio estatico actual.
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
     },
   },

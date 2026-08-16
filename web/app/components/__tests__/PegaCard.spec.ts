@@ -1,9 +1,13 @@
+import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import PegaCard from '../PegaCard.vue';
 import type { Pega } from '~/types/pega';
 
-const basePega: Pega = {
+const { trackMock } = vi.hoisted(() => ({ trackMock: vi.fn() }));
+mockNuxtImport('useTrackEvent', () => () => trackMock);
+
+const baseJob: Pega = {
   id: 1,
   url: 'https://example.com/pega/1',
   titulo: 'Frontend Developer',
@@ -20,7 +24,7 @@ const basePega: Pega = {
 
 describe('PegaCard', () => {
   it('muestra el titulo, el empleador y la ubicacion', () => {
-    const wrapper = mount(PegaCard, { props: { pega: basePega } });
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
     expect(wrapper.text()).toContain('Frontend Developer');
     expect(wrapper.text()).toContain('Acme');
@@ -28,22 +32,31 @@ describe('PegaCard', () => {
   });
 
   it('no muestra badge de sueldo cuando no hay sueldo', () => {
-    const wrapper = mount(PegaCard, { props: { pega: basePega } });
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
     expect(wrapper.text()).not.toContain('USD');
   });
 
   it('muestra el sueldo cuando esta presente', () => {
-    const pega = { ...basePega, sueldo: 'USD 2000 - 3000 /mes' };
-    const wrapper = mount(PegaCard, { props: { pega } });
+    const job = { ...baseJob, sueldo: 'USD 2000 - 3000 /mes' };
+    const wrapper = mount(PegaCard, { props: { job } });
 
     expect(wrapper.text()).toContain('USD 2000 - 3000 /mes');
   });
 
-  it('enlaza al aviso original', () => {
-    const wrapper = mount(PegaCard, { props: { pega: basePega } });
+  it('al hacer click en "Ver oferta" abre el aviso original y trackea el evento', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    trackMock.mockClear();
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
-    const link = wrapper.findComponent({ name: 'ChLink' });
-    expect(link.props('href')).toBe(basePega.url);
+    await wrapper.findComponent({ name: 'ChButton' }).vm.$emit('ch-click');
+
+    expect(openSpy).toHaveBeenCalledWith(baseJob.url, '_blank', 'noopener,noreferrer');
+    expect(trackMock).toHaveBeenCalledWith(
+      'pega_click_apply',
+      expect.objectContaining({ pega_id: baseJob.id, empleador: baseJob.empleador }),
+    );
+
+    openSpy.mockRestore();
   });
 });
