@@ -45,12 +45,13 @@ El sitio ya tiene tráfico y contenido diferenciado (agregación multi-fuente qu
 
 Orden acordado para llegar de `web/` (scaffold ya hecho) a la monetización. Se va marcando a medida que se avanza.
 
-- [ ] **1. Completar el frontend nuevo (`web/`) contra el `data.json` actual**
-  - [ ] Filtros y búsqueda (categoría, ubicación, fuente, tags)
-  - [ ] Header/branding con chucao + `DESIGN.md`
-  - [ ] Paginación o scroll infinito
-  - [ ] Meta tags por página (title/description dinámico, OG tags) — aprovechar el SSR
+- [x] **1. Completar el frontend nuevo (`web/`) contra el `data.json` actual**
+  - [x] Filtros y búsqueda (categoría, fuente)
+  - [x] Header/branding con chucao
+  - [x] Paginación
+  - [x] Meta tags por página (title/description dinámico, OG tags, schema.org JobPosting) — aprovechando el SSR
 - [ ] **2. Desplegar `web/` en paralelo al sitio estático** (Dockerfile o preset Cloudflare propio; subdominio/puerto de prueba, el público sigue viendo el sitio actual)
 - [ ] **3. Cutover del sitio estático al nuevo frontend** (swap de DNS/proxy una vez validado en paralelo; recién ahí se retira `index.html`/`css/`/`js/`)
 - [ ] **4. API REST** (reemplaza `usePegas()` leyendo `data.json` por Postgres real; prerequisito de todo lo que implica escritura — publicar pega, login, destacar, pagos; también la consumiría el bot de Slack)
-- [ ] **5. Monetización** (una vez hay API con auth: registro, publicación paga, ranking/destacados, tracking tipo ecommerce en PostHog, suscripción paga — detalle arriba)
+- [ ] **5. Registro de usuarios** (cuentas para empresas —publicar/gestionar pegas— y candidatos —alertas personalizadas, guardar pegas—; requiere la API con auth del paso 4)
+- [ ] **6. Monetización** (una vez hay registro: publicación paga, ranking/destacados, tracking tipo ecommerce en PostHog, suscripción paga — detalle arriba)
