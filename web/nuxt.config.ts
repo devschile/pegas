@@ -31,6 +31,17 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Estas claves permiten override via NUXT_PG_HOST etc, pero
+    // server/utils/db.ts resuelve con precedencia a las PG* planas (mismo
+    // nombre que usan n8n y scripts/ en la raiz del monorepo) para no
+    // mantener dos juegos de secrets distintos en Coolify.
+    pg: {
+      host: '',
+      port: '5432',
+      database: 'pega',
+      user: 'pega',
+      password: '',
+    },
     public: {
       // Fuente de datos actual: el data.json estático del pipeline existente
       // (ver scripts/generate-json.js). Reemplazar por la URL de la API REST
@@ -49,7 +60,7 @@ export default defineNuxtConfig({
       link: [
         // Pineado a la version instalada de @devschile/chucao (package.json)
         // para que el CSS y los componentes no se desincronicen.
-        { rel: 'stylesheet', href: 'https://static.devschile.cl/chucao/1.5.1/chucao.css' },
+        { rel: 'stylesheet', href: 'https://static.devschile.cl/chucao/1.6.0/chucao.css' },
         // Mismo favicon (emoji como SVG) que el sitio estatico actual.
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
