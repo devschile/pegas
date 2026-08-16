@@ -1,0 +1,23 @@
+# Postgres local para desarrollo. NO usar en produccion (ver Coolify).
+#
+# Uso:
+#   docker compose -f docker-compose.dev.yml up -d
+#   node scripts/init-db.js   # aplica migrations/
+#   node scripts/seed.js      # datos de prueba
+#
+# La app en web/ lee PGHOST=localhost / PGPORT=5432 por defecto (ver
+# web/.env.example), que matchean lo publicado acá.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pega
+      POSTGRES_PASSWORD: pega
+      POSTGRES_DB: pega
+    ports:
+      - '5432:5432'
+    volumes:
+      - pegas-dev-pg:/var/lib/postgresql/data
+
+volumes:
+  pegas-dev-pg:
