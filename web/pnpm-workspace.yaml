@@ -1,5 +1,7 @@
 allowBuilds:
   core-js: true
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@devschile/chucao@1.6.0'
 onlyBuiltDependencies:
   - esbuild
