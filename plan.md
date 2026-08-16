@@ -14,6 +14,8 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - Corregido un bug donde el resumen podía mostrar un aviso vacío o incorrecto cuando no había pegas nuevas, y ajustado el horario para que corra en la zona horaria correcta.
 - Recuperadas manualmente algunas pegas que se habían perdido por un problema puntual de sincronización de un disparador automático.
 - Investigadas y descartadas varias fuentes adicionales candidatas — sin API pública utilizable, bloqueadas por protección anti-bots, o de una sola empresa (detalle en el README).
+- Sumadas dos fuentes más de pegas (Jobicy y Himalayas), ambas remoto-LatAm.
+- Scaffold del frontend nuevo (Nuxt SSR + chucao) en `web/`, consumiendo el `data.json` actual a través de un composable aislado. Tests con Vitest, cobertura mínima 80% forzada por Husky en cada commit.
 
 ## Pendiente
 
@@ -38,3 +40,17 @@ El sitio ya tiene tráfico y contenido diferenciado (agregación multi-fuente qu
 - **Tracking tipo ecommerce con PostHog.** Ya está instalado para analytics del sitio; falta modelarlo como funnel (impresión de pega → click → postulación) en vez de solo pageviews, para poder mostrarle métricas a una empresa que paga.
 - **Sistema de registro.** Cuentas para empresas (publicar/gestionar pegas) y candidatos (alertas personalizadas, guardar pegas).
 - **Suscripción paga.** Planes para empresas (publicar, destacar, ver métricas) y quizás un plan para candidatos (alertas curadas, acceso anticipado).
+
+## Roadmap: frontend nuevo → monetización
+
+Orden acordado para llegar de `web/` (scaffold ya hecho) a la monetización. Se va marcando a medida que se avanza.
+
+- [ ] **1. Completar el frontend nuevo (`web/`) contra el `data.json` actual**
+  - [ ] Filtros y búsqueda (categoría, ubicación, fuente, tags)
+  - [ ] Header/branding con chucao + `DESIGN.md`
+  - [ ] Paginación o scroll infinito
+  - [ ] Meta tags por página (title/description dinámico, OG tags) — aprovechar el SSR
+- [ ] **2. Desplegar `web/` en paralelo al sitio estático** (Dockerfile o preset Cloudflare propio; subdominio/puerto de prueba, el público sigue viendo el sitio actual)
+- [ ] **3. Cutover del sitio estático al nuevo frontend** (swap de DNS/proxy una vez validado en paralelo; recién ahí se retira `index.html`/`css/`/`js/`)
+- [ ] **4. API REST** (reemplaza `usePegas()` leyendo `data.json` por Postgres real; prerequisito de todo lo que implica escritura — publicar pega, login, destacar, pagos; también la consumiría el bot de Slack)
+- [ ] **5. Monetización** (una vez hay API con auth: registro, publicación paga, ranking/destacados, tracking tipo ecommerce en PostHog, suscripción paga — detalle arriba)

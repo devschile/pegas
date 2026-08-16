@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "type": "module",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "nuxt build",
@@ -14,8 +14,11 @@
   },
   "dependencies": {
     "@devschile/chucao": "^1.5.1",
+    "@nuxtjs/seo": "^5.3.12",
     "@stencil/vue-output-target": "^0.14.1",
+    "motion-v": "^2.3.0",
     "nuxt": "^4.5.2",
+    "posthog-js": "^1.417.1",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"
   },

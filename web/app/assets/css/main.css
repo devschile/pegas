@@ -1,0 +1,41 @@
+/*
+ * Estilos globales de la app. Los tokens (--bg, --bg-gradient, --accent,
+ * --font-heading, etc.) ya vienen de chucao.css (link en nuxt.config.ts) --
+ * aca solo se aplican al documento, tal como hace el sitio estatico actual
+ * (ver css/style.css en la raiz del repo). chucao.css ya pone --font-body
+ * en <body>, pero no toca fondo ni headings: eso queda a criterio de la app
+ * que lo consume, asi que se define aca.
+ */
+
+ :root {
+   --typography-weight-bold: var(--typography-weight-semibold);
+ }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  font-weight: var(--typography-weight-regular);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+.pegas-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 2rem 0 3rem;
+}

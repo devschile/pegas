@@ -107,7 +107,7 @@
     countVisible.textContent = filteredPegas.length.toLocaleString('es-CL');
 
     if (filteredPegas.length === 0) {
-      list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>Ninguna pega coincide con los filtros</p></div>';
+      list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>Ninguna pega coincide</p></div>';
       return;
     }
 

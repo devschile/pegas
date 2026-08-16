@@ -6,11 +6,11 @@ const { useFetchMock } = vi.hoisted(() => ({
 }));
 mockNuxtImport('useFetch', () => useFetchMock);
 
-describe('usePegas', () => {
+describe('useJobs', () => {
   it('pide el data.json configurado con una key estable', async () => {
-    const { usePegas } = await import('../usePegas');
+    const { useJobs } = await import('../useJobs');
 
-    const result = usePegas();
+    const result = useJobs();
 
     const [url, options] = useFetchMock.mock.calls[0]!;
     expect(url).toBe('https://pegas.devschile.cl/data/data.json');
