@@ -54,3 +54,20 @@ function handleApplyClick() { ... }
 No documentar lo evidente ("// obtiene la pega" arriba de `getJob()`). Si el
 comentario no sobreviviría a la pregunta "¿esto ya no lo dice el nombre?",
 no va.
+
+## Tests de `server/`
+
+Todo spec bajo `server/` necesita `// @vitest-environment node` como primera
+línea del archivo. `vitest.config.mts` usa `environment: 'nuxt'` a nivel
+global (vía `defineVitestConfig`), que registra un `beforeAll` asumiendo un
+router de Vue (`useRouter().afterEach(...)`) — revienta con
+`Cannot read properties of undefined (reading 'afterEach')` para cualquier
+spec fuera de `app/`, incluso uno que no monta ningún componente. La pragma
+cambia el entorno solo para ese archivo a `node` (sin `window`), lo cual
+evita ese setup; `useRuntimeConfig` y el resto de los auto-imports de Nitro
+se siguen mockeando igual con `mockNuxtImport`.
+
+Al mockear un constructor con `vi.hoisted`, usar `function` y no arrow
+(`vi.fn(function Pool() { ... })`, no `vi.fn(() => ...)`): una arrow function
+no es constructible, y `new MockeadoConArrow()` tira
+`TypeError: ... is not a constructor`.

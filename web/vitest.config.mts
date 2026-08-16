@@ -7,8 +7,8 @@ export default defineVitestConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['app/**/*.{js,ts,vue}'],
-      exclude: ['app/**/*.spec.{js,ts}', 'app/app.vue'],
+      include: ['app/**/*.{js,ts,vue}', 'server/**/*.ts'],
+      exclude: ['app/**/*.spec.{js,ts}', 'app/app.vue', 'server/**/*.spec.ts'],
       thresholds: {
         lines: 80,
         statements: 80,
