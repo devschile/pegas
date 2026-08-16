@@ -3,7 +3,10 @@ set -e
 
 echo "[entrypoint] Initializing database schema..."
 cd /app
-node scripts/init-db.js 2>&1 || echo "[entrypoint] WARNING: init-db failed"
+# Fatal a proposito: con migraciones reales (no solo CREATE TABLE IF NOT
+# EXISTS) arrancar la app contra un esquema a medio migrar es peor que no
+# arrancar.
+node scripts/init-db.js
 
 echo "[entrypoint] Seeding initial data..."
 node scripts/seed.js 2>&1 || echo "[entrypoint] WARNING: seed failed"

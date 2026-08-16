@@ -1,3 +1,9 @@
+-- Documentacion del esquema actual, NO se ejecuta directamente.
+-- La fuente de verdad y lo que corre en cada arranque del contenedor es
+-- migrations/ (ver scripts/init-db.js). Este archivo se mantiene al dia a
+-- mano como referencia legible de como queda la base tras aplicar todas
+-- las migraciones.
+
 -- Tabla de pegas - pega.devschile.cl
 CREATE TABLE IF NOT EXISTS pegas (
     id SERIAL PRIMARY KEY,
