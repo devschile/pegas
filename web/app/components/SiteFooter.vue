@@ -4,9 +4,9 @@ import { ChLink } from '@devschile/chucao/vue';
 
 <template>
   <footer class="site-footer">
-    <ChLink href="https://devschile.cl" data-allow-mismatch="class">devsChile</ChLink>
+    <ChLink href="https://devschile.cl">devsChile</ChLink>
     <span class="site-footer__separator">·</span>
-    <ChLink href="https://github.com/devschile/pegas" data-allow-mismatch="class">GitHub</ChLink>
+    <ChLink href="https://github.com/devschile/pegas">GitHub</ChLink>
     <span class="site-footer__separator">·</span>
     <span>Datos públicos desde LinkedIn, WorkingNomads, GetOnBoard y otras fuentes.</span>
   </footer>

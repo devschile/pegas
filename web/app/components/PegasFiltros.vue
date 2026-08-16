@@ -26,14 +26,12 @@ const sourceOptions = computed(() => [
         label="Buscar"
         placeholder="Buscar por título, empresa o descripción..."
         :value="query"
-        data-allow-mismatch="class"
         @ch-input="query = $event.detail ?? $event"
       />
       <ChSelect
         label="Fuente"
         :options="sourceOptions"
         :value="source"
-        data-allow-mismatch="class"
         @ch-change="source = $event.detail ?? $event"
       />
     </div>

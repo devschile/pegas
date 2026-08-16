@@ -25,7 +25,7 @@ function handleApplyClick() {
 
 <template>
   <Reveal class="pega-card-motion" :delay="revealDelay" :duration="0.1">
-    <ChCard class="pega-card" data-allow-mismatch="class">
+    <ChCard class="pega-card">
       <div class="pega-card__header">
         <h3 class="pega-card__titulo"><NuxtLink :to="detailUrl">{{ job.titulo }}</NuxtLink></h3>
         <span class="pega-card__fecha">{{ publishedDate }}</span>
@@ -34,19 +34,19 @@ function handleApplyClick() {
       <div class="pega-card__meta">
         <span class="pega-card__empleador">{{ job.empleador }}</span>
         <div class="pega-card__badges">
-          <ChBadge v-if="isRemote" variant="positive" data-allow-mismatch="class">🏠 Remoto</ChBadge>
-          <ChBadge v-if="job.sueldo" variant="positive" data-allow-mismatch="class">💰 {{ job.sueldo }}</ChBadge>
+          <ChBadge v-if="isRemote" variant="positive">🏠 Remoto</ChBadge>
+          <ChBadge v-if="job.sueldo" variant="positive">💰 {{ job.sueldo }}</ChBadge>
           <NuxtLink :to="`/categoria/${categorySlug(job.categoria)}`" class="pega-card__categoria-link">
-            <ChBadge data-allow-mismatch="class">{{ job.categoria }}</ChBadge>
+            <ChBadge>{{ job.categoria }}</ChBadge>
           </NuxtLink>
-          <ChBadge data-allow-mismatch="class">{{ job.ubicacion }}</ChBadge>
+          <ChBadge>{{ job.ubicacion }}</ChBadge>
         </div>
       </div>
 
       <p class="pega-card__descripcion">{{ job.descripcion }}</p>
 
       <div class="pega-card__footer">
-        <ChButton class="pega-card__apply" data-allow-mismatch="class" @ch-click="handleApplyClick">Ver oferta</ChButton>
+        <ChButton class="pega-card__apply" @ch-click="handleApplyClick">Ver oferta</ChButton>
         <span class="pega-card__fuente">{{ sourceLabel(job.fuente) }}</span>
       </div>
     </ChCard>

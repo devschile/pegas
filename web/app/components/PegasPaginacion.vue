@@ -14,9 +14,9 @@ const emit = defineEmits<{ prev: []; next: [] }>();
 
 <template>
   <div v-if="totalPages > 1" class="paginacion">
-    <ChButton variant="secondary" :disabled="page === 1" data-allow-mismatch="class" @ch-click="emit('prev')">← Anterior</ChButton>
+    <ChButton variant="secondary" :disabled="page === 1" @ch-click="emit('prev')">← Anterior</ChButton>
     <span class="paginacion__info">{{ start }}–{{ end }} de {{ total }}</span>
-    <ChButton variant="secondary" :disabled="page === totalPages" data-allow-mismatch="class" @ch-click="emit('next')">Siguiente →</ChButton>
+    <ChButton variant="secondary" :disabled="page === totalPages" @ch-click="emit('next')">Siguiente →</ChButton>
   </div>
 </template>
 

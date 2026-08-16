@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@devschile/chucao": "^1.5.1",
+    "@devschile/chucao": "^1.6.0",
     "@nuxtjs/seo": "^5.3.12",
     "@stencil/vue-output-target": "^0.14.1",
     "motion-v": "^2.3.0",

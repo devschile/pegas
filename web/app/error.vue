@@ -24,7 +24,7 @@ function goToHome() {
       <p class="error-page__mensaje">
         {{ isNotFound ? 'Esta pega ya no está, o la URL está mala.' : (error.statusMessage || 'Algo salió mal.') }}
       </p>
-      <ChButton variant="primary" data-allow-mismatch="class" @ch-click="goToHome">Volver al inicio</ChButton>
+      <ChButton variant="primary" @ch-click="goToHome">Volver al inicio</ChButton>
     </main>
     <SiteFooter />
   </div>
