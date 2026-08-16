@@ -11,7 +11,7 @@ const emit = defineEmits<{ reset: [] }>();
     <h2 class="categorias-nav__title">Categorías</h2>
     <nav class="categorias-nav" aria-label="Categorías">
       <NuxtLink to="/" class="categorias-nav__link categorias-nav__todos" @click="emit('reset')">
-        <ChBadge variant="positive" data-allow-mismatch="class">Todos</ChBadge>
+        <ChBadge variant="positive">Todos</ChBadge>
       </NuxtLink>
       <NuxtLink
         v-for="category in categories"
@@ -19,7 +19,7 @@ const emit = defineEmits<{ reset: [] }>();
         :to="`/categoria/${categorySlug(category)}`"
         class="categorias-nav__link"
       >
-        <ChBadge :variant="category === active ? 'positive' : 'default'" data-allow-mismatch="class">{{ category }}</ChBadge>
+        <ChBadge :variant="category === active ? 'positive' : 'default'">{{ category }}</ChBadge>
       </NuxtLink>
     </nav>
   </div>

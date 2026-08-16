@@ -83,11 +83,11 @@ function handleBackClick() {
 
 <template>
   <article class="pega-detalle">
-    <ChButton class="pega-detalle__volver" variant="secondary" data-allow-mismatch="class" @ch-click="handleBackClick">
+    <ChButton class="pega-detalle__volver" variant="secondary" @ch-click="handleBackClick">
       ← Volver
     </ChButton>
 
-    <ChCard class="pega-detalle__card" data-allow-mismatch="class">
+    <ChCard class="pega-detalle__card">
       <div class="pega-detalle__header">
         <h1 class="pega-detalle__titulo">{{ job.titulo }}</h1>
         <span class="pega-detalle__fecha">{{ publishedDate }}</span>
@@ -99,15 +99,15 @@ function handleBackClick() {
       </p>
 
       <div class="pega-detalle__badges">
-        <ChBadge v-if="isRemote" variant="positive" data-allow-mismatch="class">🏠 Remoto</ChBadge>
-        <ChBadge v-if="job.sueldo" variant="positive" data-allow-mismatch="class">💰 {{ job.sueldo }}</ChBadge>
-        <ChBadge data-allow-mismatch="class">{{ job.ubicacion }}</ChBadge>
+        <ChBadge v-if="isRemote" variant="positive">🏠 Remoto</ChBadge>
+        <ChBadge v-if="job.sueldo" variant="positive">💰 {{ job.sueldo }}</ChBadge>
+        <ChBadge>{{ job.ubicacion }}</ChBadge>
       </div>
 
       <p class="pega-detalle__descripcion">{{ job.descripcion }}</p>
 
       <div class="pega-detalle__footer">
-        <ChButton class="pega-detalle__apply" data-allow-mismatch="class" @ch-click="handleApplyClick">
+        <ChButton class="pega-detalle__apply" @ch-click="handleApplyClick">
           Ver oferta original →
         </ChButton>
         <span class="pega-detalle__fuente">Publicada en {{ sourceLabel(job.fuente) }}</span>

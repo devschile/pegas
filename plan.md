@@ -55,3 +55,7 @@ Orden acordado para llegar de `web/` (scaffold ya hecho) a la monetización. Se 
 - [ ] **4. API REST** (reemplaza `usePegas()` leyendo `data.json` por Postgres real; prerequisito de todo lo que implica escritura — publicar pega, login, destacar, pagos; también la consumiría el bot de Slack)
 - [ ] **5. Registro de usuarios** (cuentas para empresas —publicar/gestionar pegas— y candidatos —alertas personalizadas, guardar pegas—; requiere la API con auth del paso 4)
 - [ ] **6. Monetización** (una vez hay registro: publicación paga, ranking/destacados, tracking tipo ecommerce en PostHog, suscripción paga — detalle arriba)
+
+## Pendiente técnico
+
+- **SSR real de chucao vía `@devschile/chucao/hydrate`** (disponible desde chucao 1.6.0, usa Declarative Shadow DOM). Podría ser la causa real del delay de ~2s en aplicar estilos que se investigó y quedó sin resolver — hoy los componentes se registran client-side, así que no hay contenido con estilos reales hasta que el JS bootea. Requiere un hook `render:html` en Nitro que post-procese el HTML ya renderizado por Vue, corriendo cada tag `ch-*` a través de `renderToString` del paquete. No es trivial, evaluar con foco dedicado.

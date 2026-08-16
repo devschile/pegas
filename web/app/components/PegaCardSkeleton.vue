@@ -8,7 +8,7 @@ const revealDelay = computed(() => Math.min(props.index, 6) * 0.05);
 
 <template>
   <Reveal class="pega-card-motion" :delay="revealDelay" :duration="0.15" :y="6">
-    <ChCard class="pega-card-skeleton" data-allow-mismatch="class">
+    <ChCard class="pega-card-skeleton">
       <div class="pega-card-skeleton__header">
         <Skeleton width="65%" height="1.2em" />
         <Skeleton width="20%" height="0.85em" />

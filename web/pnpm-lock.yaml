@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@devschile/chucao':
-        specifier: ^1.5.1
-        version: 1.5.1(vue@3.5.41)
+        specifier: ^1.6.0
+        version: 1.6.0(vue@3.5.41)
       '@nuxtjs/seo':
         specifier: ^5.3.12
         version: 5.3.12(00300349f499da73747dcd958e77c0a0)
@@ -232,8 +232,8 @@ packages:
   '@colordx/core@5.5.0':
     resolution: {integrity: sha512-3PxTH8itZzltK0U9jTwVVnjLXvnDYuq3m+QXsHkENxWiPRh4WaoLcs1SQjqgZ55kS+QyirpH5BVwzP2gMVG6EQ==}
 
-  '@devschile/chucao@1.5.1':
-    resolution: {integrity: sha512-7phPNL7a2rLo0+p0nvYSGLK5bXWCdyiQBiRiXwa0PcdHR+1bokVJaPtuzn9l8J1U+PvIoetsQBRseD0q0TWXLw==}
+  '@devschile/chucao@1.6.0':
+    resolution: {integrity: sha512-xtDlaSH1QshFWRs1Oz31DOY0D4Q1+X2UDqQmaSP2uccPvsbgdQlbwYE4BTXQB7ReQYT6FAYn3w0zbqgNS+iAwQ==}
     engines: {node: '>=24'}
     peerDependencies:
       react: ^18 || ^19
@@ -4333,7 +4333,7 @@ snapshots:
 
   '@colordx/core@5.5.0': {}
 
-  '@devschile/chucao@1.5.1(vue@3.5.41)':
+  '@devschile/chucao@1.6.0(vue@3.5.41)':
     optionalDependencies:
       vue: 3.5.41
 
