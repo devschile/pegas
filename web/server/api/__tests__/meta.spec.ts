@@ -12,15 +12,15 @@ vi.mock('../../utils/db', () => ({
  * módulos virtuales (#nitro-internal-virtual/*) generados solo dentro de un
  * servidor Nitro real -- no se puede importar ni mockear vía mockNuxtImport
  * en un test unitario. Se shimea como identidad para poder importar el
- * módulo y ejercitar `obtenerMeta`; el wrapping de caché en sí queda sin
+ * módulo y ejercitar `getMeta`; el wrapping de caché en sí queda sin
  * cobertura de test, igual que `defineSitemapEventHandler` en
  * `server/api/__sitemap__/urls.ts`.
  */
 (globalThis as Record<string, unknown>).defineCachedEventHandler = (fn: unknown) => fn;
 
-const { obtenerMeta } = await import('../meta.get');
+const { getMeta } = await import('../meta.get');
 
-describe('obtenerMeta', () => {
+describe('getMeta', () => {
   beforeEach(() => {
     queryMock.mockReset();
   });
@@ -30,7 +30,7 @@ describe('obtenerMeta', () => {
       rows: [{ total: '3', categorias: ['frontend', 'backend'], fuentes: ['linkedin'], actualizado: '2026-08-01T00:00:00.000Z' }],
     });
 
-    expect(await obtenerMeta()).toEqual({
+    expect(await getMeta()).toEqual({
       total: 3,
       categorias: ['frontend', 'backend'],
       fuentes: ['linkedin'],
@@ -41,6 +41,6 @@ describe('obtenerMeta', () => {
   it('devuelve valores vacíos si no hay filas (tabla vacía)', async () => {
     queryMock.mockResolvedValueOnce({ rows: [] });
 
-    expect(await obtenerMeta()).toEqual({ total: 0, categorias: [], fuentes: [], actualizado: null });
+    expect(await getMeta()).toEqual({ total: 0, categorias: [], fuentes: [], actualizado: null });
   });
 });

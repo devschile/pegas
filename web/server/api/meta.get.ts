@@ -14,7 +14,7 @@ interface MetaRow {
   actualizado: string | null;
 }
 
-export async function obtenerMeta(): Promise<PegasMeta> {
+export async function getMeta(): Promise<PegasMeta> {
   const { rows } = await query<MetaRow>(
     `SELECT
        COUNT(*) AS total,
@@ -40,4 +40,4 @@ export async function obtenerMeta(): Promise<PegasMeta> {
  * de agregación por cada request — a diferencia de `/api/pegas`, acá no
  * hay filtros por usuario que invaliden el caché.
  */
-export default defineCachedEventHandler(obtenerMeta, { maxAge: 300 });
+export default defineCachedEventHandler(getMeta, { maxAge: 300 });
