@@ -18,6 +18,17 @@ const sources = computed(() => meta.value?.fuentes ?? []);
 const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * porPagina.value + 1));
 const rangeEnd = computed(() => Math.min(page.value * porPagina.value, total.value));
 
+/**
+ * `await` explícito, no solo el watch de abajo: un `watch` dispara
+ * `loadStates` sin que SSR lo espere -- el HTML ya se serializa antes de
+ * que la respuesta llegue, así que los botones quedaban siempre inactivos
+ * en el render inicial. El watch sigue haciendo falta para cuando `jobs`
+ * cambia client-side (paginación/filtros).
+ */
+const { loadStates } = usePegaReactions();
+await loadStates(jobs.value.map(job => job.id));
+watch(jobs, value => loadStates(value.map(job => job.id)));
+
 function goToPreviousPage() {
   if (page.value > 1) {
     prevPage();

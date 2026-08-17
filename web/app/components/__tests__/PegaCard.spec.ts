@@ -1,11 +1,25 @@
 import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import { mount } from '@vue/test-utils';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ref } from 'vue';
 import PegaCard from '../PegaCard.vue';
 import type { Pega } from '~/types/pega';
 
-const { trackMock } = vi.hoisted(() => ({ trackMock: vi.fn() }));
+const { trackMock, toggleReactionMock, toggleSavedMock } = vi.hoisted(() => ({
+  trackMock: vi.fn(),
+  toggleReactionMock: vi.fn(),
+  toggleSavedMock: vi.fn(),
+}));
+const statesRef = ref<Record<number, { reaccion: 'like' | 'dislike' | null; guardada: boolean }>>({});
+const loggedInRef = ref(true);
+
 mockNuxtImport('useTrackEvent', () => () => trackMock);
+mockNuxtImport('useUserSession', () => () => ({ loggedIn: loggedInRef }));
+mockNuxtImport('usePegaReactions', () => () => ({
+  states: statesRef,
+  toggleReaction: toggleReactionMock,
+  toggleSaved: toggleSavedMock,
+}));
 
 const baseJob: Pega = {
   id: 1,
@@ -23,6 +37,13 @@ const baseJob: Pega = {
 };
 
 describe('PegaCard', () => {
+  beforeEach(() => {
+    statesRef.value = {};
+    loggedInRef.value = true;
+    toggleReactionMock.mockClear();
+    toggleSavedMock.mockClear();
+  });
+
   it('muestra el titulo, el empleador y la ubicacion', () => {
     const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
@@ -58,5 +79,58 @@ describe('PegaCard', () => {
     );
 
     openSpy.mockRestore();
+  });
+
+  it('los botones de reaccion y guardar estan deshabilitados sin sesion', () => {
+    loggedInRef.value = false;
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+
+    const buttons = wrapper.findAllComponents({ name: 'ChButton' });
+    expect(buttons.find(b => b.text() === '👍')!.props('disabled')).toBe(true);
+    expect(buttons.find(b => b.text() === '👎')!.props('disabled')).toBe(true);
+    expect(buttons.find(b => b.text() === '🔖')!.props('disabled')).toBe(true);
+  });
+
+  it('clickear like llama a toggleReaction con "like"', async () => {
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+    const likeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '👍')!;
+
+    await likeButton.vm.$emit('ch-click');
+
+    expect(toggleReactionMock).toHaveBeenCalledWith(baseJob.id, 'like');
+  });
+
+  it('clickear nolike llama a toggleReaction con "dislike"', async () => {
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+    const dislikeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '👎')!;
+
+    await dislikeButton.vm.$emit('ch-click');
+
+    expect(toggleReactionMock).toHaveBeenCalledWith(baseJob.id, 'dislike');
+  });
+
+  it('clickear guardar llama a toggleSaved', async () => {
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+    const saveButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '🔖')!;
+
+    await saveButton.vm.$emit('ch-click');
+
+    expect(toggleSavedMock).toHaveBeenCalledWith(baseJob.id);
+  });
+
+  it('el boton de like usa variant primary cuando la reaccion esta activa', () => {
+    statesRef.value = { [baseJob.id]: { reaccion: 'like', guardada: false } };
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+
+    const likeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '👍')!;
+    expect(likeButton.props('variant')).toBe('primary');
+  });
+
+  it('el boton de guardar usa variant primary cuando esta guardada', () => {
+    statesRef.value = { [baseJob.id]: { reaccion: null, guardada: true } };
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+
+    const saveButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '🔖')!;
+    expect(saveButton.props('variant')).toBe('primary');
   });
 });
