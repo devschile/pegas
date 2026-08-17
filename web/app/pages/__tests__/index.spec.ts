@@ -2,12 +2,16 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref, Suspense } from 'vue';
-import type { Pega, PegasData } from '~/types/pega';
+import type { Pega, PegasMeta } from '~/types/pega';
 
-const { useJobsMock } = vi.hoisted(() => ({
+const { useJobsMock, useJobsListingMock, useFetchMock } = vi.hoisted(() => ({
   useJobsMock: vi.fn(),
+  useJobsListingMock: vi.fn(),
+  useFetchMock: vi.fn(),
 }));
 mockNuxtImport('useJobs', () => useJobsMock);
+mockNuxtImport('useJobsListing', () => useJobsListingMock);
+mockNuxtImport('useFetch', () => useFetchMock);
 
 function buildJob(overrides: Partial<Pega> = {}): Pega {
   return {
@@ -27,15 +31,26 @@ function buildJob(overrides: Partial<Pega> = {}): Pega {
   };
 }
 
-function buildJobsData(overrides: Partial<PegasData> = {}): PegasData {
+function buildMeta(overrides: Partial<PegasMeta> = {}): PegasMeta {
   return {
     total: 1,
     fuentes: ['getonbrd'],
     categorias: ['Frontend'],
     actualizado: '2026-08-15T00:00:00.000Z',
-    pegas: [buildJob()],
     ...overrides,
   };
+}
+
+function mockListing() {
+  const query = ref('');
+  const source = ref('');
+  const page = ref(1);
+  const nextPage = vi.fn(() => page.value++);
+  const prevPage = vi.fn(() => {
+    if (page.value > 1) page.value--;
+  });
+  useJobsListingMock.mockReturnValue({ query, source, page, filters: ref({}), nextPage, prevPage });
+  return { query, source, page, nextPage, prevPage };
 }
 
 /**
@@ -56,11 +71,9 @@ async function mountIndexPage() {
 
 describe('pages/index', () => {
   it('muestra un mensaje de error', async () => {
-    useJobsMock.mockReturnValue({
-      data: ref(null),
-      status: ref('error'),
-      error: ref(new Error('fallo')),
-    });
+    mockListing();
+    useJobsMock.mockReturnValue({ data: ref(null), error: ref(new Error('fallo')) });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()) });
 
     const wrapper = await mountIndexPage();
 
@@ -68,11 +81,9 @@ describe('pages/index', () => {
   });
 
   it('muestra un mensaje cuando no hay pegas en absoluto', async () => {
-    useJobsMock.mockReturnValue({
-      data: ref(buildJobsData({ pegas: [], categorias: [], fuentes: [] })),
-      status: ref('success'),
-      error: ref(null),
-    });
+    mockListing();
+    useJobsMock.mockReturnValue({ data: ref({ total: 0, pagina: 1, porPagina: 25, pegas: [] }), error: ref(null) });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta({ total: 0, categorias: [], fuentes: [] })) });
 
     const wrapper = await mountIndexPage();
 
@@ -80,11 +91,9 @@ describe('pages/index', () => {
   });
 
   it('lista las pegas y muestra los filtros cuando llegan datos', async () => {
-    useJobsMock.mockReturnValue({
-      data: ref(buildJobsData()),
-      status: ref('success'),
-      error: ref(null),
-    });
+    mockListing();
+    useJobsMock.mockReturnValue({ data: ref({ total: 1, pagina: 1, porPagina: 25, pegas: [buildJob()] }), error: ref(null) });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()) });
 
     const wrapper = await mountIndexPage();
 
@@ -93,32 +102,28 @@ describe('pages/index', () => {
   });
 
   it('muestra un mensaje cuando el filtro no matchea ninguna pega', async () => {
-    useJobsMock.mockReturnValue({
-      data: ref(buildJobsData()),
-      status: ref('success'),
-      error: ref(null),
-    });
+    mockListing();
+    useJobsMock.mockReturnValue({ data: ref({ total: 0, pagina: 1, porPagina: 25, pegas: [] }), error: ref(null) });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()) });
 
     const wrapper = await mountIndexPage();
-    const filters = wrapper.findComponent({ name: 'PegasFiltros' });
-    await filters.vm.$emit('update:query', 'esto no matchea con nada');
-    await flushPromises();
 
     expect(wrapper.text()).toContain('Ninguna pega coincide');
   });
 
   it('pagina el listado cuando hay mas de 25 resultados y hace scroll al tope', async () => {
     const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const { page, nextPage, prevPage } = mockListing();
     useJobsMock.mockReturnValue({
-      data: ref(
-        buildJobsData({
-          pegas: Array.from({ length: 30 }, (_, index) => buildJob({ id: index, titulo: `Pega ${index}` })),
-          total: 30,
-        }),
-      ),
-      status: ref('success'),
+      data: ref({
+        total: 30,
+        pagina: 1,
+        porPagina: 25,
+        pegas: Array.from({ length: 25 }, (_, index) => buildJob({ id: index, titulo: `Pega ${index}` })),
+      }),
       error: ref(null),
     });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta({ total: 30 })) });
 
     const wrapper = await mountIndexPage();
     const pagination = wrapper.findComponent({ name: 'PegasPaginacion' });
@@ -127,18 +132,33 @@ describe('pages/index', () => {
     expect(wrapper.findAllComponents({ name: 'PegaCard' })).toHaveLength(25);
 
     await pagination.vm.$emit('next');
-    await flushPromises();
-
-    expect(wrapper.findAllComponents({ name: 'PegaCard' })).toHaveLength(5);
+    expect(nextPage).toHaveBeenCalled();
+    expect(page.value).toBe(2);
     expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
 
     scrollToSpy.mockClear();
     await pagination.vm.$emit('prev');
-    await flushPromises();
-
-    expect(wrapper.findAllComponents({ name: 'PegaCard' })).toHaveLength(25);
+    expect(prevPage).toHaveBeenCalled();
+    expect(page.value).toBe(1);
     expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
 
     scrollToSpy.mockRestore();
+  });
+
+  it('no avanza de pagina mas alla del total', async () => {
+    const { page, nextPage } = mockListing();
+    page.value = 2;
+    useJobsMock.mockReturnValue({
+      data: ref({ total: 30, pagina: 2, porPagina: 25, pegas: Array.from({ length: 5 }, (_, i) => buildJob({ id: i })) }),
+      error: ref(null),
+    });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta({ total: 30 })) });
+
+    const wrapper = await mountIndexPage();
+    const pagination = wrapper.findComponent({ name: 'PegasPaginacion' });
+
+    await pagination.vm.$emit('next');
+
+    expect(nextPage).not.toHaveBeenCalled();
   });
 });

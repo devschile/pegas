@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { PegasMeta } from '~/types/pega';
 
-const { data } = useJobs();
+const { data } = useFetch<PegasMeta>('/api/meta', { key: 'pegas-meta' });
 const total = computed(() => data.value?.total ?? 0);
 </script>
 

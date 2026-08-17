@@ -3,21 +3,33 @@ import { ChBadge, ChButton, ChCard } from '@devschile/chucao/vue';
 import { computed, onMounted } from 'vue';
 import { formatDate, sourceLabel } from '~/utils/pegas';
 import { categorySlug, idFromSlug, jobSlug } from '~/utils/slug';
+import type { Pega } from '~/types/pega';
 
 const route = useRoute();
-const { data, error: fetchError } = await useJobs();
 const track = useTrackEvent();
 
 const idParam = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
 const id = idFromSlug(idParam ?? '');
-const job = data.value?.pegas.find(item => item.id === id) ?? null;
 
-if (fetchError.value) {
-  throw createError({ statusCode: 500, statusMessage: 'No se pudieron cargar las pegas', fatal: true });
-}
-if (!job) {
+if (id === null) {
   throw createError({ statusCode: 404, statusMessage: 'Pega no encontrada', fatal: true });
 }
+
+const { data: fetchedJob, error: fetchError } = await useFetch<Pega>(`/api/pegas/${id}`, { key: `pega-${id}` });
+
+if (fetchError.value) {
+  const statusCode = fetchError.value.statusCode === 404 ? 404 : 500;
+  throw createError({
+    statusCode,
+    statusMessage: statusCode === 404 ? 'Pega no encontrada' : 'No se pudieron cargar las pegas',
+    fatal: true,
+  });
+}
+if (!fetchedJob.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Pega no encontrada', fatal: true });
+}
+
+const job = fetchedJob.value;
 
 const publishedDate = computed(() => formatDate(job.fecha_publicacion || job.fecha_creacion));
 const isRemote = computed(() => Boolean(job.tags?.includes('remote')));

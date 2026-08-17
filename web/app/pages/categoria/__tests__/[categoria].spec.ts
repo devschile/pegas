@@ -2,14 +2,18 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref, Suspense } from 'vue';
-import type { Pega, PegasData } from '~/types/pega';
+import type { Pega, PegasMeta } from '~/types/pega';
 
-const { useJobsMock, useRouteMock, trackMock } = vi.hoisted(() => ({
+const { useJobsMock, useJobsListingMock, useFetchMock, useRouteMock, trackMock } = vi.hoisted(() => ({
   useJobsMock: vi.fn(),
+  useJobsListingMock: vi.fn(),
+  useFetchMock: vi.fn(),
   useRouteMock: vi.fn(),
   trackMock: vi.fn(),
 }));
 mockNuxtImport('useJobs', () => useJobsMock);
+mockNuxtImport('useJobsListing', () => useJobsListingMock);
+mockNuxtImport('useFetch', () => useFetchMock);
 mockNuxtImport('useRoute', () => useRouteMock);
 mockNuxtImport('useTrackEvent', () => () => trackMock);
 
@@ -31,18 +35,28 @@ function buildJob(overrides: Partial<Pega> = {}): Pega {
   };
 }
 
-function buildJobsData(overrides: Partial<PegasData> = {}): PegasData {
+function buildMeta(overrides: Partial<PegasMeta> = {}): PegasMeta {
   return {
     total: 2,
     fuentes: ['getonbrd', 'linkedin'],
     categorias: ['Frontend', 'Backend'],
     actualizado: '2026-08-15T00:00:00.000Z',
-    pegas: [
-      buildJob({ id: 1, categoria: 'Frontend', titulo: 'Frontend Developer' }),
-      buildJob({ id: 2, categoria: 'Backend', titulo: 'Backend Developer', fuente: 'linkedin' }),
-    ],
     ...overrides,
   };
+}
+
+function mockListing() {
+  const query = ref('');
+  const source = ref('');
+  const page = ref(1);
+  useJobsListingMock.mockReturnValue({
+    query,
+    source,
+    page,
+    filters: ref({ q: '', categoria: '', fuente: '', pagina: 1 }),
+    nextPage: vi.fn(() => page.value++),
+    prevPage: vi.fn(() => { if (page.value > 1) page.value--; }),
+  });
 }
 
 async function mountCategoryPage() {
@@ -77,18 +91,33 @@ async function mountCategoryPageExpectingError() {
 
 describe('pages/categoria/[categoria]', () => {
   it('muestra solo las pegas de la categoria del slug', async () => {
+    mockListing();
     useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
-    useJobsMock.mockReturnValue({ data: ref(buildJobsData()), error: ref(null) });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()), error: ref(null) });
+    useJobsMock.mockReturnValue({ data: ref({ total: 1, pagina: 1, porPagina: 25, pegas: [buildJob({ id: 1, categoria: 'Frontend' })] }), error: ref(null) });
 
     const wrapper = await mountCategoryPage();
 
     expect(wrapper.text()).toContain('Frontend Developer');
-    expect(wrapper.text()).not.toContain('Backend Developer');
+  });
+
+  it('pide /api/pegas con la categoria resuelta desde el slug', async () => {
+    mockListing();
+    useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()), error: ref(null) });
+    useJobsMock.mockReturnValue({ data: ref({ total: 1, pagina: 1, porPagina: 25, pegas: [buildJob()] }), error: ref(null) });
+
+    await mountCategoryPage();
+
+    const [filtersArg] = useJobsMock.mock.calls[0]!;
+    expect(filtersArg.value).toMatchObject({ categoria: 'Frontend' });
   });
 
   it('trackea categoria_view al montar', async () => {
+    mockListing();
     useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
-    useJobsMock.mockReturnValue({ data: ref(buildJobsData()), error: ref(null) });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()), error: ref(null) });
+    useJobsMock.mockReturnValue({ data: ref({ total: 1, pagina: 1, porPagina: 25, pegas: [buildJob()] }), error: ref(null) });
     trackMock.mockClear();
 
     await mountCategoryPage();
@@ -97,16 +126,29 @@ describe('pages/categoria/[categoria]', () => {
   });
 
   it('tira 404 si la categoria del slug no existe', async () => {
+    mockListing();
     useRouteMock.mockReturnValue({ params: { categoria: 'no-existe' }, path: '/categoria/no-existe', fullPath: '/categoria/no-existe', matched: [] });
-    useJobsMock.mockReturnValue({ data: ref(buildJobsData()), error: ref(null) });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()), error: ref(null) });
 
     const error = await mountCategoryPageExpectingError();
 
     expect(error).toMatchObject({ statusCode: 404 });
   });
 
-  it('tira 500 si fallo la carga de datos', async () => {
+  it('tira 500 si fallo la carga de meta', async () => {
+    mockListing();
     useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
+    useFetchMock.mockReturnValue({ data: ref(null), error: ref(new Error('fallo')) });
+
+    const error = await mountCategoryPageExpectingError();
+
+    expect(error).toMatchObject({ statusCode: 500 });
+  });
+
+  it('tira 500 si fallo la carga de pegas', async () => {
+    mockListing();
+    useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta()), error: ref(null) });
     useJobsMock.mockReturnValue({ data: ref(null), error: ref(new Error('fallo')) });
 
     const error = await mountCategoryPageExpectingError();

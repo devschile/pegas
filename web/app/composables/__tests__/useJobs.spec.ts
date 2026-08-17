@@ -1,5 +1,6 @@
 import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import { describe, expect, it, vi } from 'vitest';
+import { ref } from 'vue';
 
 const { useFetchMock } = vi.hoisted(() => ({
   useFetchMock: vi.fn(() => 'fetch-result'),
@@ -7,14 +8,15 @@ const { useFetchMock } = vi.hoisted(() => ({
 mockNuxtImport('useFetch', () => useFetchMock);
 
 describe('useJobs', () => {
-  it('pide el data.json configurado con una key estable', async () => {
+  it('pide /api/pegas con los filtros reactivos y una key estable', async () => {
     const { useJobs } = await import('../useJobs');
+    const filters = ref({ q: 'vue', categoria: '', fuente: 'getonbrd', pagina: 1 });
 
-    const result = useJobs();
+    const result = useJobs(filters);
 
     const [url, options] = useFetchMock.mock.calls[0]!;
-    expect(url).toBe('https://pegas.devschile.cl/data/data.json');
-    expect(options).toMatchObject({ key: 'pegas-data' });
+    expect(url).toBe('/api/pegas');
+    expect(options).toMatchObject({ key: 'pegas-data', query: filters });
     expect(result).toBe('fetch-result');
   });
 });
