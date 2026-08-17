@@ -1,58 +1,65 @@
 <script setup lang="ts">
-import { ChButton } from '@devschile/chucao/vue';
 import { computed, onMounted } from 'vue';
-import { PAGE_SIZE, useJobsListing } from '~/composables/useJobsListing';
 import { findCategoryBySlug } from '~/utils/slug';
 import { scrollToTop } from '~/utils/scroll';
+import type { PegasMeta } from '~/types/pega';
 
 const route = useRoute();
-const router = useRouter();
-const { data, error: fetchError } = await useJobs();
 const track = useTrackEvent();
 
-const slugParam = Array.isArray(route.params.categoria) ? route.params.categoria[0] : route.params.categoria;
-const category = findCategoryBySlug(data.value?.categorias ?? [], slugParam ?? '');
+const { data: meta, error: metaError } = await useFetch<PegasMeta>('/api/meta', { key: 'pegas-meta' });
 
-if (fetchError.value) {
+const slugParam = Array.isArray(route.params.categoria) ? route.params.categoria[0] : route.params.categoria;
+const category = findCategoryBySlug(meta.value?.categorias ?? [], slugParam ?? '');
+
+if (metaError.value) {
   throw createError({ statusCode: 500, statusMessage: 'No se pudieron cargar las pegas', fatal: true });
 }
 if (!category) {
   throw createError({ statusCode: 404, statusMessage: 'Categoría no encontrada', fatal: true });
 }
 
-const allCategories = computed(() => data.value?.categorias ?? []);
-const categoryJobs = computed(() => (data.value?.pegas ?? []).filter(job => job.categoria === category));
-const categorySources = computed(() => [...new Set(categoryJobs.value.map(job => job.fuente))]);
+const { query, source, page, filters: baseFilters, nextPage, prevPage } = useJobsListing();
+const filters = computed(() => ({ ...baseFilters.value, categoria: category }));
+const { data, error: fetchError } = await useJobs(filters);
 
-const { query, source, page, totalPages, filteredJobs, pageItems, nextPage, prevPage } =
-  useJobsListing(categoryJobs);
+if (fetchError.value) {
+  throw createError({ statusCode: 500, statusMessage: 'No se pudieron cargar las pegas', fatal: true });
+}
 
-const rangeStart = computed(() => (page.value - 1) * PAGE_SIZE + 1);
-const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, filteredJobs.value.length));
+const jobs = computed(() => data.value?.pegas ?? []);
+const total = computed(() => data.value?.total ?? 0);
+const porPagina = computed(() => data.value?.porPagina ?? 25);
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / porPagina.value)));
+const allCategories = computed(() => meta.value?.categorias ?? []);
+const categorySources = computed(() => meta.value?.fuentes ?? []);
+
+const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * porPagina.value + 1));
+const rangeEnd = computed(() => Math.min(page.value * porPagina.value, total.value));
 
 onMounted(() => {
-  track('categoria_view', { categoria: category, total: categoryJobs.value.length });
+  track('categoria_view', { categoria: category, total: total.value });
 });
 
 function goToPreviousPage() {
-  prevPage();
-  scrollToTop();
+  if (page.value > 1) {
+    prevPage();
+    scrollToTop();
+  }
 }
 
 function goToNextPage() {
-  nextPage();
-  scrollToTop();
-}
-
-function handleBackClick() {
-  router.push('/');
+  if (page.value < totalPages.value) {
+    nextPage();
+    scrollToTop();
+  }
 }
 
 useSeoMeta({
   title: `Pegas de ${category}`,
   description: `Ofertas de trabajo tech de ${category} en Chile y remoto LatAm, agregadas desde varias fuentes.`,
   ogTitle: `Pegas de ${category}`,
-  ogDescription: `${categoryJobs.value.length} pegas de ${category} disponibles ahora en Pegas devsChile().`,
+  ogDescription: `${total.value} pegas de ${category} disponibles ahora en Pegas devsChile().`,
   ogImage: 'https://utfs.io/f/ZkRB8SdTOr1pVr4K8lG0bLlkFfDeNAs3GhUqpWQTYazn8jSH',
   twitterCard: 'summary_large_image',
 });
@@ -66,16 +73,16 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
       v-model:query="query"
       v-model:source="source"
       :sources="categorySources"
-      :total-visible="filteredJobs.length"
-      :total-general="categoryJobs.length"
+      :total-visible="total"
+      :total-general="total"
     />
 
     <CategoriasNav :categories="allCategories" :active="category" />
 
-    <p v-if="filteredJobs.length === 0" class="listado-categoria__mensaje">🔍 Ninguna pega coincide</p>
+    <p v-if="jobs.length === 0" class="listado-categoria__mensaje">🔍 Ninguna pega coincide</p>
 
     <div v-else class="pegas-grid">
-      <PegaCard v-for="(job, index) in pageItems" :key="job.id" :job="job" :index="index" />
+      <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
     </div>
 
     <PegasPaginacion
@@ -83,7 +90,7 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
       :total-pages="totalPages"
       :start="rangeStart"
       :end="rangeEnd"
-      :total="filteredJobs.length"
+      :total="total"
       @prev="goToPreviousPage"
       @next="goToNextPage"
     />
