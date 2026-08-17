@@ -1,0 +1,52 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { Pega } from '~/types/pega';
+import type { Reaction } from '../../server/utils/reacciones';
+
+const { loggedIn } = useUserSession();
+if (!loggedIn.value) {
+  await navigateTo('/');
+}
+
+type MiPega = Pega & { reaccion: Reaction | null; guardada: boolean };
+
+const { data, error } = await useFetch<MiPega[]>('/api/me/pegas', { key: 'mis-pegas' });
+
+/** Siembra el estado compartido con lo que ya vino en esta misma respuesta -- evita un segundo round-trip a /api/me/pegas-estado para las mismas pegas. */
+const { states } = usePegaReactions();
+for (const pega of data.value ?? []) {
+  states.value[pega.id] = { reaccion: pega.reaccion, guardada: pega.guardada };
+}
+
+const pegas = computed<Pega[]>(() => data.value ?? []);
+
+useSeoMeta({
+  title: 'Mis pegas',
+  description: 'Pegas que guardaste o marcaste con like/nolike.',
+});
+</script>
+
+<template>
+  <div class="mis-pegas">
+    <h1 class="mis-pegas__titulo">Mis pegas</h1>
+
+    <p v-if="error" class="mis-pegas__mensaje">⚠ Error al cargar tus pegas</p>
+    <p v-else-if="pegas.length === 0" class="mis-pegas__mensaje">Todavía no guardaste ni reaccionaste a ninguna pega</p>
+
+    <div v-else class="pegas-grid">
+      <PegaCard v-for="(job, index) in pegas" :key="job.id" :job="job" :index="index" />
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.mis-pegas__titulo {
+  margin-bottom: 1.5rem;
+}
+
+.mis-pegas__mensaje {
+  text-align: center;
+  padding: 4rem 0;
+  color: var(--text-muted, #666);
+}
+</style>

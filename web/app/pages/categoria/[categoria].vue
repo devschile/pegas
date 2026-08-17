@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { findCategoryBySlug } from '~/utils/slug';
 import { scrollToTop } from '~/utils/scroll';
 import type { PegasMeta } from '~/types/pega';
@@ -36,6 +36,11 @@ const categorySources = computed(() => meta.value?.fuentes ?? []);
 
 const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * porPagina.value + 1));
 const rangeEnd = computed(() => Math.min(page.value * porPagina.value, total.value));
+
+/** `await` explícito -- ver la misma nota en index.vue: un watch no bloquea SSR. */
+const { loadStates } = usePegaReactions();
+await loadStates(jobs.value.map(job => job.id));
+watch(jobs, value => loadStates(value.map(job => job.id)));
 
 onMounted(() => {
   track('categoria_view', { categoria: category, total: total.value });

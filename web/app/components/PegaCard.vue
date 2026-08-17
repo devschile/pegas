@@ -7,10 +7,14 @@ import type { Pega } from '~/types/pega';
 
 const props = withDefaults(defineProps<{ job: Pega; index?: number }>(), { index: 0 });
 const track = useTrackEvent();
+const { loggedIn } = useUserSession();
+const { states, toggleReaction, toggleSaved } = usePegaReactions();
+
 const publishedDate = computed(() => formatDate(props.job.fecha_publicacion || props.job.fecha_creacion));
 const isRemote = computed(() => Boolean(props.job.tags?.includes('remote')));
 const detailUrl = computed(() => `/pega/${jobSlug(props.job)}`);
 const revealDelay = computed(() => Math.min(props.index, 6) * 0.2);
+const state = computed(() => states.value[props.job.id] ?? { reaccion: null, guardada: false });
 
 function handleApplyClick() {
   track('pega_click_apply', {
@@ -20,6 +24,18 @@ function handleApplyClick() {
     empleador: props.job.empleador,
   });
   window.open(props.job.url, '_blank', 'noopener,noreferrer');
+}
+
+function handleLikeClick() {
+  toggleReaction(props.job.id, 'like');
+}
+
+function handleDislikeClick() {
+  toggleReaction(props.job.id, 'dislike');
+}
+
+function handleSaveClick() {
+  toggleSaved(props.job.id);
 }
 </script>
 
@@ -47,6 +63,26 @@ function handleApplyClick() {
 
       <div class="pega-card__footer">
         <ChButton class="pega-card__apply" @ch-click="handleApplyClick">Ver oferta</ChButton>
+        <div class="pega-card__reactions">
+          <ChButton
+            :variant="state.reaccion === 'like' ? 'primary' : 'secondary'"
+            :disabled="!loggedIn"
+            label="Me gusta"
+            @ch-click="handleLikeClick"
+          >👍</ChButton>
+          <ChButton
+            :variant="state.reaccion === 'dislike' ? 'primary' : 'secondary'"
+            :disabled="!loggedIn"
+            label="No me gusta"
+            @ch-click="handleDislikeClick"
+          >👎</ChButton>
+          <ChButton
+            :variant="state.guardada ? 'primary' : 'secondary'"
+            :disabled="!loggedIn"
+            label="Guardar"
+            @ch-click="handleSaveClick"
+          >🔖</ChButton>
+        </div>
         <span class="pega-card__fuente">{{ sourceLabel(job.fuente) }}</span>
       </div>
     </ChCard>
@@ -117,8 +153,15 @@ function handleApplyClick() {
 
 .pega-card__footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+}
+
+.pega-card__reactions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .pega-card__fuente {

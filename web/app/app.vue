@@ -23,6 +23,7 @@
       </NuxtPage>
     </main>
     <SiteFooter />
+    <UserMenu />
   </div>
 </template>
 
