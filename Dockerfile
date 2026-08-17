@@ -1,7 +1,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --production --ignore-scripts
 
 FROM nginx:alpine
 # Install Node.js for the generate-json.js script
