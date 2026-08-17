@@ -43,10 +43,6 @@ export default defineNuxtConfig({
       password: '',
     },
     public: {
-      // Fuente de datos actual: el data.json estático del pipeline existente
-      // (ver scripts/generate-json.js). Reemplazar por la URL de la API REST
-      // cuando exista -- ver app/composables/useJobs.ts.
-      dataJsonUrl: 'https://pegas.devschile.cl/data/data.json',
       // Mismo proyecto de PostHog que ya usa el sitio estatico actual
       // (index.html), para no partir el analytics en dos durante la
       // convivencia de ambos frontends.

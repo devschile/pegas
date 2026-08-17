@@ -13,10 +13,16 @@ export interface Pega {
   fecha_creacion: string;
 }
 
-export interface PegasData {
+export interface PegasListado {
   total: number;
-  fuentes: string[];
-  categorias: string[];
-  actualizado: string;
+  pagina: number;
+  porPagina: number;
   pegas: Pega[];
+}
+
+export interface PegasMeta {
+  total: number;
+  categorias: string[];
+  fuentes: string[];
+  actualizado: string | null;
 }

@@ -1,97 +1,142 @@
-import { describe, expect, it } from 'vitest';
-import { nextTick, ref } from 'vue';
-import { PAGE_SIZE, useJobsListing } from '../useJobsListing';
-import type { Pega } from '~/types/pega';
+import { mockNuxtImport } from '@nuxt/test-utils/runtime';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { nextTick } from 'vue';
 
-function buildJob(overrides: Partial<Pega>): Pega {
-  return {
-    id: 1,
-    url: 'https://example.com/1',
-    titulo: 'Frontend Developer',
-    empleador: 'Acme',
-    descripcion: 'Frontend Developer, Chile',
-    categoria: 'Frontend',
-    ubicacion: 'Chile',
-    sueldo: null,
-    tags: null,
-    fecha_publicacion: '2026-08-15T00:00:00.000Z',
-    fuente: 'getonbrd',
-    fecha_creacion: '2026-08-15T00:00:00.000Z',
-    ...overrides,
-  };
+const { useRouteMock, replaceMock } = vi.hoisted(() => ({
+  useRouteMock: vi.fn(() => ({ query: {} })),
+  replaceMock: vi.fn(),
+}));
+mockNuxtImport('useRoute', () => useRouteMock);
+/**
+ * No se puede reemplazar useRouter por un objeto mínimo: plugins internos
+ * de Nuxt (navigation-repaint, @nuxt/test-utils) llaman
+ * `useRouter().afterEach(...)`/`.beforeResolve(...)` en el setup del test
+ * environment, antes de que corra el test -- un mock sin esos métodos
+ * rompe *cualquier* test de este archivo con un TypeError ajeno al
+ * composable. Se mockea con los no-ops que esos plugins necesitan más
+ * `replace`, que es lo único que este composable llama.
+ */
+mockNuxtImport('useRouter', () => () => ({
+  replace: replaceMock,
+  afterEach: vi.fn(),
+  beforeResolve: vi.fn(),
+}));
+
+async function importUseJobsListing() {
+  const { useJobsListing } = await import('../useJobsListing');
+  return useJobsListing;
 }
 
 describe('useJobsListing', () => {
-  it('sin filtros muestra todo, hasta PAGE_SIZE por pagina', () => {
-    const jobs = ref(Array.from({ length: 30 }, (_, i) => buildJob({ id: i, titulo: `Pega ${i}` })));
-    const { filteredJobs, pageItems, totalPages } = useJobsListing(jobs);
-
-    expect(filteredJobs.value).toHaveLength(30);
-    expect(pageItems.value).toHaveLength(PAGE_SIZE);
-    expect(totalPages.value).toBe(2);
+  beforeEach(() => {
+    vi.useFakeTimers();
+    replaceMock.mockClear();
+    useRouteMock.mockReturnValue({ query: {} });
   });
 
-  it('filtra por categoria', () => {
-    const jobs = ref([
-      buildJob({ id: 1, categoria: 'Frontend' }),
-      buildJob({ id: 2, categoria: 'Backend' }),
-    ]);
-    const { filteredJobs, category } = useJobsListing(jobs);
-
-    category.value = 'Backend';
-
-    expect(filteredJobs.value).toHaveLength(1);
-    expect(filteredJobs.value[0]!.id).toBe(2);
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
-  it('filtra por fuente', () => {
-    const jobs = ref([
-      buildJob({ id: 1, fuente: 'getonbrd' }),
-      buildJob({ id: 2, fuente: 'linkedin' }),
-    ]);
-    const { filteredJobs, source } = useJobsListing(jobs);
+  it('arranca en blanco/pagina 1 sin query string', async () => {
+    const useJobsListing = await importUseJobsListing();
+    const { query, source, page, filters } = useJobsListing();
 
-    source.value = 'linkedin';
-
-    expect(filteredJobs.value).toHaveLength(1);
-    expect(filteredJobs.value[0]!.id).toBe(2);
+    expect(query.value).toBe('');
+    expect(source.value).toBe('');
+    expect(page.value).toBe(1);
+    expect(filters.value).toEqual({ q: '', categoria: '', fuente: '', pagina: 1 });
   });
 
-  it('busca por titulo, empleador, descripcion y categoria (case-insensitive)', () => {
-    const jobs = ref([
-      buildJob({ id: 1, titulo: 'Backend Developer', empleador: 'Acme' }),
-      buildJob({ id: 2, titulo: 'Diseñador UX', empleador: 'Otra Empresa' }),
-    ]);
-    const { filteredJobs, query } = useJobsListing(jobs);
+  it('lee el estado inicial desde la query string (deep-link)', async () => {
+    useRouteMock.mockReturnValue({ query: { q: 'vue', fuente: 'getonbrd', pagina: '3' } });
+    const useJobsListing = await importUseJobsListing();
 
-    query.value = 'ACME';
+    const { query, source, page, filters } = useJobsListing();
 
-    expect(filteredJobs.value).toHaveLength(1);
-    expect(filteredJobs.value[0]!.id).toBe(1);
+    expect(query.value).toBe('vue');
+    expect(source.value).toBe('getonbrd');
+    expect(page.value).toBe(3);
+    expect(filters.value).toEqual({ q: 'vue', categoria: '', fuente: 'getonbrd', pagina: 3 });
   });
 
-  it('vuelve a la pagina 1 cuando cambia un filtro', async () => {
-    const jobs = ref(Array.from({ length: 30 }, (_, i) => buildJob({ id: i })));
-    const { page, nextPage, query } = useJobsListing(jobs);
+  it('ignora un pagina invalido en la query string y cae a 1', async () => {
+    useRouteMock.mockReturnValue({ query: { pagina: 'abc' } });
+    const useJobsListing = await importUseJobsListing();
+
+    expect(useJobsListing().page.value).toBe(1);
+  });
+
+  it('debouncea query 300ms antes de reflejarse en filters', async () => {
+    const useJobsListing = await importUseJobsListing();
+    const { query, filters } = useJobsListing();
+
+    query.value = 'react';
+    await nextTick();
+    expect(filters.value.q).toBe('');
+
+    vi.advanceTimersByTime(299);
+    await nextTick();
+    expect(filters.value.q).toBe('');
+
+    vi.advanceTimersByTime(1);
+    await nextTick();
+    expect(filters.value.q).toBe('react');
+  });
+
+  it('vuelve a la pagina 1 cuando cambia la busqueda (debounceada)', async () => {
+    const useJobsListing = await importUseJobsListing();
+    const { query, page, nextPage } = useJobsListing();
 
     nextPage();
     expect(page.value).toBe(2);
 
-    query.value = 'algo';
+    query.value = 'react';
+    await nextTick();
+    vi.advanceTimersByTime(300);
     await nextTick();
 
     expect(page.value).toBe(1);
   });
 
-  it('nextPage/prevPage no salen del rango [1, totalPages]', () => {
-    const jobs = ref([buildJob({ id: 1 })]);
-    const { page, nextPage, prevPage, totalPages } = useJobsListing(jobs);
+  it('vuelve a la pagina 1 cuando cambia la fuente (sin debounce)', async () => {
+    const useJobsListing = await importUseJobsListing();
+    const { source, page, nextPage } = useJobsListing();
 
-    expect(totalPages.value).toBe(1);
     nextPage();
+    expect(page.value).toBe(2);
+
+    source.value = 'linkedin';
+    await nextTick();
+
     expect(page.value).toBe(1);
+  });
+
+  it('nextPage incrementa y prevPage no baja de 1', async () => {
+    const useJobsListing = await importUseJobsListing();
+    const { page, nextPage, prevPage } = useJobsListing();
 
     prevPage();
     expect(page.value).toBe(1);
+
+    nextPage();
+    nextPage();
+    expect(page.value).toBe(3);
+
+    prevPage();
+    expect(page.value).toBe(2);
+  });
+
+  it('sincroniza la query string solo con los parametros activos', async () => {
+    const useJobsListing = await importUseJobsListing();
+    const { source, page, nextPage } = useJobsListing();
+
+    source.value = 'linkedin';
+    await nextTick();
+    expect(replaceMock).toHaveBeenLastCalledWith({ query: { fuente: 'linkedin' } });
+
+    nextPage();
+    await nextTick();
+    expect(replaceMock).toHaveBeenLastCalledWith({ query: { fuente: 'linkedin', pagina: '2' } });
   });
 });

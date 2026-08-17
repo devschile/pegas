@@ -50,9 +50,11 @@ Orden acordado para llegar de `web/` (scaffold ya hecho) a la monetización. Se 
   - [x] Header/branding con chucao
   - [x] Paginación
   - [x] Meta tags por página (title/description dinámico, OG tags, schema.org JobPosting) — aprovechando el SSR
-- [ ] **2. Desplegar `web/` en paralelo al sitio estático** (Dockerfile o preset Cloudflare propio; subdominio/puerto de prueba, el público sigue viendo el sitio actual)
+- [x] **2. Desplegar `web/` en paralelo al sitio estático** (Dockerfile en `web/`, app nueva en Coolify servida en `pegas-staging.devschile.cl`; el público sigue viendo el sitio actual en `pegas.devschile.cl`)
 - [ ] **3. Cutover del sitio estático al nuevo frontend** (swap de DNS/proxy una vez validado en paralelo; recién ahí se retira `index.html`/`css/`/`js/`)
 - [ ] **4. API REST** (reemplaza `usePegas()` leyendo `data.json` por Postgres real; prerequisito de todo lo que implica escritura — publicar pega, login, destacar, pagos; también la consumiría el bot de Slack)
+  - [x] Endpoints de solo lectura: `GET /api/pegas` (filtros + paginación), `GET /api/pegas/:id`, `GET /api/meta` (cacheado 300s) — contra el esquema actual de `pegas` (sin `estado`/`destacada`/`fijada` todavía, esas columnas llegan con Fase 3/4 de moderación)
+  - [x] Frontend conectado a la API en vez de `data.json`: `useJobs.ts`/`useJobsListing.ts` reescritos (paginación y filtrado en SQL, debounce 300ms + sync de query string), `SiteHeader.vue`/`index.vue`/`categoria/[categoria].vue`/`pega/[id].vue` y el sitemap consumen `/api/pegas`, `/api/pegas/:id` y `/api/meta`. Probado end-to-end contra Postgres local con datos reales.
 - [ ] **5. Registro de usuarios** (cuentas para empresas —publicar/gestionar pegas— y candidatos —alertas personalizadas, guardar pegas—; requiere la API con auth del paso 4)
 - [ ] **6. Monetización** (una vez hay registro: publicación paga, ranking/destacados, tracking tipo ecommerce en PostHog, suscripción paga — detalle arriba)
 

@@ -1,28 +1,35 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
-import { PAGE_SIZE, useJobsListing } from '~/composables/useJobsListing';
 import { scrollToTop } from '~/utils/scroll';
+import type { PegasMeta } from '~/types/pega';
 
-const { data, error } = await useJobs();
+const { query, source, page, filters, nextPage, prevPage } = useJobsListing();
+const { data, error } = await useJobs(filters);
+const { data: meta } = await useFetch<PegasMeta>('/api/meta', { key: 'pegas-meta' });
 const track = useTrackEvent();
 
 const jobs = computed(() => data.value?.pegas ?? []);
-const categories = computed(() => data.value?.categorias ?? []);
-const sources = computed(() => data.value?.fuentes ?? []);
+const total = computed(() => data.value?.total ?? 0);
+const porPagina = computed(() => data.value?.porPagina ?? 25);
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / porPagina.value)));
+const categories = computed(() => meta.value?.categorias ?? []);
+const sources = computed(() => meta.value?.fuentes ?? []);
 
-const { query, source, page, totalPages, filteredJobs, pageItems, nextPage, prevPage } = useJobsListing(jobs);
-
-const rangeStart = computed(() => (page.value - 1) * PAGE_SIZE + 1);
-const rangeEnd = computed(() => Math.min(page.value * PAGE_SIZE, filteredJobs.value.length));
+const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * porPagina.value + 1));
+const rangeEnd = computed(() => Math.min(page.value * porPagina.value, total.value));
 
 function goToPreviousPage() {
-  prevPage();
-  scrollToTop();
+  if (page.value > 1) {
+    prevPage();
+    scrollToTop();
+  }
 }
 
 function goToNextPage() {
-  nextPage();
-  scrollToTop();
+  if (page.value < totalPages.value) {
+    nextPage();
+    scrollToTop();
+  }
 }
 
 function resetFilters() {
@@ -47,23 +54,23 @@ useSeoMeta({
 <template>
   <div class="listado">
     <p v-if="error" class="listado__mensaje">⚠ Error al cargar las pegas</p>
-    <p v-else-if="jobs.length === 0" class="listado__mensaje">📭 No hay pegas aún, ¡Vuelve pronto!</p>
+    <p v-else-if="(meta?.total ?? 0) === 0" class="listado__mensaje">📭 No hay pegas aún, ¡Vuelve pronto!</p>
 
     <template v-else>
       <PegasFiltros
         v-model:query="query"
         v-model:source="source"
         :sources="sources"
-        :total-visible="filteredJobs.length"
-        :total-general="jobs.length"
+        :total-visible="total"
+        :total-general="meta?.total ?? 0"
       />
 
       <CategoriasNav :categories="categories" @reset="resetFilters" />
 
-      <p v-if="filteredJobs.length === 0" class="listado__mensaje">🔍 Ninguna pega coincide</p>
+      <p v-if="jobs.length === 0" class="listado__mensaje">🔍 Ninguna pega coincide</p>
 
       <div v-else class="pegas-grid">
-        <PegaCard v-for="(job, index) in pageItems" :key="job.id" :job="job" :index="index" />
+        <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
       </div>
 
       <PegasPaginacion
@@ -71,7 +78,7 @@ useSeoMeta({
         :total-pages="totalPages"
         :start="rangeStart"
         :end="rangeEnd"
-        :total="filteredJobs.length"
+        :total="total"
         @prev="goToPreviousPage"
         @next="goToNextPage"
       />
