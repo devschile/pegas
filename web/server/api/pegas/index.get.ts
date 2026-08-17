@@ -2,7 +2,7 @@ import { defineEventHandler, getQuery } from 'h3';
 import { query } from '../../utils/db';
 import type { Pega } from '~/types/pega';
 
-export interface ListarPegasParams {
+export interface ListJobsParams {
   q: string;
   categoria: string;
   fuente: string;
@@ -10,7 +10,7 @@ export interface ListarPegasParams {
   porPagina: number;
 }
 
-export interface ListarPegasResult {
+export interface ListJobsResult {
   total: number;
   pagina: number;
   porPagina: number;
@@ -34,7 +34,7 @@ function toIntParam(value: unknown, fallback: number): number {
  * clampean acá (nunca en SQL) para que un valor negativo o absurdo no
  * termine en un LIMIT/OFFSET inválido.
  */
-export function parseListarPegasQuery(raw: Record<string, unknown>): ListarPegasParams {
+export function parseListJobsQuery(raw: Record<string, unknown>): ListJobsParams {
   const pagina = Math.max(1, toIntParam(raw.pagina, 1));
   const porPagina = Math.min(PORPAGINA_MAX, Math.max(1, toIntParam(raw.porPagina, PORPAGINA_DEFAULT)));
 
@@ -53,7 +53,7 @@ export function parseListarPegasQuery(raw: Record<string, unknown>): ListarPegas
  * con historial (ej. WorkingNomads) no quede enterrada al fondo del
  * listado. Búsqueda replica el haystack de `useJobsListing.ts`.
  */
-export async function listarPegas(params: ListarPegasParams): Promise<ListarPegasResult> {
+export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> {
   const filters = ['activo = TRUE'];
   const values: unknown[] = [];
 
@@ -80,7 +80,7 @@ export async function listarPegas(params: ListarPegasParams): Promise<ListarPega
 
   const limitIndex = values.length + 1;
   const offsetIndex = values.length + 2;
-  const { rows: pegas } = await query<Pega>(
+  const { rows: jobs } = await query<Pega>(
     `SELECT id, url, titulo, empleador, descripcion, categoria, ubicacion, sueldo, tags,
             fecha_publicacion, fuente, fecha_creacion
      FROM pegas
@@ -90,7 +90,7 @@ export async function listarPegas(params: ListarPegasParams): Promise<ListarPega
     [...values, params.porPagina, (params.pagina - 1) * params.porPagina],
   );
 
-  return { total, pagina: params.pagina, porPagina: params.porPagina, pegas };
+  return { total, pagina: params.pagina, porPagina: params.porPagina, pegas: jobs };
 }
 
-export default defineEventHandler(event => listarPegas(parseListarPegasQuery(getQuery(event))));
+export default defineEventHandler(event => listJobs(parseListJobsQuery(getQuery(event))));

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import handler, { obtenerPega, parsePegaId } from '../[id].get';
+import handler, { getJob, parseJobId } from '../[id].get';
 
 const queryMock = vi.fn();
 
@@ -8,30 +8,30 @@ vi.mock('../../../utils/db', () => ({
   query: (...args: unknown[]) => queryMock(...args),
 }));
 
-describe('parsePegaId', () => {
+describe('parseJobId', () => {
   it('acepta un entero positivo como string', () => {
-    expect(parsePegaId('42')).toBe(42);
+    expect(parseJobId('42')).toBe(42);
   });
 
   it('rechaza undefined', () => {
-    expect(parsePegaId(undefined)).toBeNull();
+    expect(parseJobId(undefined)).toBeNull();
   });
 
   it('rechaza no-numérico', () => {
-    expect(parsePegaId('abc')).toBeNull();
+    expect(parseJobId('abc')).toBeNull();
   });
 
   it('rechaza cero y negativos', () => {
-    expect(parsePegaId('0')).toBeNull();
-    expect(parsePegaId('-1')).toBeNull();
+    expect(parseJobId('0')).toBeNull();
+    expect(parseJobId('-1')).toBeNull();
   });
 
   it('rechaza decimales', () => {
-    expect(parsePegaId('1.5')).toBeNull();
+    expect(parseJobId('1.5')).toBeNull();
   });
 });
 
-describe('obtenerPega', () => {
+describe('getJob', () => {
   beforeEach(() => {
     queryMock.mockReset();
   });
@@ -39,16 +39,16 @@ describe('obtenerPega', () => {
   it('devuelve la pega si existe y está activa', async () => {
     queryMock.mockResolvedValueOnce({ rows: [{ id: 7, titulo: 'Dev' }] });
 
-    const pega = await obtenerPega(7);
+    const job = await getJob(7);
 
-    expect(pega).toEqual({ id: 7, titulo: 'Dev' });
+    expect(job).toEqual({ id: 7, titulo: 'Dev' });
     expect(queryMock).toHaveBeenCalledWith(expect.stringContaining('WHERE id = $1 AND activo = TRUE'), [7]);
   });
 
   it('devuelve null si no hay filas', async () => {
     queryMock.mockResolvedValueOnce({ rows: [] });
 
-    expect(await obtenerPega(999)).toBeNull();
+    expect(await getJob(999)).toBeNull();
   });
 });
 
