@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['motion-v/nuxt', '@nuxtjs/seo'],
+  modules: ['motion-v/nuxt', '@nuxtjs/seo', 'nuxt-auth-utils'],
 
   css: ['~/assets/css/main.css'],
 
