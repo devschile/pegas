@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import handler, { listarPegas, parseListarPegasQuery } from '../index.get';
+import handler, { listJobs, parseListJobsQuery } from '../index.get';
 
 const queryMock = vi.fn();
 
@@ -8,34 +8,34 @@ vi.mock('../../../utils/db', () => ({
   query: (...args: unknown[]) => queryMock(...args),
 }));
 
-describe('parseListarPegasQuery', () => {
+describe('parseListJobsQuery', () => {
   it('usa los valores por defecto sin query params', () => {
-    expect(parseListarPegasQuery({})).toEqual({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
+    expect(parseListJobsQuery({})).toEqual({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
   });
 
   it('recorta espacios en q, categoria y fuente', () => {
-    const result = parseListarPegasQuery({ q: '  vue  ', categoria: ' frontend ', fuente: ' getonboard ' });
+    const result = parseListJobsQuery({ q: '  vue  ', categoria: ' frontend ', fuente: ' getonboard ' });
     expect(result).toMatchObject({ q: 'vue', categoria: 'frontend', fuente: 'getonboard' });
   });
 
   it('clampea porPagina a 50 como máximo', () => {
-    expect(parseListarPegasQuery({ porPagina: '999' }).porPagina).toBe(50);
+    expect(parseListJobsQuery({ porPagina: '999' }).porPagina).toBe(50);
   });
 
   it('clampea porPagina a 1 como mínimo', () => {
-    expect(parseListarPegasQuery({ porPagina: '-5' }).porPagina).toBe(1);
+    expect(parseListJobsQuery({ porPagina: '-5' }).porPagina).toBe(1);
   });
 
   it('clampea pagina a 1 como mínimo', () => {
-    expect(parseListarPegasQuery({ pagina: '-3' }).pagina).toBe(1);
+    expect(parseListJobsQuery({ pagina: '-3' }).pagina).toBe(1);
   });
 
   it('ignora valores no numéricos y cae al default', () => {
-    expect(parseListarPegasQuery({ pagina: 'abc', porPagina: 'xyz' })).toMatchObject({ pagina: 1, porPagina: 25 });
+    expect(parseListJobsQuery({ pagina: 'abc', porPagina: 'xyz' })).toMatchObject({ pagina: 1, porPagina: 25 });
   });
 });
 
-describe('listarPegas', () => {
+describe('listJobs', () => {
   beforeEach(() => {
     queryMock.mockReset();
   });
@@ -44,7 +44,7 @@ describe('listarPegas', () => {
     queryMock.mockResolvedValueOnce({ rows: [{ count: '2' }] });
     queryMock.mockResolvedValueOnce({ rows: [{ id: 1 }, { id: 2 }] });
 
-    const result = await listarPegas({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
+    const result = await listJobs({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
 
     expect(result.total).toBe(2);
     expect(result.pegas).toHaveLength(2);
@@ -58,7 +58,7 @@ describe('listarPegas', () => {
     queryMock.mockResolvedValueOnce({ rows: [{ count: '0' }] });
     queryMock.mockResolvedValueOnce({ rows: [] });
 
-    await listarPegas({ q: 'react', categoria: 'frontend', fuente: 'getonboard', pagina: 2, porPagina: 10 });
+    await listJobs({ q: 'react', categoria: 'frontend', fuente: 'getonboard', pagina: 2, porPagina: 10 });
 
     const [countSql, countValues] = queryMock.mock.calls[0];
     expect(countSql).toContain('categoria = $1');
@@ -74,7 +74,7 @@ describe('listarPegas', () => {
     queryMock.mockResolvedValueOnce({ rows: [] });
     queryMock.mockResolvedValueOnce({ rows: [] });
 
-    const result = await listarPegas({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
+    const result = await listJobs({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
 
     expect(result.total).toBe(0);
   });
@@ -85,7 +85,7 @@ describe('handler (GET /api/pegas)', () => {
     queryMock.mockReset();
   });
 
-  it('lee los filtros desde la query string real (event.path) y delega en listarPegas', async () => {
+  it('lee los filtros desde la query string real (event.path) y delega en listJobs', async () => {
     queryMock.mockResolvedValueOnce({ rows: [{ count: '1' }] });
     queryMock.mockResolvedValueOnce({ rows: [{ id: 5 }] });
 
