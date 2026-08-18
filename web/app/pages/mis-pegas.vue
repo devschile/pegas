@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IconAlertTriangle, IconBookmarkOff } from '@tabler/icons-vue';
 import { computed } from 'vue';
 import type { Pega } from '~/types/pega';
 import type { Reaction } from '../../server/utils/reacciones';
@@ -30,8 +31,8 @@ useSeoMeta({
   <div class="mis-pegas">
     <h1 class="mis-pegas__titulo">Mis pegas</h1>
 
-    <p v-if="error" class="mis-pegas__mensaje">⚠ Error al cargar tus pegas</p>
-    <p v-else-if="pegas.length === 0" class="mis-pegas__mensaje">Todavía no guardaste ni reaccionaste a ninguna pega</p>
+    <p v-if="error" class="mis-pegas__mensaje"><IconAlertTriangle aria-hidden="true" /> Error al cargar tus pegas</p>
+    <p v-else-if="pegas.length === 0" class="mis-pegas__mensaje"><IconBookmarkOff aria-hidden="true" /> Todavía no guardaste ni reaccionaste a ninguna pega</p>
 
     <div v-else class="pegas-grid">
       <PegaCard v-for="(job, index) in pegas" :key="job.id" :job="job" :index="index" />
@@ -45,7 +46,10 @@ useSeoMeta({
 }
 
 .mis-pegas__mensaje {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 4rem 0;
   color: var(--text-muted, #666);
 }

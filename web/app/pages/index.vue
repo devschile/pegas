@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IconAlertTriangle, IconInboxOff, IconSearchOff } from '@tabler/icons-vue';
 import { computed, watch } from 'vue';
 import { scrollToTop } from '~/utils/scroll';
 import type { PegasMeta } from '~/types/pega';
@@ -64,8 +65,8 @@ useSeoMeta({
 
 <template>
   <div class="listado">
-    <p v-if="error" class="listado__mensaje">⚠ Error al cargar las pegas</p>
-    <p v-else-if="(meta?.total ?? 0) === 0" class="listado__mensaje">📭 No hay pegas aún, ¡Vuelve pronto!</p>
+    <p v-if="error" class="listado__mensaje"><IconAlertTriangle aria-hidden="true" /> Error al cargar las pegas</p>
+    <p v-else-if="(meta?.total ?? 0) === 0" class="listado__mensaje"><IconInboxOff aria-hidden="true" /> No hay pegas aún, ¡Vuelve pronto!</p>
 
     <template v-else>
       <PegasFiltros
@@ -78,7 +79,7 @@ useSeoMeta({
 
       <CategoriasNav :categories="categories" @reset="resetFilters" />
 
-      <p v-if="jobs.length === 0" class="listado__mensaje">🔍 Ninguna pega coincide</p>
+      <p v-if="jobs.length === 0" class="listado__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
 
       <div v-else class="pegas-grid">
         <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
@@ -99,7 +100,10 @@ useSeoMeta({
 
 <style scoped>
 .listado__mensaje {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 4rem 0;
   color: var(--text-muted, #666);
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IconSearchOff } from '@tabler/icons-vue';
 import { computed, onMounted, watch } from 'vue';
 import { findCategoryBySlug } from '~/utils/slug';
 import { scrollToTop } from '~/utils/scroll';
@@ -84,7 +85,7 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
 
     <CategoriasNav :categories="allCategories" :active="category" />
 
-    <p v-if="jobs.length === 0" class="listado-categoria__mensaje">🔍 Ninguna pega coincide</p>
+    <p v-if="jobs.length === 0" class="listado-categoria__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
 
     <div v-else class="pegas-grid">
       <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
@@ -128,7 +129,10 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
 }
 
 .listado-categoria__mensaje {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 4rem 0;
   color: var(--text-muted, #666);
 }

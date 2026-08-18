@@ -86,14 +86,14 @@ describe('PegaCard', () => {
     const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
     const buttons = wrapper.findAllComponents({ name: 'ChButton' });
-    expect(buttons.find(b => b.text() === '👍')!.props('disabled')).toBe(true);
-    expect(buttons.find(b => b.text() === '👎')!.props('disabled')).toBe(true);
-    expect(buttons.find(b => b.text() === '🔖')!.props('disabled')).toBe(true);
+    expect(buttons.find(b => b.props('label') === 'Me gusta')!.props('disabled')).toBe(true);
+    expect(buttons.find(b => b.props('label') === 'No me gusta')!.props('disabled')).toBe(true);
+    expect(buttons.find(b => b.props('label') === 'Guardar')!.props('disabled')).toBe(true);
   });
 
   it('clickear like llama a toggleReaction con "like"', async () => {
     const wrapper = mount(PegaCard, { props: { job: baseJob } });
-    const likeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '👍')!;
+    const likeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'Me gusta')!;
 
     await likeButton.vm.$emit('ch-click');
 
@@ -102,7 +102,7 @@ describe('PegaCard', () => {
 
   it('clickear nolike llama a toggleReaction con "dislike"', async () => {
     const wrapper = mount(PegaCard, { props: { job: baseJob } });
-    const dislikeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '👎')!;
+    const dislikeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'No me gusta')!;
 
     await dislikeButton.vm.$emit('ch-click');
 
@@ -111,26 +111,28 @@ describe('PegaCard', () => {
 
   it('clickear guardar llama a toggleSaved', async () => {
     const wrapper = mount(PegaCard, { props: { job: baseJob } });
-    const saveButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '🔖')!;
+    const saveButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'Guardar')!;
 
     await saveButton.vm.$emit('ch-click');
 
     expect(toggleSavedMock).toHaveBeenCalledWith(baseJob.id);
   });
 
-  it('el boton de like usa variant primary cuando la reaccion esta activa', () => {
+  it('el boton de like marca la clase activa cuando la reaccion esta activa', () => {
     statesRef.value = { [baseJob.id]: { reaccion: 'like', guardada: false } };
     const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
-    const likeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '👍')!;
-    expect(likeButton.props('variant')).toBe('primary');
+    const likeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'Me gusta')!;
+    const dislikeButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'No me gusta')!;
+    expect(likeButton.classes()).toContain('pega-card__reaction-btn--active');
+    expect(dislikeButton.classes()).not.toContain('pega-card__reaction-btn--active');
   });
 
-  it('el boton de guardar usa variant primary cuando esta guardada', () => {
+  it('el boton de guardar marca la clase activa cuando esta guardada', () => {
     statesRef.value = { [baseJob.id]: { reaccion: null, guardada: true } };
     const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
-    const saveButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.text() === '🔖')!;
-    expect(saveButton.props('variant')).toBe('primary');
+    const saveButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'Guardar')!;
+    expect(saveButton.classes()).toContain('pega-card__reaction-btn--active');
   });
 });

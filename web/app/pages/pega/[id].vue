@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ChBadge, ChButton, ChCard } from '@devschile/chucao/vue';
+import { IconArrowLeft, IconCalendar, IconCoin, IconExternalLink, IconHome } from '@tabler/icons-vue';
 import { computed, onMounted } from 'vue';
 import { formatDate, sourceLabel } from '~/utils/pegas';
 import { categorySlug, idFromSlug, jobSlug } from '~/utils/slug';
@@ -96,13 +97,13 @@ function handleBackClick() {
 <template>
   <article class="pega-detalle">
     <ChButton class="pega-detalle__volver" variant="secondary" @ch-click="handleBackClick">
-      ← Volver
+      <IconArrowLeft :size="16" aria-hidden="true" /> Volver
     </ChButton>
 
     <ChCard class="pega-detalle__card">
       <div class="pega-detalle__header">
         <h1 class="pega-detalle__titulo">{{ job.titulo }}</h1>
-        <span class="pega-detalle__fecha">{{ publishedDate }}</span>
+        <span class="pega-detalle__fecha"><IconCalendar :size="14" aria-hidden="true" />{{ publishedDate }}</span>
       </div>
 
       <p class="pega-detalle__empleador">
@@ -111,8 +112,8 @@ function handleBackClick() {
       </p>
 
       <div class="pega-detalle__badges">
-        <ChBadge v-if="isRemote" variant="positive">🏠 Remoto</ChBadge>
-        <ChBadge v-if="job.sueldo" variant="positive">💰 {{ job.sueldo }}</ChBadge>
+        <ChBadge v-if="isRemote" variant="positive"><IconHome :size="14" aria-hidden="true" /> Remoto</ChBadge>
+        <ChBadge v-if="job.sueldo" variant="positive"><IconCoin :size="14" aria-hidden="true" /> {{ job.sueldo }}</ChBadge>
         <ChBadge>{{ job.ubicacion }}</ChBadge>
       </div>
 
@@ -120,7 +121,7 @@ function handleBackClick() {
 
       <div class="pega-detalle__footer">
         <ChButton class="pega-detalle__apply" @ch-click="handleApplyClick">
-          Ver oferta original →
+          Ver oferta original <IconExternalLink :size="16" aria-hidden="true" />
         </ChButton>
         <span class="pega-detalle__fuente">Publicada en {{ sourceLabel(job.fuente) }}</span>
       </div>
@@ -152,6 +153,9 @@ function handleBackClick() {
 }
 
 .pega-detalle__fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   flex-shrink: 0;
   font-size: 0.85em;
   color: var(--text-muted, #666);
