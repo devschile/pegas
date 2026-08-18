@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { IconBriefcase } from '@tabler/icons-vue';
 import { computed } from 'vue';
 import type { PegasMeta } from '~/types/pega';
 
@@ -8,7 +9,7 @@ const total = computed(() => data.value?.total ?? 0);
 
 <template>
   <header class="site-header">
-    <h1 class="site-header__title">💼 <span>Pegas</span> devsChile()</h1>
+    <h1 class="site-header__title">💵 <span>Pegas</span> devsChile()</h1>
     <p class="site-header__subtitle">{{ total }} ofertas de trabajo tech desde varias fuentes</p>
   </header>
 </template>
@@ -20,6 +21,11 @@ const total = computed(() => data.value?.total ?? 0);
 }
 
 .site-header__title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
   margin: 0;
   font-size: 2.4rem;
   letter-spacing: -1px;

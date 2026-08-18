@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ChButton } from '@devschile/chucao/vue';
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-vue';
 
 defineProps<{
   page: number;
@@ -14,9 +15,13 @@ const emit = defineEmits<{ prev: []; next: [] }>();
 
 <template>
   <div v-if="totalPages > 1" class="paginacion">
-    <ChButton variant="secondary" :disabled="page === 1" @ch-click="emit('prev')">← Anterior</ChButton>
+    <ChButton class="paginacion__btn" variant="secondary" :disabled="page === 1" @ch-click="emit('prev')">
+      <IconChevronLeft :size="16" aria-hidden="true" /> Anterior
+    </ChButton>
     <span class="paginacion__info">{{ start }}–{{ end }} de {{ total }}</span>
-    <ChButton variant="secondary" :disabled="page === totalPages" @ch-click="emit('next')">Siguiente →</ChButton>
+    <ChButton class="paginacion__btn" variant="secondary" :disabled="page === totalPages" @ch-click="emit('next')">
+      Siguiente <IconChevronRight :size="16" aria-hidden="true" />
+    </ChButton>
   </div>
 </template>
 
@@ -31,5 +36,13 @@ const emit = defineEmits<{ prev: []; next: [] }>();
 
 .paginacion__info {
   color: var(--text-muted, #666);
+}
+
+.paginacion__btn {
+  transition: transform 0.15s ease;
+}
+
+.paginacion__btn:active {
+  transform: scale(0.95);
 }
 </style>

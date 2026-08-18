@@ -44,6 +44,16 @@ const emit = defineEmits<{ reset: [] }>();
 
 .categorias-nav__link {
   text-decoration: none;
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.categorias-nav__link:hover {
+  transform: translateY(-1px);
+}
+
+.categorias-nav__link:active {
+  transform: scale(0.95);
 }
 
 .categorias-nav__todos {
