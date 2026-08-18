@@ -35,7 +35,7 @@ describe('UserMenu', () => {
 
     const wrapper = await mountUserMenu();
 
-    expect(wrapper.text()).not.toContain('Entrar con GitHub');
+    expect(wrapper.find('a[href="/auth/github"]').exists()).toBe(false);
   });
 
   it('deslogueado: el click en el trigger abre links de GitHub y Slack', async () => {
@@ -44,10 +44,9 @@ describe('UserMenu', () => {
     const wrapper = await mountUserMenu();
     await wrapper.find('.user-menu__trigger').trigger('click');
 
-    expect(wrapper.text()).toContain('Entrar con GitHub');
-    expect(wrapper.text()).toContain('Entrar con Slack');
-    expect(wrapper.find('a[href="/auth/github"]').exists()).toBe(true);
-    expect(wrapper.find('a[href="/auth/slack"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('Login:');
+    expect(wrapper.find('a[href="/auth/github"]').attributes('aria-label')).toBe('Entrar con GitHub');
+    expect(wrapper.find('a[href="/auth/slack"]').attributes('aria-label')).toBe('Entrar con Slack');
   });
 
   it('logueado: el trigger muestra el avatar y el panel tiene Mis pegas y Cerrar sesion', async () => {
@@ -65,16 +64,17 @@ describe('UserMenu', () => {
 
     expect(wrapper.text()).toContain('Mis pegas');
     expect(wrapper.text()).toContain('Cerrar sesión');
-    expect(wrapper.text()).not.toContain('Entrar con GitHub');
+    expect(wrapper.find('a[href="/auth/github"]').exists()).toBe(false);
   });
 
-  it('logueado sin avatar: el trigger cae al emoji', async () => {
+  it('logueado sin avatar: el trigger cae al icono generico', async () => {
     loggedInRef.value = true;
     useFetchMock.mockReturnValue({ data: ref({ id: 1, nombre: 'Dev', avatarUrl: null }), refresh: vi.fn() });
 
     const wrapper = await mountUserMenu();
 
     expect(wrapper.find('img.user-menu__avatar').exists()).toBe(false);
+    expect(wrapper.find('.user-menu__trigger svg').exists()).toBe(true);
   });
 
   it('click en Cerrar sesion llama a clear()', async () => {
@@ -93,11 +93,11 @@ describe('UserMenu', () => {
 
     const wrapper = await mountUserMenu();
     await wrapper.find('.user-menu__trigger').trigger('click');
-    expect(wrapper.text()).toContain('Entrar con GitHub');
+    expect(wrapper.find('a[href="/auth/github"]').exists()).toBe(true);
 
     document.body.click();
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.text()).not.toContain('Entrar con GitHub');
+    expect(wrapper.find('a[href="/auth/github"]').exists()).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ChBadge, ChButton, ChCard } from '@devschile/chucao/vue';
+import { IconCalendar, IconCoin, IconHome } from '@tabler/icons-vue';
 import { computed } from 'vue';
 import { formatDate, sourceLabel } from '~/utils/pegas';
 import { categorySlug, jobSlug } from '~/utils/slug';
@@ -15,6 +16,10 @@ const isRemote = computed(() => Boolean(props.job.tags?.includes('remote')));
 const detailUrl = computed(() => `/pega/${jobSlug(props.job)}`);
 const revealDelay = computed(() => Math.min(props.index, 6) * 0.2);
 const state = computed(() => states.value[props.job.id] ?? { reaccion: null, guardada: false });
+
+const likeTooltip = computed(() => (loggedIn.value ? 'Me gusta' : 'Debes estar logueado para dar like'));
+const dislikeTooltip = computed(() => (loggedIn.value ? 'No me gusta' : 'Debes estar logueado para dar dislike'));
+const saveTooltip = computed(() => (loggedIn.value ? 'Guardar pega' : 'Debes estar logueado para guardar'));
 
 function handleApplyClick() {
   track('pega_click_apply', {
@@ -44,14 +49,14 @@ function handleSaveClick() {
     <ChCard class="pega-card">
       <div class="pega-card__header">
         <h3 class="pega-card__titulo"><NuxtLink :to="detailUrl">{{ job.titulo }}</NuxtLink></h3>
-        <span class="pega-card__fecha">{{ publishedDate }}</span>
+        <span class="pega-card__fecha"><IconCalendar :size="14" aria-hidden="true" />{{ publishedDate }}</span>
       </div>
 
       <div class="pega-card__meta">
         <span class="pega-card__empleador">{{ job.empleador }}</span>
         <div class="pega-card__badges">
-          <ChBadge v-if="isRemote" variant="positive">🏠 Remoto</ChBadge>
-          <ChBadge v-if="job.sueldo" variant="positive">💰 {{ job.sueldo }}</ChBadge>
+          <ChBadge v-if="isRemote" variant="positive"><IconHome :size="14" aria-hidden="true" /> Remoto</ChBadge>
+          <ChBadge v-if="job.sueldo" variant="positive"><IconCoin :size="14" aria-hidden="true" /> {{ job.sueldo }}</ChBadge>
           <NuxtLink :to="`/categoria/${categorySlug(job.categoria)}`" class="pega-card__categoria-link">
             <ChBadge>{{ job.categoria }}</ChBadge>
           </NuxtLink>
@@ -65,23 +70,32 @@ function handleSaveClick() {
         <ChButton class="pega-card__apply" @ch-click="handleApplyClick">Ver oferta</ChButton>
         <div class="pega-card__reactions">
           <ChButton
-            :variant="state.reaccion === 'like' ? 'primary' : 'secondary'"
+            class="pega-card__reaction-btn"
+            :class="{ 'pega-card__reaction-btn--active': state.reaccion === 'like' }"
+            variant="primary"
             :disabled="!loggedIn"
+            :title="likeTooltip"
             label="Me gusta"
             @ch-click="handleLikeClick"
-          >👍</ChButton>
+          ><ReactionIcon variant="like" :active="state.reaccion === 'like'" /></ChButton>
           <ChButton
-            :variant="state.reaccion === 'dislike' ? 'primary' : 'secondary'"
+            class="pega-card__reaction-btn"
+            :class="{ 'pega-card__reaction-btn--active': state.reaccion === 'dislike' }"
+            variant="primary"
             :disabled="!loggedIn"
+            :title="dislikeTooltip"
             label="No me gusta"
             @ch-click="handleDislikeClick"
-          >👎</ChButton>
+          ><ReactionIcon variant="dislike" :active="state.reaccion === 'dislike'" /></ChButton>
           <ChButton
-            :variant="state.guardada ? 'primary' : 'secondary'"
+            class="pega-card__reaction-btn"
+            :class="{ 'pega-card__reaction-btn--active': state.guardada }"
+            variant="primary"
             :disabled="!loggedIn"
+            :title="saveTooltip"
             label="Guardar"
             @ch-click="handleSaveClick"
-          >🔖</ChButton>
+          ><ReactionIcon variant="save" :active="state.guardada" /></ChButton>
         </div>
         <span class="pega-card__fuente">{{ sourceLabel(job.fuente) }}</span>
       </div>
@@ -116,6 +130,9 @@ function handleSaveClick() {
 }
 
 .pega-card__fecha {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   flex-shrink: 0;
   font-size: 0.85em;
   color: var(--text-muted, #666);
@@ -162,6 +179,31 @@ function handleSaveClick() {
 .pega-card__reactions {
   display: flex;
   gap: 0.5rem;
+  /* pisa los tokens de ch-button (custom properties, atraviesan su shadow DOM)
+     solo para estos tres botones: fondo naranja siempre (variant primary
+     fijo, ver template), icono blanco (el default de --color-accent-text
+     es casi negro) y padding parejo -> pill circular. El borde en cambio
+     NO tiene hook de custom property en .btn--primary (chucao solo le pone
+     borde a .btn--secondary), asi que se aplica directo sobre el host del
+     custom element (luz, no atraviesa su shadow DOM -- ver reaction-btn). */
+  --accent: #fb923c;
+  --accent-hover: #fdba74;
+  --color-accent-text: #ffffff;
+  --spacing-xl: var(--spacing-sm, 0.35rem);
+}
+
+.pega-card__reaction-btn {
+  border: 2px solid #fdba74;
+  border-radius: 999px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.pega-card__reaction-btn:active {
+  transform: scale(0.9);
+}
+
+.pega-card__reaction-btn--active {
+  border-color: #ffffff;
 }
 
 .pega-card__fuente {

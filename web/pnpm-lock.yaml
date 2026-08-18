@@ -17,6 +17,15 @@ importers:
       '@stencil/vue-output-target':
         specifier: ^0.14.1
         version: 0.14.1(vue-router@5.2.0(@vue/compiler-sfc@3.5.41)(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(vue@3.5.41))(vue@3.5.41)
+      '@tabler/icons':
+        specifier: ^3.46.0
+        version: 3.46.0
+      '@tabler/icons-vue':
+        specifier: ^3.46.0
+        version: 3.46.0(vue@3.5.41)
+      morphicons:
+        specifier: ^1.7.0
+        version: 1.7.0(vue@3.5.41)
       motion-v:
         specifier: ^2.3.0
         version: 2.3.0(@vueuse/core@14.4.0(vue@3.5.41))(vue@3.5.41)
@@ -1324,6 +1333,14 @@ packages:
         optional: true
       vue-router:
         optional: true
+
+  '@tabler/icons-vue@3.46.0':
+    resolution: {integrity: sha512-RkYlrGx8NY5ePXk0fTJJaDYQpjbi0ys33Cvswnvn83X04IVOCEaEqS2S3GANcp1dgEu9Fs7c6kd2sdJbwOZQtw==}
+    peerDependencies:
+      vue: '>=3.0.1'
+
+  '@tabler/icons@3.46.0':
+    resolution: {integrity: sha512-f2RYFl3fzPwj5WO82x6en0dmkjefxEfOm16D1ByM6cj/McNiwOkL4VaPUoP9VVIrXAD9WnTSVFr70px703b//A==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -2702,6 +2719,26 @@ packages:
 
   mocked-exports@0.1.1:
     resolution: {integrity: sha512-aF7yRQr/Q0O2/4pIXm6PZ5G+jAd7QS4Yu8m+WEeEHGnbo+7mE36CbLSDQiXYV8bVL3NfmdeqPJct0tUlnjVSnA==}
+
+  morphicons@1.7.0:
+    resolution: {integrity: sha512-MOqSK+O5RdxynER5016vUvvqQaHkqqWYmNpocsk9TEszUZ9PB/K52Yqq8AGTRK1NUO5dj8znGSEVf9slqEIQaw==}
+    peerDependencies:
+      react: '>=18'
+      react-native: '>=0.71'
+      react-native-svg: '>=14'
+      svelte: '>=5'
+      vue: '>=3.3'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-native:
+        optional: true
+      react-native-svg:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
 
   motion-dom@12.43.0:
     resolution: {integrity: sha512-azKON4d9S65PEoFUiQTMTgPheEmzf2QngdRc50AKfJp9Q9mmcBVw22c8eMq9k8kxOFHdL7+WZY7N/5F/lwiDag==}
@@ -5574,6 +5611,13 @@ snapshots:
     optionalDependencies:
       vue-router: 5.2.0(@vue/compiler-sfc@3.5.41)(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))(vue@3.5.41)
 
+  '@tabler/icons-vue@3.46.0(vue@3.5.41)':
+    dependencies:
+      '@tabler/icons': 3.46.0
+      vue: 3.5.41
+
+  '@tabler/icons@3.46.0': {}
+
   '@types/chai@5.2.3':
     dependencies:
       '@types/deep-eql': 4.0.2
@@ -6950,6 +6994,10 @@ snapshots:
       ufo: 1.6.4
 
   mocked-exports@0.1.1: {}
+
+  morphicons@1.7.0(vue@3.5.41):
+    optionalDependencies:
+      vue: 3.5.41
 
   motion-dom@12.43.0:
     dependencies:
