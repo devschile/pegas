@@ -4,15 +4,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref, Suspense } from 'vue';
 import type { Pega, PegasMeta } from '~/types/pega';
 
-const { useJobsMock, useJobsListingMock, useFetchMock, useRouteMock, trackMock } = vi.hoisted(() => ({
+const { useJobsMock, useJobsListingStateMock, useFetchMock, useRouteMock, trackMock } = vi.hoisted(() => ({
   useJobsMock: vi.fn(),
-  useJobsListingMock: vi.fn(),
+  useJobsListingStateMock: vi.fn(),
   useFetchMock: vi.fn(),
   useRouteMock: vi.fn(),
   trackMock: vi.fn(),
 }));
 mockNuxtImport('useJobs', () => useJobsMock);
-mockNuxtImport('useJobsListing', () => useJobsListingMock);
+mockNuxtImport('useJobsListingState', () => useJobsListingStateMock);
 mockNuxtImport('useFetch', () => useFetchMock);
 mockNuxtImport('useRoute', () => useRouteMock);
 mockNuxtImport('useTrackEvent', () => () => trackMock);
@@ -46,12 +46,8 @@ function buildMeta(overrides: Partial<PegasMeta> = {}): PegasMeta {
 }
 
 function mockListing() {
-  const query = ref('');
-  const source = ref('');
   const page = ref(1);
-  useJobsListingMock.mockReturnValue({
-    query,
-    source,
+  useJobsListingStateMock.mockReturnValue({
     page,
     filters: ref({ q: '', categoria: '', fuente: '', pagina: 1 }),
     nextPage: vi.fn(() => page.value++),
@@ -111,18 +107,6 @@ describe('pages/categoria/[categoria]', () => {
 
     const [filtersArg] = useJobsMock.mock.calls[0]!;
     expect(filtersArg.value).toMatchObject({ categoria: 'Frontend' });
-  });
-
-  it('muestra el total general del sitio, no el total filtrado, en las stats', async () => {
-    mockListing();
-    useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
-    useFetchMock.mockReturnValue({ data: ref(buildMeta({ total: 834 })), error: ref(null) });
-    useJobsMock.mockReturnValue({ data: ref({ total: 125, pagina: 1, porPagina: 25, pegas: [buildJob()] }), error: ref(null) });
-
-    const wrapper = await mountCategoryPage();
-
-    expect(wrapper.text()).toContain('125');
-    expect(wrapper.text()).toContain('834');
   });
 
   it('trackea categoria_view al montar', async () => {

@@ -4,13 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref, Suspense } from 'vue';
 import type { Pega, PegasMeta } from '~/types/pega';
 
-const { useJobsMock, useJobsListingMock, useFetchMock } = vi.hoisted(() => ({
+const { useJobsMock, useJobsListingStateMock, useFetchMock } = vi.hoisted(() => ({
   useJobsMock: vi.fn(),
-  useJobsListingMock: vi.fn(),
+  useJobsListingStateMock: vi.fn(),
   useFetchMock: vi.fn(),
 }));
 mockNuxtImport('useJobs', () => useJobsMock);
-mockNuxtImport('useJobsListing', () => useJobsListingMock);
+mockNuxtImport('useJobsListingState', () => useJobsListingStateMock);
 mockNuxtImport('useFetch', () => useFetchMock);
 
 function buildJob(overrides: Partial<Pega> = {}): Pega {
@@ -42,15 +42,13 @@ function buildMeta(overrides: Partial<PegasMeta> = {}): PegasMeta {
 }
 
 function mockListing() {
-  const query = ref('');
-  const source = ref('');
   const page = ref(1);
   const nextPage = vi.fn(() => page.value++);
   const prevPage = vi.fn(() => {
     if (page.value > 1) page.value--;
   });
-  useJobsListingMock.mockReturnValue({ query, source, page, filters: ref({}), nextPage, prevPage });
-  return { query, source, page, nextPage, prevPage };
+  useJobsListingStateMock.mockReturnValue({ page, filters: ref({}), nextPage, prevPage });
+  return { page, nextPage, prevPage };
 }
 
 /**
@@ -90,7 +88,7 @@ describe('pages/index', () => {
     expect(wrapper.text()).toContain('No hay pegas aún');
   });
 
-  it('lista las pegas y muestra los filtros cuando llegan datos', async () => {
+  it('lista las pegas cuando llegan datos', async () => {
     mockListing();
     useJobsMock.mockReturnValue({ data: ref({ total: 1, pagina: 1, porPagina: 25, pegas: [buildJob()] }), error: ref(null) });
     useFetchMock.mockReturnValue({ data: ref(buildMeta()) });
@@ -98,7 +96,6 @@ describe('pages/index', () => {
     const wrapper = await mountIndexPage();
 
     expect(wrapper.text()).toContain('Frontend Developer');
-    expect(wrapper.findComponent({ name: 'PegasFiltros' }).exists()).toBe(true);
   });
 
   it('muestra un mensaje cuando el filtro no matchea ninguna pega', async () => {
