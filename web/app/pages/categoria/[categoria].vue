@@ -80,7 +80,7 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
       v-model:source="source"
       :sources="categorySources"
       :total-visible="total"
-      :total-general="total"
+      :total-general="meta?.total ?? 0"
     />
 
     <CategoriasNav :categories="allCategories" :active="category" />
