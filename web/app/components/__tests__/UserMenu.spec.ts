@@ -3,11 +3,13 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref, Suspense } from 'vue';
 
-const { useFetchMock, clearMock } = vi.hoisted(() => ({
+const { useFetchMock, clearMock, navigateToMock } = vi.hoisted(() => ({
   useFetchMock: vi.fn(),
   clearMock: vi.fn(),
+  navigateToMock: vi.fn(),
 }));
 mockNuxtImport('useFetch', () => useFetchMock);
+mockNuxtImport('navigateTo', () => navigateToMock);
 
 const loggedInRef = ref(false);
 mockNuxtImport('useUserSession', () => () => ({ loggedIn: loggedInRef, clear: clearMock }));
@@ -27,6 +29,7 @@ describe('UserMenu', () => {
   beforeEach(() => {
     useFetchMock.mockReset();
     clearMock.mockReset();
+    navigateToMock.mockReset();
     loggedInRef.value = false;
   });
 
@@ -77,7 +80,7 @@ describe('UserMenu', () => {
     expect(wrapper.find('.user-menu__trigger svg').exists()).toBe(true);
   });
 
-  it('click en Cerrar sesion llama a clear()', async () => {
+  it('click en Cerrar sesion llama a clear() y manda al home', async () => {
     loggedInRef.value = true;
     useFetchMock.mockReturnValue({ data: ref({ id: 1, nombre: 'Dev', avatarUrl: null }), refresh: vi.fn() });
 
@@ -86,6 +89,7 @@ describe('UserMenu', () => {
     await wrapper.findComponent({ name: 'ChButton' }).vm.$emit('ch-click');
 
     expect(clearMock).toHaveBeenCalled();
+    expect(navigateToMock).toHaveBeenCalledWith('/');
   });
 
   it('click afuera cierra el panel', async () => {
