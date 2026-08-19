@@ -17,5 +17,5 @@ export default defineEventHandler(async event => {
     avatarUrl: null,
   });
   await setUserSession(event, { user: { id: usuario.id } });
-  return sendRedirect(event, '/');
+  return sendRedirect(event, '/mis-pegas');
 });

@@ -32,6 +32,12 @@ function mapRow(row: UsuarioRow): Usuario {
  * Todo en una transaccion: el SELECT + INSERT/UPDATE tienen que ser
  * atomicos para no crear dos filas si el mismo usuario completa el OAuth
  * dos veces en paralelo (doble click, dos pestañas).
+ *
+ * Si no matchea por (proveedor, proveedor_id) pero si por email, se
+ * reutiliza esa fila (cambiando su proveedor/proveedor_id al del login
+ * actual) en vez de crear una cuenta nueva -- asi loguearse con Slack
+ * despues de haber usado GitHub con el mismo correo no empieza de cero
+ * (pegas guardadas/reacciones quedan atadas al mismo `usuario.id`).
  */
 export async function findOrCreateUser(input: FindOrCreateUserInput): Promise<Usuario> {
   return withTransaction(async client => {
@@ -49,6 +55,23 @@ export async function findOrCreateUser(input: FindOrCreateUserInput): Promise<Us
         [input.email, input.nombre, input.avatarUrl, existing[0].id],
       );
       return mapRow(updated[0]!);
+    }
+
+    if (input.email) {
+      const { rows: byEmail } = await client.query<UsuarioRow>(
+        'SELECT id, rol, nombre, avatar_url FROM usuarios WHERE email = $1',
+        [input.email],
+      );
+      if (byEmail[0]) {
+        const { rows: updated } = await client.query<UsuarioRow>(
+          `UPDATE usuarios
+           SET proveedor = $1, proveedor_id = $2, fecha_ultimo_login = NOW(), nombre = $3, avatar_url = $4
+           WHERE id = $5
+           RETURNING id, rol, nombre, avatar_url`,
+          [input.proveedor, input.proveedorId, input.nombre, input.avatarUrl, byEmail[0].id],
+        );
+        return mapRow(updated[0]!);
+      }
     }
 
     const { rows: inserted } = await client.query<UsuarioRow>(

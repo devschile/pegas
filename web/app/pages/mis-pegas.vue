@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { IconAlertTriangle, IconBookmarkOff } from '@tabler/icons-vue';
+import { ChButton } from '@devschile/chucao/vue';
+import { IconAlertTriangle, IconArrowLeft, IconBookmarkOff } from '@tabler/icons-vue';
 import { computed } from 'vue';
 import type { Pega } from '~/types/pega';
 import type { Reaction } from '../../server/utils/reacciones';
@@ -21,6 +22,12 @@ for (const pega of data.value ?? []) {
 
 const pegas = computed<Pega[]>(() => data.value ?? []);
 
+const router = useRouter();
+
+function handleBackClick() {
+  router.push('/');
+}
+
 useSeoMeta({
   title: 'Mis pegas',
   description: 'Pegas que guardaste o marcaste con like/nolike.',
@@ -29,6 +36,10 @@ useSeoMeta({
 
 <template>
   <div class="mis-pegas">
+    <ChButton class="mis-pegas__volver" variant="secondary" @ch-click="handleBackClick">
+      <IconArrowLeft :size="16" aria-hidden="true" /> Volver
+    </ChButton>
+
     <h1 class="mis-pegas__titulo">Mis pegas</h1>
 
     <p v-if="error" class="mis-pegas__mensaje"><IconAlertTriangle aria-hidden="true" /> Error al cargar tus pegas</p>
@@ -41,6 +52,11 @@ useSeoMeta({
 </template>
 
 <style scoped>
+.mis-pegas__volver {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
 .mis-pegas__titulo {
   margin-bottom: 1.5rem;
 }

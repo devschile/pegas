@@ -8,7 +8,7 @@ export default defineOAuthGitHubEventHandler({
       avatarUrl: user.avatar_url,
     });
     await setUserSession(event, { user: { id: usuario.id } });
-    return sendRedirect(event, '/');
+    return sendRedirect(event, '/mis-pegas');
   },
   onError(event, error) {
     console.error('[auth] GitHub OAuth error:', error.message);

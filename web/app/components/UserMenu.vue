@@ -40,6 +40,7 @@ onUnmounted(() => document.removeEventListener('click', handleDocumentClick));
 async function handleLogoutClick() {
   await clear();
   open.value = false;
+  await navigateTo('/');
 }
 </script>
 
