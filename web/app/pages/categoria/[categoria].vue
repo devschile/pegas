@@ -85,21 +85,25 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
 
     <CategoriasNav :categories="allCategories" :active="category" />
 
-    <p v-if="jobs.length === 0" class="listado-categoria__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
+    <Transition name="fade-filtro" mode="out-in">
+      <div :key="JSON.stringify(filters)">
+        <p v-if="jobs.length === 0" class="listado-categoria__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
 
-    <div v-else class="pegas-grid">
-      <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
-    </div>
+        <div v-else class="pegas-grid">
+          <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
+        </div>
 
-    <PegasPaginacion
-      :page="page"
-      :total-pages="totalPages"
-      :start="rangeStart"
-      :end="rangeEnd"
-      :total="total"
-      @prev="goToPreviousPage"
-      @next="goToNextPage"
-    />
+        <PegasPaginacion
+          :page="page"
+          :total-pages="totalPages"
+          :start="rangeStart"
+          :end="rangeEnd"
+          :total="total"
+          @prev="goToPreviousPage"
+          @next="goToNextPage"
+        />
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -135,5 +139,15 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
   gap: 0.5rem;
   padding: 4rem 0;
   color: var(--text-muted, #666);
+}
+
+.fade-filtro-enter-active,
+.fade-filtro-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-filtro-enter-from,
+.fade-filtro-leave-to {
+  opacity: 0;
 }
 </style>
