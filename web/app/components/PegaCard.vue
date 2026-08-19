@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ChBadge, ChButton, ChCard } from '@devschile/chucao/vue';
-import { IconCalendar, IconCoin, IconHome } from '@tabler/icons-vue';
-import { computed } from 'vue';
+import { IconBan, IconCalendar, IconCoin, IconHome } from '@tabler/icons-vue';
+import { computed, ref } from 'vue';
 import { formatDate, sourceLabel } from '~/utils/pegas';
 import { categorySlug, jobSlug } from '~/utils/slug';
 import type { Pega } from '~/types/pega';
@@ -9,7 +9,9 @@ import type { Pega } from '~/types/pega';
 const props = withDefaults(defineProps<{ job: Pega; index?: number }>(), { index: 0 });
 const track = useTrackEvent();
 const { loggedIn } = useUserSession();
+const { isAdmin } = useMe();
 const { states, toggleReaction, toggleSaved } = usePegaReactions();
+const desactivada = ref(false);
 
 const publishedDate = computed(() => formatDate(props.job.fecha_publicacion || props.job.fecha_creacion));
 const isRemote = computed(() => Boolean(props.job.tags?.includes('remote')));
@@ -42,10 +44,15 @@ function handleDislikeClick() {
 function handleSaveClick() {
   toggleSaved(props.job.id);
 }
+
+async function handleDesactivarClick() {
+  await $fetch(`/api/pegas/${props.job.id}/desactivar`, { method: 'POST' });
+  desactivada.value = true;
+}
 </script>
 
 <template>
-  <Reveal class="pega-card-motion" :delay="revealDelay" :duration="0.1">
+  <Reveal v-if="!desactivada" class="pega-card-motion" :delay="revealDelay" :duration="0.1">
     <ChCard class="pega-card">
       <div class="pega-card__header">
         <h3 class="pega-card__titulo"><NuxtLink :to="detailUrl">{{ job.titulo }}</NuxtLink></h3>
@@ -98,6 +105,14 @@ function handleSaveClick() {
           ><ReactionIcon variant="save" :active="state.guardada" /></ChButton>
         </div>
         <span class="pega-card__fuente">{{ sourceLabel(job.fuente) }}</span>
+        <ChButton
+          v-if="isAdmin"
+          class="pega-card__desactivar"
+          variant="secondary"
+          title="Desactivar pega (solo admins)"
+          label="Desactivar"
+          @ch-click="handleDesactivarClick"
+        ><IconBan :size="16" aria-hidden="true" /> Desactivar</ChButton>
       </div>
     </ChCard>
   </Reveal>
@@ -209,5 +224,12 @@ function handleSaveClick() {
 .pega-card__fuente {
   font-size: 0.85em;
   color: var(--text-muted, #666);
+}
+
+.pega-card__desactivar {
+  --border: #f87171;
+  --border-hover: #f87171;
+  --surface-hover: rgba(248, 113, 113, 0.12);
+  --text: #f87171;
 }
 </style>
