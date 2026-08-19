@@ -5,13 +5,15 @@ import { ref } from 'vue';
 import PegaCard from '../PegaCard.vue';
 import type { Pega } from '~/types/pega';
 
-const { trackMock, toggleReactionMock, toggleSavedMock } = vi.hoisted(() => ({
+const { trackMock, toggleReactionMock, toggleSavedMock, fetchMock } = vi.hoisted(() => ({
   trackMock: vi.fn(),
   toggleReactionMock: vi.fn(),
   toggleSavedMock: vi.fn(),
+  fetchMock: vi.fn(),
 }));
 const statesRef = ref<Record<number, { reaccion: 'like' | 'dislike' | null; guardada: boolean }>>({});
 const loggedInRef = ref(true);
+const isAdminRef = ref(false);
 
 mockNuxtImport('useTrackEvent', () => () => trackMock);
 mockNuxtImport('useUserSession', () => () => ({ loggedIn: loggedInRef }));
@@ -20,6 +22,8 @@ mockNuxtImport('usePegaReactions', () => () => ({
   toggleReaction: toggleReactionMock,
   toggleSaved: toggleSavedMock,
 }));
+mockNuxtImport('useMe', () => () => ({ me: ref(null), isAdmin: isAdminRef, refresh: vi.fn() }));
+mockNuxtImport('$fetch', () => fetchMock);
 
 const baseJob: Pega = {
   id: 1,
@@ -40,8 +44,10 @@ describe('PegaCard', () => {
   beforeEach(() => {
     statesRef.value = {};
     loggedInRef.value = true;
+    isAdminRef.value = false;
     toggleReactionMock.mockClear();
     toggleSavedMock.mockClear();
+    fetchMock.mockReset();
   });
 
   it('muestra el titulo, el empleador y la ubicacion', () => {
@@ -134,5 +140,26 @@ describe('PegaCard', () => {
 
     const saveButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'Guardar')!;
     expect(saveButton.classes()).toContain('pega-card__reaction-btn--active');
+  });
+
+  it('no muestra el boton Desactivar si no es admin', () => {
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+
+    expect(wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'Desactivar')).toBeUndefined();
+  });
+
+  it('admin: clickear Desactivar llama al endpoint y oculta la card', async () => {
+    isAdminRef.value = true;
+    fetchMock.mockResolvedValue({ ok: true });
+    const wrapper = mount(PegaCard, { props: { job: baseJob } });
+
+    const desactivarButton = wrapper.findAllComponents({ name: 'ChButton' }).find(b => b.props('label') === 'Desactivar')!;
+    expect(desactivarButton).toBeDefined();
+
+    await desactivarButton.vm.$emit('ch-click');
+    await wrapper.vm.$nextTick();
+
+    expect(fetchMock).toHaveBeenCalledWith(`/api/pegas/${baseJob.id}/desactivar`, { method: 'POST' });
+    expect(wrapper.text()).not.toContain('Frontend Developer');
   });
 });

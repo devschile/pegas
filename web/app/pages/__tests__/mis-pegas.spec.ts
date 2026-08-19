@@ -17,6 +17,9 @@ mockNuxtImport('usePegaReactions', () => () => ({ states: statesRef, toggleReact
 const loggedInRef = ref(true);
 mockNuxtImport('useUserSession', () => () => ({ loggedIn: loggedInRef }));
 
+const isAdminRef = ref(false);
+mockNuxtImport('useMe', () => () => ({ me: ref(null), isAdmin: isAdminRef, refresh: vi.fn() }));
+
 function buildJob(overrides: Partial<Pega> = {}): Pega {
   return {
     id: 1,
@@ -33,6 +36,19 @@ function buildJob(overrides: Partial<Pega> = {}): Pega {
     fecha_creacion: '2026-08-15T00:00:00.000Z',
     ...overrides,
   };
+}
+
+/** `misPegas` responde /api/me/pegas, `desactivadas` responde /api/pegas/desactivadas (default: vacio, sin admin no importa el contenido). */
+function mockFetches(
+  misPegas: { data: unknown; error?: unknown },
+  desactivadas: { data: unknown; error?: unknown } = { data: [] },
+) {
+  useFetchMock.mockImplementation((url: string) => {
+    if (url === '/api/pegas/desactivadas') {
+      return { data: ref(desactivadas.data), error: ref(desactivadas.error ?? null) };
+    }
+    return { data: ref(misPegas.data), error: ref(misPegas.error ?? null) };
+  });
 }
 
 async function mountMisPegas() {
@@ -52,11 +68,12 @@ describe('pages/mis-pegas', () => {
     navigateToMock.mockReset();
     statesRef.value = {};
     loggedInRef.value = true;
+    isAdminRef.value = false;
   });
 
   it('redirige a / si no hay sesion', async () => {
     loggedInRef.value = false;
-    useFetchMock.mockReturnValue({ data: ref(null), error: ref(null) });
+    mockFetches({ data: null });
 
     await mountMisPegas();
 
@@ -64,7 +81,7 @@ describe('pages/mis-pegas', () => {
   });
 
   it('muestra un mensaje si no hay pegas guardadas ni reaccionadas', async () => {
-    useFetchMock.mockReturnValue({ data: ref([]), error: ref(null) });
+    mockFetches({ data: [] });
 
     const wrapper = await mountMisPegas();
 
@@ -72,10 +89,7 @@ describe('pages/mis-pegas', () => {
   });
 
   it('lista las pegas devueltas y siembra el estado compartido', async () => {
-    useFetchMock.mockReturnValue({
-      data: ref([{ ...buildJob(), reaccion: 'like', guardada: true }]),
-      error: ref(null),
-    });
+    mockFetches({ data: [{ ...buildJob(), reaccion: 'like', guardada: true }] });
 
     const wrapper = await mountMisPegas();
 
@@ -84,10 +98,37 @@ describe('pages/mis-pegas', () => {
   });
 
   it('muestra un mensaje de error si fallo la carga', async () => {
-    useFetchMock.mockReturnValue({ data: ref(null), error: ref(new Error('fallo')) });
+    mockFetches({ data: null, error: new Error('fallo') });
 
     const wrapper = await mountMisPegas();
 
     expect(wrapper.text()).toContain('Error al cargar');
+  });
+
+  it('no admin: no muestra la seccion de pegas desactivadas aunque el fetch devuelva datos', async () => {
+    mockFetches({ data: [] }, { data: [{ id: 9, titulo: 'X', empleador: 'Y', categoria: 'Otros', fuente: 'jobicy', fecha_actualizacion: '2026-08-19' }] });
+
+    const wrapper = await mountMisPegas();
+
+    expect(wrapper.text()).not.toContain('Pegas desactivadas');
+  });
+
+  it('admin: muestra la seccion de pegas desactivadas', async () => {
+    isAdminRef.value = true;
+    mockFetches({ data: [] }, { data: [{ id: 9, titulo: 'Vendedor Puerta a Puerta', empleador: 'Acme', categoria: 'Otros', fuente: 'jobicy', fecha_actualizacion: '2026-08-19' }] });
+
+    const wrapper = await mountMisPegas();
+
+    expect(wrapper.text()).toContain('Pegas desactivadas');
+    expect(wrapper.text()).toContain('Vendedor Puerta a Puerta');
+  });
+
+  it('admin sin pegas desactivadas: no muestra la seccion', async () => {
+    isAdminRef.value = true;
+    mockFetches({ data: [] }, { data: [] });
+
+    const wrapper = await mountMisPegas();
+
+    expect(wrapper.text()).not.toContain('Pegas desactivadas');
   });
 });

@@ -6,5 +6,5 @@ export default defineEventHandler(async event => {
     throw createError({ statusCode: 404, message: 'Usuario no encontrado' });
   }
 
-  return { id: usuario.id, nombre: usuario.nombre, avatarUrl: usuario.avatarUrl };
+  return { id: usuario.id, nombre: usuario.nombre, avatarUrl: usuario.avatarUrl, rol: usuario.rol };
 });
