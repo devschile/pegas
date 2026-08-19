@@ -5,6 +5,8 @@ import { findCategoryBySlug } from '~/utils/slug';
 import { scrollToTop } from '~/utils/scroll';
 import type { PegasMeta } from '~/types/pega';
 
+definePageMeta({ layout: 'listado' });
+
 const route = useRoute();
 const track = useTrackEvent();
 
@@ -20,7 +22,7 @@ if (!category) {
   throw createError({ statusCode: 404, statusMessage: 'Categoría no encontrada', fatal: true });
 }
 
-const { query, source, page, filters: baseFilters, nextPage, prevPage } = useJobsListing();
+const { page, filters: baseFilters, nextPage, prevPage } = useJobsListingState();
 const filters = computed(() => ({ ...baseFilters.value, categoria: category }));
 const { data, error: fetchError } = await useJobs(filters);
 
@@ -32,8 +34,6 @@ const jobs = computed(() => data.value?.pegas ?? []);
 const total = computed(() => data.value?.total ?? 0);
 const porPagina = computed(() => data.value?.porPagina ?? 25);
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / porPagina.value)));
-const allCategories = computed(() => meta.value?.categorias ?? []);
-const categorySources = computed(() => meta.value?.fuentes ?? []);
 
 const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * porPagina.value + 1));
 const rangeEnd = computed(() => Math.min(page.value * porPagina.value, total.value));
@@ -75,16 +75,6 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
 
 <template>
   <div class="listado-categoria">
-    <PegasFiltros
-      v-model:query="query"
-      v-model:source="source"
-      :sources="categorySources"
-      :total-visible="total"
-      :total-general="meta?.total ?? 0"
-    />
-
-    <CategoriasNav :categories="allCategories" :active="category" />
-
     <Transition name="fade-filtro" mode="out-in">
       <div :key="JSON.stringify(filters)">
         <p v-if="jobs.length === 0" class="listado-categoria__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
@@ -108,30 +98,6 @@ useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria
 </template>
 
 <style scoped>
-.listado-categoria__header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  white-space: nowrap;
-}
-
-.listado-categoria__row {
-    display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-}
-
-.listado-categoria__volver {
-  flex-shrink: 0;
-}
-
-.listado-categoria__titulo {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .listado-categoria__mensaje {
   display: flex;
   align-items: center;
