@@ -1,6 +1,7 @@
 interface SlackOpenIdUser {
   sub: string;
   email?: string;
+  email_verified?: boolean;
   name?: string;
   picture?: string;
 }
@@ -18,15 +19,22 @@ export default defineOAuthSlackEventHandler({
    */
   config: { clientId: process.env.NUXT_OAUTH_SLACK_CLIENT_ID },
   async onSuccess(event, { user }: { user: SlackOpenIdUser }) {
+    /**
+     * findOrCreateUser vincula cuentas por email cuando el proveedor no
+     * matchea (ver server/utils/usuarios.ts) -- con un email sin verificar
+     * cualquiera podria reclamar el email de otra persona y heredar sus
+     * pegas guardadas, asi que un email no verificado se trata como si no
+     * hubiera venido ninguno (crea/usa una cuenta propia por (slack, sub)).
+     */
     const usuario = await findOrCreateUser({
       proveedor: 'slack',
       proveedorId: user.sub,
-      email: user.email ?? null,
+      email: user.email_verified === false ? null : (user.email ?? null),
       nombre: user.name ?? null,
       avatarUrl: user.picture ?? null,
     });
     await setUserSession(event, { user: { id: usuario.id } });
-    return sendRedirect(event, '/');
+    return sendRedirect(event, '/mis-pegas');
   },
   onError(event, error) {
     console.error('[auth] Slack OAuth error:', error.message);

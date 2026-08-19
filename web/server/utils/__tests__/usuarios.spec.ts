@@ -23,7 +23,8 @@ describe('findOrCreateUser', () => {
     clientQueryMock.mockReset();
   });
 
-  it('crea un usuario nuevo como candidato si no existe', async () => {
+  it('crea un usuario nuevo como candidato si no existe ni por proveedor ni por email', async () => {
+    clientQueryMock.mockResolvedValueOnce({ rows: [] });
     clientQueryMock.mockResolvedValueOnce({ rows: [] });
     clientQueryMock.mockResolvedValueOnce({
       rows: [{ id: 1, rol: 'candidato', nombre: 'Dev Ejemplo', avatar_url: 'https://example.com/avatar.png' }],
@@ -32,9 +33,38 @@ describe('findOrCreateUser', () => {
     const usuario = await findOrCreateUser(input);
 
     expect(usuario).toEqual({ id: 1, rol: 'candidato', nombre: 'Dev Ejemplo', avatarUrl: 'https://example.com/avatar.png' });
-    const [insertSql, insertValues] = clientQueryMock.mock.calls[1]!;
+    const [insertSql, insertValues] = clientQueryMock.mock.calls[2]!;
     expect(insertSql).toContain('INSERT INTO usuarios');
     expect(insertValues).toEqual(['github', '123', 'dev@example.com', 'Dev Ejemplo', 'https://example.com/avatar.png']);
+  });
+
+  it('crea un usuario nuevo sin buscar por email si el proveedor no devolvio uno', async () => {
+    clientQueryMock.mockResolvedValueOnce({ rows: [] });
+    clientQueryMock.mockResolvedValueOnce({
+      rows: [{ id: 1, rol: 'candidato', nombre: 'Dev Ejemplo', avatar_url: null }],
+    });
+
+    await findOrCreateUser({ ...input, email: null });
+
+    expect(clientQueryMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('vincula por email a un usuario existente de otro proveedor en vez de crear uno nuevo', async () => {
+    clientQueryMock.mockResolvedValueOnce({ rows: [] });
+    clientQueryMock.mockResolvedValueOnce({ rows: [{ id: 7, rol: 'candidato', nombre: 'Viejo', avatar_url: null }] });
+    clientQueryMock.mockResolvedValueOnce({
+      rows: [{ id: 7, rol: 'candidato', nombre: 'Dev Ejemplo', avatar_url: 'https://example.com/avatar.png' }],
+    });
+
+    const usuario = await findOrCreateUser(input);
+
+    expect(usuario.id).toBe(7);
+    const [emailSql, emailValues] = clientQueryMock.mock.calls[1]!;
+    expect(emailSql).toContain('WHERE email = $1');
+    expect(emailValues).toEqual(['dev@example.com']);
+    const [updateSql, updateValues] = clientQueryMock.mock.calls[2]!;
+    expect(updateSql).toContain('SET proveedor = $1, proveedor_id = $2');
+    expect(updateValues).toEqual(['github', '123', 'Dev Ejemplo', 'https://example.com/avatar.png', 7]);
   });
 
   it('actualiza y devuelve el usuario existente por (proveedor, proveedor_id)', async () => {
