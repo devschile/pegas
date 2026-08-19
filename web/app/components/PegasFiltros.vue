@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChInput, ChSelect } from '@devschile/chucao/vue';
-import { computed } from 'vue';
+import { animate, RowValue, useMotionValue, useTransform } from 'motion-v';
+import { computed, watch } from 'vue';
 import { sourceLabel } from '~/utils/pegas';
 
 const props = defineProps<{
@@ -16,11 +17,35 @@ const sourceOptions = computed(() => [
   { label: 'Todas las fuentes', value: '' },
   ...props.sources.map(value => ({ label: sourceLabel(value), value })),
 ]);
+
+/**
+ * Cuenta animada (motion-v) en vez de saltar de golpe al cambiar de filtro
+ * o pagina. useMotionValue arranca en el valor inicial (SSR/primer paint
+ * muestran el numero correcto sin animar desde 0); solo anima en updates
+ * posteriores, disparados por el watch.
+ */
+const visibleCount = useMotionValue(props.totalVisible);
+const visibleRounded = useTransform(() => Math.round(visibleCount.get()));
+const generalCount = useMotionValue(props.totalGeneral);
+const generalRounded = useTransform(() => Math.round(generalCount.get()));
+
+watch(
+  () => props.totalVisible,
+  value => {
+    animate(visibleCount, value, { duration: 0.5 });
+  },
+);
+watch(
+  () => props.totalGeneral,
+  value => {
+    animate(generalCount, value, { duration: 0.5 });
+  },
+);
 </script>
 
 <template>
   <section class="filtros">
-    <p class="filtros__stats"><strong>{{ totalVisible }}</strong> de <strong>{{ totalGeneral }}</strong> pegas</p>
+    <p class="filtros__stats"><strong><RowValue :value="visibleRounded" /></strong> de <strong><RowValue :value="generalRounded" /></strong> pegas</p>
     <div class="filtros__row">
       <ChInput
         label="Buscar"
