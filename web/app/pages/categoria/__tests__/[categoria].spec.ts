@@ -113,6 +113,18 @@ describe('pages/categoria/[categoria]', () => {
     expect(filtersArg.value).toMatchObject({ categoria: 'Frontend' });
   });
 
+  it('muestra el total general del sitio, no el total filtrado, en las stats', async () => {
+    mockListing();
+    useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
+    useFetchMock.mockReturnValue({ data: ref(buildMeta({ total: 834 })), error: ref(null) });
+    useJobsMock.mockReturnValue({ data: ref({ total: 125, pagina: 1, porPagina: 25, pegas: [buildJob()] }), error: ref(null) });
+
+    const wrapper = await mountCategoryPage();
+
+    expect(wrapper.text()).toContain('125');
+    expect(wrapper.text()).toContain('834');
+  });
+
   it('trackea categoria_view al montar', async () => {
     mockListing();
     useRouteMock.mockReturnValue({ params: { categoria: 'frontend' }, path: '/categoria/frontend', fullPath: '/categoria/frontend', matched: [] });
