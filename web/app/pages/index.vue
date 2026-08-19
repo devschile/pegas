@@ -4,17 +4,16 @@ import { computed, watch } from 'vue';
 import { scrollToTop } from '~/utils/scroll';
 import type { PegasMeta } from '~/types/pega';
 
-const { query, source, page, filters, nextPage, prevPage } = useJobsListing();
+definePageMeta({ layout: 'listado' });
+
+const { page, filters, nextPage, prevPage } = useJobsListingState();
 const { data, error } = await useJobs(filters);
 const { data: meta } = await useFetch<PegasMeta>('/api/meta', { key: 'pegas-meta' });
-const track = useTrackEvent();
 
 const jobs = computed(() => data.value?.pegas ?? []);
 const total = computed(() => data.value?.total ?? 0);
 const porPagina = computed(() => data.value?.porPagina ?? 25);
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / porPagina.value)));
-const categories = computed(() => meta.value?.categorias ?? []);
-const sources = computed(() => meta.value?.fuentes ?? []);
 
 const rangeStart = computed(() => (total.value === 0 ? 0 : (page.value - 1) * porPagina.value + 1));
 const rangeEnd = computed(() => Math.min(page.value * porPagina.value, total.value));
@@ -44,14 +43,6 @@ function goToNextPage() {
   }
 }
 
-function resetFilters() {
-  query.value = '';
-  source.value = '';
-}
-
-/** Solo el select (acción discreta), no cada tecla del buscador. */
-watch(source, value => track('filtro_usado', { filtro: 'fuente', valor: value }));
-
 useSeoMeta({
   title: 'Ofertas de trabajo tech en Chile y remoto LatAm',
   description: 'Vitrina de ofertas de trabajo tech en Chile y remoto LatAm, agregadas desde LinkedIn, GetOnBoard, WorkingNomads, Jobicy e Himalayas.',
@@ -68,37 +59,25 @@ useSeoMeta({
     <p v-if="error" class="listado__mensaje"><IconAlertTriangle aria-hidden="true" /> Error al cargar las pegas</p>
     <p v-else-if="(meta?.total ?? 0) === 0" class="listado__mensaje"><IconInboxOff aria-hidden="true" /> No hay pegas aún, ¡Vuelve pronto!</p>
 
-    <template v-else>
-      <PegasFiltros
-        v-model:query="query"
-        v-model:source="source"
-        :sources="sources"
-        :total-visible="total"
-        :total-general="meta?.total ?? 0"
-      />
+    <Transition v-else name="fade-filtro" mode="out-in">
+      <div :key="JSON.stringify(filters)">
+        <p v-if="jobs.length === 0" class="listado__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
 
-      <CategoriasNav :categories="categories" @reset="resetFilters" />
-
-      <Transition name="fade-filtro" mode="out-in">
-        <div :key="JSON.stringify(filters)">
-          <p v-if="jobs.length === 0" class="listado__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
-
-          <div v-else class="pegas-grid">
-            <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
-          </div>
-
-          <PegasPaginacion
-            :page="page"
-            :total-pages="totalPages"
-            :start="rangeStart"
-            :end="rangeEnd"
-            :total="total"
-            @prev="goToPreviousPage"
-            @next="goToNextPage"
-          />
+        <div v-else class="pegas-grid">
+          <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
         </div>
-      </Transition>
-    </template>
+
+        <PegasPaginacion
+          :page="page"
+          :total-pages="totalPages"
+          :start="rangeStart"
+          :end="rangeEnd"
+          :total="total"
+          @prev="goToPreviousPage"
+          @next="goToNextPage"
+        />
+      </div>
+    </Transition>
   </div>
 </template>
 
