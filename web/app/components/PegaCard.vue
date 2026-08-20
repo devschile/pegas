@@ -117,7 +117,7 @@ async function handleDesactivarClick() {
 
           <button
             type="button"
-            class="pega-card__accion"
+            class="pega-card__accion pega-card__accion--guardar"
             :class="{ 'pega-card__accion--activa': state.guardada }"
             :title="state.guardada ? 'Quitar de guardadas' : 'Guardar pega'"
             aria-label="Guardar"
@@ -293,6 +293,14 @@ button.pega-card__accion--negativa:hover,
 .pega-card__accion--negativa.pega-card__accion--activa {
   background: rgba(255, 139, 123, 0.12);
   color: #ff8b7b;
+}
+
+/* Guardar en naranjo y no en el acento: guardar es marcar algo para
+   despues, no valorarlo -- conviene que se lea distinto de like/nolike. */
+button.pega-card__accion--guardar:hover,
+.pega-card__accion--guardar.pega-card__accion--activa {
+  background: rgba(251, 146, 60, 0.14);
+  color: #fb923c;
 }
 
 .pega-card__accion-conteo {
