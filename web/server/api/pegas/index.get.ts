@@ -1,5 +1,6 @@
 import { defineEventHandler, getQuery } from 'h3';
 import { query } from '../../utils/db';
+import { CONTADORES_LATERAL, CONTADORES_SELECT } from '../../utils/contadores';
 import type { Pega } from '~/types/pega';
 
 export interface ListJobsParams {
@@ -81,11 +82,11 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
   const limitIndex = values.length + 1;
   const offsetIndex = values.length + 2;
   const { rows: jobs } = await query<Pega>(
-    `SELECT id, url, titulo, empleador, descripcion, categoria, ubicacion, sueldo, tags,
-            fecha_publicacion, fuente, fecha_creacion
-     FROM pegas
+    `SELECT p.id, p.url, p.titulo, p.empleador, p.descripcion, p.categoria, p.ubicacion, p.sueldo, p.tags,
+            p.fecha_publicacion, p.fuente, p.fecha_creacion, ${CONTADORES_SELECT}
+     FROM pegas p${CONTADORES_LATERAL}
      WHERE ${where}
-     ORDER BY GREATEST(COALESCE(fecha_publicacion, fecha_creacion), fecha_creacion) DESC
+     ORDER BY GREATEST(COALESCE(p.fecha_publicacion, p.fecha_creacion), p.fecha_creacion) DESC
      LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
     [...values, params.porPagina, (params.pagina - 1) * params.porPagina],
   );

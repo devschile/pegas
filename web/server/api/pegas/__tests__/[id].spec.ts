@@ -42,7 +42,7 @@ describe('getJob', () => {
     const job = await getJob(7);
 
     expect(job).toEqual({ id: 7, titulo: 'Dev' });
-    expect(queryMock).toHaveBeenCalledWith(expect.stringContaining('WHERE id = $1 AND activo = TRUE'), [7]);
+    expect(queryMock).toHaveBeenCalledWith(expect.stringContaining('WHERE p.id = $1 AND p.activo = TRUE'), [7]);
   });
 
   it('devuelve null si no hay filas', async () => {

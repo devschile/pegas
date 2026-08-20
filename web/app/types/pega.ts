@@ -11,6 +11,10 @@ export interface Pega {
   fecha_publicacion: string | null;
   fuente: string;
   fecha_creacion: string;
+  /** Conteos públicos de reacciones -- ver server/utils/contadores.ts. */
+  likes: number;
+  dislikes: number;
+  guardados: number;
 }
 
 export interface PegasListado {

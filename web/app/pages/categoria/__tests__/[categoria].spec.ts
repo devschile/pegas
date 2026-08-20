@@ -31,6 +31,9 @@ function buildJob(overrides: Partial<Pega> = {}): Pega {
     fecha_publicacion: '2026-08-15T00:00:00.000Z',
     fuente: 'getonbrd',
     fecha_creacion: '2026-08-15T00:00:00.000Z',
+    likes: 0,
+    dislikes: 0,
+    guardados: 0,
     ...overrides,
   };
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChButton } from '@devschile/chucao/vue';
-import { IconBrandGithub, IconBrandSlack, IconLogout, IconUserCircle } from '@tabler/icons-vue';
+import { IconBrandGithub, IconBrandSlack, IconLogout, IconUserCircle, IconUserDollar } from '@tabler/icons-vue';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 
 interface Me {
@@ -20,7 +20,7 @@ watch(loggedIn, isLoggedIn => {
   else me.value = null;
 });
 
-const open = ref(false);
+const { open } = useUserMenu();
 const root = ref<HTMLElement | null>(null);
 
 function toggle() {
@@ -54,19 +54,21 @@ async function handleLogoutClick() {
     <Transition name="user-menu-panel">
       <div v-if="open" class="user-menu__panel">
         <template v-if="loggedIn">
-          <NuxtLink to="/mis-pegas" class="user-menu__link" @click="open = false">Mis pegas</NuxtLink>
-          <ChButton variant="secondary" @ch-click="handleLogoutClick">
+          <NuxtLink to="/mis-pegas" class="user-menu__link" @click="open = false">
+              <IconUserDollar :size="16" aria-hidden="true" /> Mis pegas
+          </NuxtLink>
+          <ChButton variant="secondary" @ch-click="handleLogoutClick" class="btn-close">
             <IconLogout :size="16" aria-hidden="true" /> Cerrar sesión
           </ChButton>
         </template>
         <template v-else>
-          <span class="user-menu__panel-title">Login:</span>
+          <span class="user-menu__panel-title">Inicia sesión:</span>
           <div class="user-menu__providers">
             <a class="user-menu__provider" href="/auth/github" title="Entrar con GitHub" aria-label="Entrar con GitHub">
-              <IconBrandGithub :size="20" aria-hidden="true" />
+              <IconBrandGithub :size="28" aria-hidden="true" />
             </a>
             <a class="user-menu__provider" href="/auth/slack" title="Entrar con Slack" aria-label="Entrar con Slack">
-              <IconBrandSlack :size="20" aria-hidden="true" />
+              <IconBrandSlack :size="28" aria-hidden="true" />
             </a>
           </div>
         </template>
@@ -76,6 +78,10 @@ async function handleLogoutClick() {
 </template>
 
 <style scoped>
+.btn-close {
+    font-size: 0.75rem;
+}
+
 .user-menu {
   position: fixed;
   bottom: 1.5rem;
@@ -89,7 +95,7 @@ async function handleLogoutClick() {
   border-radius: 50%;
   border: 2px solid #fdba74;
   background: #fb923c;
-  color: #1a1005;
+  color: #fff;
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
@@ -129,7 +135,7 @@ async function handleLogoutClick() {
   border-radius: 0.75rem;
   background: var(--surface, #1a1f2e);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  min-width: 10rem;
+  min-width: 8rem;
 }
 
 .user-menu__link {
@@ -151,6 +157,8 @@ async function handleLogoutClick() {
 
 .user-menu__providers {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 0.6rem;
 }
 
@@ -158,8 +166,8 @@ async function handleLogoutClick() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 50%;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
   color: inherit;
