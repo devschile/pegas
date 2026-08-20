@@ -12,7 +12,8 @@ mockNuxtImport('useFetch', () => useFetchMock);
 mockNuxtImport('navigateTo', () => navigateToMock);
 
 const statesRef = ref<Record<number, { reaccion: 'like' | 'dislike' | null; guardada: boolean }>>({});
-mockNuxtImport('usePegaReactions', () => () => ({ states: statesRef, toggleReaction: vi.fn(), toggleSaved: vi.fn() }));
+const deltasRef = ref<Record<number, { likes: number; dislikes: number; guardados: number }>>({});
+mockNuxtImport('usePegaReactions', () => () => ({ states: statesRef, deltas: deltasRef, toggleReaction: vi.fn(), toggleSaved: vi.fn() }));
 
 const loggedInRef = ref(true);
 mockNuxtImport('useUserSession', () => () => ({ loggedIn: loggedInRef }));
@@ -34,6 +35,9 @@ function buildJob(overrides: Partial<Pega> = {}): Pega {
     fecha_publicacion: '2026-08-15T00:00:00.000Z',
     fuente: 'getonbrd',
     fecha_creacion: '2026-08-15T00:00:00.000Z',
+    likes: 0,
+    dislikes: 0,
+    guardados: 0,
     ...overrides,
   };
 }

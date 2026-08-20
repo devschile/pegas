@@ -1,4 +1,5 @@
 import { query } from './db';
+import { CONTADORES_LATERAL, CONTADORES_SELECT } from './contadores';
 import type { Pega } from '~/types/pega';
 
 export type Reaction = 'like' | 'dislike';
@@ -67,9 +68,9 @@ export async function getPegaStatesFor(usuarioId: number, pegaIds: number[]): Pr
 export async function getMyPegas(usuarioId: number): Promise<(Pega & PegaState)[]> {
   const { rows } = await query<Pega & EstadoRow>(
     `SELECT p.id, p.url, p.titulo, p.empleador, p.descripcion, p.categoria, p.ubicacion, p.sueldo, p.tags,
-            p.fecha_publicacion, p.fuente, p.fecha_creacion, e.reaccion, e.guardada
+            p.fecha_publicacion, p.fuente, p.fecha_creacion, e.reaccion, e.guardada, ${CONTADORES_SELECT}
      FROM pegas_estado_usuario e
-     JOIN pegas p ON p.id = e.pega_id
+     JOIN pegas p ON p.id = e.pega_id${CONTADORES_LATERAL}
      WHERE e.usuario_id = $1
      ORDER BY e.fecha_actualizacion DESC`,
     [usuarioId],

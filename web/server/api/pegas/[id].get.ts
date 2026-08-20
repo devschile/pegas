@@ -1,5 +1,6 @@
 import { createError, defineEventHandler, getRouterParam } from 'h3';
 import { query } from '../../utils/db';
+import { CONTADORES_LATERAL, CONTADORES_SELECT } from '../../utils/contadores';
 import type { Pega } from '~/types/pega';
 
 /** `null` para cualquier id que no sea un entero positivo, incluido no-numérico. */
@@ -11,10 +12,10 @@ export function parseJobId(raw: string | undefined): number | null {
 
 export async function getJob(id: number): Promise<Pega | null> {
   const { rows } = await query<Pega>(
-    `SELECT id, url, titulo, empleador, descripcion, categoria, ubicacion, sueldo, tags,
-            fecha_publicacion, fuente, fecha_creacion
-     FROM pegas
-     WHERE id = $1 AND activo = TRUE`,
+    `SELECT p.id, p.url, p.titulo, p.empleador, p.descripcion, p.categoria, p.ubicacion, p.sueldo, p.tags,
+            p.fecha_publicacion, p.fuente, p.fecha_creacion, ${CONTADORES_SELECT}
+     FROM pegas p${CONTADORES_LATERAL}
+     WHERE p.id = $1 AND p.activo = TRUE`,
     [id],
   );
   return rows[0] ?? null;

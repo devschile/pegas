@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
-import { createPegaReactionsStore } from '../usePegaReactions';
+import { createPegaReactionsStore, type PegaDelta } from '../usePegaReactions';
 
 function buildStore(overrides: { isLoggedIn?: boolean } = {}) {
   const fetchMock = vi.fn();
   const states = ref<Record<number, { reaccion: 'like' | 'dislike' | null; guardada: boolean }>>({});
-  const store = createPegaReactionsStore(states, {
+  const deltas = ref<Record<number, PegaDelta>>({});
+  const store = createPegaReactionsStore(states, deltas, {
     isLoggedIn: () => overrides.isLoggedIn ?? true,
     fetch: fetchMock as unknown as typeof $fetch,
   });
@@ -121,6 +122,84 @@ describe('createPegaReactionsStore', () => {
       await toggleSaved(5);
 
       expect(states.value[5]).toEqual({ reaccion: 'like', guardada: false });
+    });
+  });
+
+  /**
+   * Los conteos públicos que muestra PegaCard salen de `job.likes + delta`.
+   * El delta solo acumula lo que hizo el usuario en esta sesión, nunca lo
+   * que ya venía contado del server.
+   */
+  describe('deltas de conteo', () => {
+    it('dar like suma 1 al delta de likes', async () => {
+      const { deltas, toggleReaction, fetchMock } = buildStore();
+      fetchMock.mockResolvedValue({});
+
+      await toggleReaction(5, 'like');
+
+      expect(deltas.value[5]).toEqual({ likes: 1, dislikes: 0, guardados: 0 });
+    });
+
+    it('sacar el propio like vuelve el delta a 0', async () => {
+      const { deltas, toggleReaction, fetchMock } = buildStore();
+      fetchMock.mockResolvedValue({});
+
+      await toggleReaction(5, 'like');
+      await toggleReaction(5, 'like');
+
+      expect(deltas.value[5]).toEqual({ likes: 0, dislikes: 0, guardados: 0 });
+    });
+
+    it('cambiar de like a nolike mueve el conteo de uno al otro', async () => {
+      const { deltas, toggleReaction, fetchMock } = buildStore();
+      fetchMock.mockResolvedValue({});
+
+      await toggleReaction(5, 'like');
+      await toggleReaction(5, 'dislike');
+
+      expect(deltas.value[5]).toEqual({ likes: 0, dislikes: 1, guardados: 0 });
+    });
+
+    it('sembrar el estado desde el server no mueve el delta (el conteo ya lo incluye)', async () => {
+      const { states, deltas, loadStates, fetchMock } = buildStore();
+      fetchMock.mockResolvedValueOnce({ 5: { reaccion: 'like', guardada: true } });
+
+      await loadStates([5]);
+
+      expect(states.value[5]).toEqual({ reaccion: 'like', guardada: true });
+      expect(deltas.value[5]).toBeUndefined();
+    });
+
+    it('quitar un like que ya venia del server resta 1', async () => {
+      const { states, deltas, toggleReaction, fetchMock } = buildStore();
+      fetchMock.mockResolvedValue({});
+      states.value[5] = { reaccion: 'like', guardada: false };
+
+      await toggleReaction(5, 'like');
+
+      expect(deltas.value[5]).toEqual({ likes: -1, dislikes: 0, guardados: 0 });
+    });
+
+    it('guardar suma y revierte el delta si el POST falla', async () => {
+      const { deltas, toggleSaved, fetchMock } = buildStore();
+      fetchMock.mockResolvedValueOnce({});
+
+      await toggleSaved(5);
+      expect(deltas.value[5]).toEqual({ likes: 0, dislikes: 0, guardados: 1 });
+
+      fetchMock.mockRejectedValueOnce(new Error('fallo'));
+      await toggleSaved(5);
+
+      expect(deltas.value[5]).toEqual({ likes: 0, dislikes: 0, guardados: 1 });
+    });
+
+    it('revertir una reaccion fallida tambien revierte el delta', async () => {
+      const { deltas, toggleReaction, fetchMock } = buildStore();
+      fetchMock.mockRejectedValueOnce(new Error('fallo'));
+
+      await toggleReaction(5, 'like');
+
+      expect(deltas.value[5]).toEqual({ likes: 0, dislikes: 0, guardados: 0 });
     });
   });
 });
