@@ -4,12 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref, Suspense } from 'vue';
 import type { Pega } from '~/types/pega';
 
-const { useFetchMock, navigateToMock } = vi.hoisted(() => ({
+const { useFetchMock, navigateToMock, fetchMock } = vi.hoisted(() => ({
   useFetchMock: vi.fn(),
   navigateToMock: vi.fn(),
+  fetchMock: vi.fn(),
 }));
 mockNuxtImport('useFetch', () => useFetchMock);
 mockNuxtImport('navigateTo', () => navigateToMock);
+mockNuxtImport('$fetch', () => fetchMock);
 
 const statesRef = ref<Record<number, { reaccion: 'like' | 'dislike' | null; guardada: boolean }>>({});
 const deltasRef = ref<Record<number, { likes: number; dislikes: number; guardados: number }>>({});
@@ -70,6 +72,7 @@ describe('pages/mis-pegas', () => {
   beforeEach(() => {
     useFetchMock.mockReset();
     navigateToMock.mockReset();
+    fetchMock.mockReset();
     statesRef.value = {};
     loggedInRef.value = true;
     isAdminRef.value = false;
@@ -125,6 +128,24 @@ describe('pages/mis-pegas', () => {
 
     expect(wrapper.text()).toContain('Pegas desactivadas');
     expect(wrapper.text()).toContain('Vendedor Puerta a Puerta');
+  });
+
+  it('admin: reactivar llama al endpoint y saca la pega de la lista', async () => {
+    isAdminRef.value = true;
+    fetchMock.mockResolvedValue({ ok: true });
+    mockFetches({ data: [] }, { data: [
+      { id: 9, titulo: 'Vendedor Puerta a Puerta', empleador: 'Acme', categoria: 'Otros', fuente: 'jobicy', fecha_actualizacion: '2026-08-19' },
+      { id: 10, titulo: 'Otra pega', empleador: 'Acme', categoria: 'Otros', fuente: 'jobicy', fecha_actualizacion: '2026-08-19' },
+    ] });
+
+    const wrapper = await mountMisPegas();
+    await wrapper.get('button[aria-label="Reactivar Vendedor Puerta a Puerta"]').trigger('click');
+    await flushPromises();
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/pegas/9/activar', { method: 'POST' });
+    expect(wrapper.text()).not.toContain('Vendedor Puerta a Puerta');
+    expect(wrapper.text()).toContain('Otra pega');
+    expect(wrapper.text()).toContain('Pegas desactivadas (1)');
   });
 
   it('admin sin pegas desactivadas: no muestra la seccion', async () => {

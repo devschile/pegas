@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ChButton } from '@devschile/chucao/vue';
-import { IconAlertTriangle, IconArrowLeft, IconBan, IconBookmarkOff } from '@tabler/icons-vue';
-import { computed } from 'vue';
+import { IconAlertTriangle, IconArrowLeft, IconBan, IconBookmarkOff, IconArrowBackUp } from '@tabler/icons-vue';
+import { computed, ref } from 'vue';
 import type { Pega } from '~/types/pega';
 import type { Reaction } from '../../server/utils/reacciones';
 import type { PegaDesactivada } from '../../server/api/pegas/desactivadas.get';
@@ -36,6 +36,23 @@ const { data: desactivadas } = await useFetch<PegaDesactivada[]>('/api/pegas/des
   key: 'pegas-desactivadas',
 });
 
+const reactivando = ref<number | null>(null);
+
+/**
+ * Deshacer una desactivación: la saca de la lista en el acto y la devuelve
+ * al listado publico. Sin esto la unica forma de revertir un click en el
+ * boton de desactivar era ir a la base a mano.
+ */
+async function handleReactivarClick(id: number) {
+  reactivando.value = id;
+  try {
+    await $fetch(`/api/pegas/${id}/activar`, { method: 'POST' });
+    desactivadas.value = (desactivadas.value ?? []).filter(pega => pega.id !== id);
+  } finally {
+    reactivando.value = null;
+  }
+}
+
 const router = useRouter();
 
 function handleBackClick() {
@@ -67,8 +84,19 @@ useSeoMeta({
       <h2 class="pegas-desactivadas__titulo"><IconBan :size="20" aria-hidden="true" /> Pegas desactivadas ({{ desactivadas.length }})</h2>
       <ul class="pegas-desactivadas__lista">
         <li v-for="pega in desactivadas" :key="pega.id" class="pegas-desactivadas__item">
-          <span class="pegas-desactivadas__titulo-pega">{{ pega.titulo }}</span>
-          <span class="pegas-desactivadas__meta">{{ pega.empleador }} · {{ pega.categoria }} · {{ sourceLabel(pega.fuente) }} · {{ formatDate(pega.fecha_actualizacion) }}</span>
+          <div class="pegas-desactivadas__datos">
+            <span class="pegas-desactivadas__titulo-pega">{{ pega.titulo }}</span>
+            <span class="pegas-desactivadas__meta">{{ pega.empleador }} · {{ pega.categoria }} · {{ sourceLabel(pega.fuente) }} · {{ formatDate(pega.fecha_actualizacion) }}</span>
+          </div>
+          <button
+            type="button"
+            class="pegas-desactivadas__reactivar"
+            :disabled="reactivando === pega.id"
+            :aria-label="`Reactivar ${pega.titulo}`"
+            @click="handleReactivarClick(pega.id)"
+          >
+            <IconArrowBackUp :size="16" aria-hidden="true" /> Reactivar
+          </button>
         </li>
       </ul>
     </section>
@@ -119,10 +147,48 @@ useSeoMeta({
 
 .pegas-desactivadas__item {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+
+.pegas-desactivadas__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.pegas-desactivadas__reactivar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-radius: 999px;
+  background: none;
+  font-family: inherit;
+  font-size: 0.85em;
+  color: var(--text-muted, #666);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pegas-desactivadas__reactivar:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.pegas-desactivadas__reactivar:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.pegas-desactivadas__reactivar:disabled {
+  opacity: var(--opacity-disabled, 0.5);
+  cursor: progress;
 }
 
 .pegas-desactivadas__titulo-pega {
