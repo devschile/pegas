@@ -40,7 +40,7 @@ const baseJob: Pega = {
   ubicacion: 'Chile',
   sueldo: null,
   tags: 'remote',
-  fecha_publicacion: '2026-08-15T12:00:00',
+  fecha_publicacion: '2026-08-15T15:00:00Z',
   fuente: 'getonbrd',
   fecha_creacion: '2026-08-15T00:00:00.000Z',
   likes: 34,
