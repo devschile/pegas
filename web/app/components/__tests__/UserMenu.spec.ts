@@ -14,6 +14,14 @@ mockNuxtImport('navigateTo', () => navigateToMock);
 const loggedInRef = ref(false);
 mockNuxtImport('useUserSession', () => () => ({ loggedIn: loggedInRef, clear: clearMock }));
 
+/**
+ * `open` vive en useState compartido (PegaCard lo abre desde afuera), asi que
+ * sin mockearlo el estado se filtra entre tests de este archivo: el segundo
+ * click sobre el trigger lo cerraria en vez de abrirlo.
+ */
+const userMenuOpenRef = ref(false);
+mockNuxtImport('useUserMenu', () => () => ({ open: userMenuOpenRef }));
+
 async function mountUserMenu() {
   const { default: UserMenu } = await import('../UserMenu.vue');
   const wrapper = mount(
@@ -31,6 +39,7 @@ describe('UserMenu', () => {
     clearMock.mockReset();
     navigateToMock.mockReset();
     loggedInRef.value = false;
+    userMenuOpenRef.value = false;
   });
 
   it('el panel empieza cerrado', async () => {
@@ -47,7 +56,7 @@ describe('UserMenu', () => {
     const wrapper = await mountUserMenu();
     await wrapper.find('.user-menu__trigger').trigger('click');
 
-    expect(wrapper.text()).toContain('Login:');
+    expect(wrapper.text()).toContain('Inicia sesión:');
     expect(wrapper.find('a[href="/auth/github"]').attributes('aria-label')).toBe('Entrar con GitHub');
     expect(wrapper.find('a[href="/auth/slack"]').attributes('aria-label')).toBe('Entrar con Slack');
   });
