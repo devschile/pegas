@@ -66,8 +66,11 @@ useSeoMeta({
   description: `Ofertas de trabajo tech de ${category} en Chile y remoto LatAm, agregadas desde varias fuentes.`,
   ogTitle: `Pegas de ${category}`,
   ogDescription: `${total.value} pegas de ${category} disponibles ahora en Pegas devsChile().`,
-  ogImage: 'https://utfs.io/f/ZkRB8SdTOr1pVr4K8lG0bLlkFfDeNAs3GhUqpWQTYazn8jSH',
   twitterCard: 'summary_large_image',
+});
+defineOgImage('Pega', {
+  title: `Pegas de ${category}`,
+  subtitle: `${total.value} pegas disponibles ahora`,
 });
 
 useHead({ link: [{ rel: 'canonical', href: `https://pegas.devschile.cl/categoria/${slugParam}` }] });

@@ -3,3 +3,4 @@ data/data.json
 .env
 emails.txt
 context.md
+.DS_Store

@@ -41,9 +41,12 @@ useSeoMeta({
   description: `${job.titulo} en ${job.empleador}, ${job.ubicacion}. Publicada en ${sourceLabel(job.fuente)}.`,
   ogTitle: `${job.titulo} en ${job.empleador}`,
   ogDescription: `${job.categoria} · ${job.ubicacion}${job.sueldo ? ' · ' + job.sueldo : ''}`,
-  ogImage: 'https://utfs.io/f/ZkRB8SdTOr1pVr4K8lG0bLlkFfDeNAs3GhUqpWQTYazn8jSH',
   ogType: 'website',
   twitterCard: 'summary_large_image',
+});
+defineOgImage('Pega', {
+  title: job.titulo,
+  subtitle: `${job.empleador} · ${job.ubicacion}`,
 });
 useHead({ link: [{ rel: 'canonical', href: canonicalUrl.value }] });
 
