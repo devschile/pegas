@@ -15,7 +15,8 @@ defineProps<{ title: string; subtitle?: string }>();
       width: 1200px;
       height: 630px;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      align-items: center;
       justify-content: space-between;
       background: #120f24;
       padding: 64px;
@@ -24,23 +25,7 @@ defineProps<{ title: string; subtitle?: string }>();
   >
     <div style="position: absolute; top: 0; left: 0; right: 0; height: 10px; background: #2dd4bf;" />
 
-    <div
-      style="
-        position: absolute;
-        width: 340px;
-        height: 340px;
-        right: -80px;
-        bottom: -80px;
-        border-radius: 9999px;
-        background: rgba(133, 66, 43, 0.25);
-      "
-    />
-
-    <span style="color: #2dd4bf; font-family: Inconsolata, monospace; font-size: 30px; font-weight: 700;">
-      Pegas devsChile()
-    </span>
-
-    <div style="display: flex; flex-direction: column; gap: 20px; max-width: 760px;">
+    <div style="display: flex; flex-direction: column; gap: 20px; max-width: 600px;">
       <h1
         style="
           color: #ffffff;
@@ -58,6 +43,6 @@ defineProps<{ title: string; subtitle?: string }>();
       </p>
     </div>
 
-    <img src="/huemul-icono.png" style="position: absolute; right: 64px; bottom: 56px; width: 150px; height: 150px;" />
+    <img src="/pegas-mascota.png" style="width: 440px; height: 440px; flex-shrink: 0;" />
   </div>
 </template>
