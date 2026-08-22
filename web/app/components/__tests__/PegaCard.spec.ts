@@ -213,16 +213,30 @@ describe('PegaCard', () => {
       expect(wrapper.find('button[aria-label="Desactivar"]').exists()).toBe(false);
     });
 
-    it('clickear Desactivar llama al endpoint y oculta la card', async () => {
+    it('clickear Desactivar pide confirmacion y, al aceptar, llama al endpoint y oculta la card', async () => {
       isAdminRef.value = true;
       fetchMock.mockResolvedValue({ ok: true });
+      window.confirm = vi.fn().mockReturnValue(true);
       const wrapper = mount(PegaCard, { props: { job: baseJob } });
 
       await accion(wrapper, 'Desactivar').trigger('click');
       await wrapper.vm.$nextTick();
 
+      expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining(baseJob.titulo));
       expect(fetchMock).toHaveBeenCalledWith(`/api/pegas/${baseJob.id}/desactivar`, { method: 'POST' });
       expect(wrapper.text()).not.toContain('Frontend Developer');
+    });
+
+    it('clickear Desactivar y cancelar la confirmacion no llama al endpoint ni oculta la card', async () => {
+      isAdminRef.value = true;
+      window.confirm = vi.fn().mockReturnValue(false);
+      const wrapper = mount(PegaCard, { props: { job: baseJob } });
+
+      await accion(wrapper, 'Desactivar').trigger('click');
+      await wrapper.vm.$nextTick();
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(wrapper.text()).toContain('Frontend Developer');
     });
   });
 });
