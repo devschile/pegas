@@ -57,7 +57,9 @@ function handleLoginClick() {
   userMenuOpen.value = true;
 }
 
+/** Un solo click en un icono sin etiqueta desactivaba la pega al toque -- fácil de gatillar sin querer. */
 async function handleDesactivarClick() {
+  if (!confirm(`¿Desactivar "${props.job.titulo}"? Deja de verse en el listado público. Se puede reactivar desde /mis-pegas.`)) return;
   await $fetch(`/api/pegas/${props.job.id}/desactivar`, { method: 'POST' });
   desactivada.value = true;
 }
