@@ -16,6 +16,7 @@
   "dependencies": {
     "@devschile/chucao": "^1.6.0",
     "@nuxtjs/seo": "^5.3.12",
+    "@resvg/resvg-js": "^2.6.2",
     "@stencil/vue-output-target": "^0.14.1",
     "@tabler/icons": "^3.46.0",
     "@tabler/icons-vue": "^3.46.0",
@@ -25,6 +26,8 @@
     "nuxt-auth-utils": "^0.5.30",
     "pg": "^8.23.0",
     "posthog-js": "^1.417.1",
+    "satori": "^0.33.0",
+    "unifont": "^0.7.0",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"
   },

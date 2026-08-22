@@ -23,12 +23,10 @@ export default defineNuxtConfig({
     sources: ['/api/__sitemap__/urls'],
   },
 
-  // No generamos imagenes OG por pagina (requeriria un template propio y
-  // renderizado via navegador headless en cada request/build) -- se usa un
-  // og:image estatico fijo en su lugar (ver useSeoMeta en cada pagina).
-  ogImage: {
-    enabled: false,
-  },
+  // Imagen OG generada por pagina via Satori (sin navegador headless, el
+  // template en app/components/OgImage/Pega.vue es solo texto + imagen) --
+  // ver defineOgImage() en cada pagina. Se genera en cada request porque las
+  // pegas son datos vivos (Postgres), no hay build estatico que prerenderice.
 
   runtimeConfig: {
     // Estas claves permiten override via NUXT_PG_HOST etc, pero
