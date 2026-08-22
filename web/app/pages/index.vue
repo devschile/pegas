@@ -48,9 +48,12 @@ useSeoMeta({
   description: 'Vitrina de ofertas de trabajo tech en Chile y remoto LatAm, agregadas desde LinkedIn, GetOnBoard, WorkingNomads, Jobicy e Himalayas.',
   ogTitle: 'Pegas devsChile() — Ofertas de trabajo tech',
   ogDescription: 'Vitrina de ofertas de trabajo tech en Chile y remoto LatAm, agregadas desde varias fuentes.',
-  ogImage: 'https://utfs.io/f/ZkRB8SdTOr1pVr4K8lG0bLlkFfDeNAs3GhUqpWQTYazn8jSH',
   ogType: 'website',
   twitterCard: 'summary_large_image',
+});
+defineOgImage('Pega', {
+  title: 'Ofertas de trabajo tech en Chile y remoto LatAm',
+  subtitle: 'LinkedIn · GetOnBoard · WorkingNomads · Jobicy · Himalayas',
 });
 </script>
 
