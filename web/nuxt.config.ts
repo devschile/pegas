@@ -25,8 +25,15 @@ export default defineNuxtConfig({
 
   // Imagen OG generada por pagina via Satori (sin navegador headless, el
   // template en app/components/OgImage/Pega.vue es solo texto + imagen) --
-  // ver defineOgImage() en cada pagina. Se genera en cada request porque las
-  // pegas son datos vivos (Postgres), no hay build estatico que prerenderice.
+  // ver defineOgImage() en cada pagina. Se renderiza en el primer pedido de
+  // esa URL (no hay build estatico que prerenderice, las pegas son datos
+  // vivos) y de ahi queda cacheada -- titulo/empleador no cambian una vez
+  // publicada la pega, asi que 7 dias es seguro.
+  ogImage: {
+    defaults: {
+      cacheMaxAgeSeconds: 60 * 60 * 24 * 7,
+    },
+  },
 
   runtimeConfig: {
     // Estas claves permiten override via NUXT_PG_HOST etc, pero
