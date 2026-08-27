@@ -1,7 +1,7 @@
 {
   "name": "pega-devschile",
   "author": "@huemul",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -11,6 +11,8 @@
     "husky": "^9.1.7"
   },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "sync:categorizar": "node n8n/sync-categorizar.js",
+    "test:n8n": "node n8n/sync-categorizar.js --check && node n8n/test-categorizar.js && node n8n/test-parser.js"
   }
 }

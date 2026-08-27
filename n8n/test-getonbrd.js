@@ -1,6 +1,11 @@
 // Prueba standalone contra la API pública v0 de GetOnBoard (sin auth).
 // Valida el filtro Chile/Remoto antes de correrlo dentro de n8n.
 // Ejecutar: node n8n/test-getonbrd.js
+//
+// `categorizar` se importa de categorizar.js en vez de tener copia propia:
+// este archivo existe para ver qué categoría le tocaría a cada aviso, así que
+// una copia desactualizada acá mentiría justo sobre lo que viene a comprobar.
+import { categorizar } from './categorizar.js';
 
 const CATEGORIAS = [
   'programming',
@@ -19,25 +24,14 @@ async function get(url) {
   return res.json();
 }
 
-function categorizar(t) {
-  t = t.toLowerCase();
-  if (/\bfront.?end\b|frontend|\breact\b|\bvue\b|\bangular\b|\bui.ux\b|\bcss\b|\bhtml\b|\btypescript\b|\bjavascript\b|\bjs\b/i.test(t)) return 'Frontend';
-  if (/\bback.?end\b|backend|\bnode\b|\bpython\b|\bdjango\b|\bflask\b|\bgo\b|\bgolang\b|\brust\b|\bjava\b|\bspring\b|\bquarkus\b|\.net\b|\bc#\b|\bphp\b|\blaravel\b|\brails\b|\bruby\b/i.test(t)) return 'Backend';
-  if (/\bfull.?stack\b|fullstack/i.test(t)) return 'Full Stack';
-  if (/\bdevops\b|\bsre\b|\binfra\b|\bcloud\b|\baws\b|\bazure\b|\bgcp\b|\bkubernetes\b|\bdocker\b|\bterraform\b/i.test(t)) return 'DevOps';
-  if (/\bqa\b|\btester\b|\btesting\b|\bcalidad\b|\bquality\b/i.test(t)) return 'QA';
-  if (/\bdata\b|\banalytics\b|\banalist[ao]s?\b|\banalyst\b|\bmachine.?learning\b|\bml\b|\bai\b|\binteligencia\b|\bartificial\b|\betl\b|\bpower.bi\b|\btableau\b|\blooker\b/i.test(t)) return 'Data';
-  if (/\bmobile\b|\bandroid\b|\bios\b|\bswift\b|\bkotlin\b|\bflutter\b|\breact.native\b/i.test(t)) return 'Mobile';
-  if (/\bsecurity\b|\bseguridad\b|\bciberseguridad\b|\bpentest\b/i.test(t)) return 'Ciberseguridad';
-  return 'Otros';
-}
-
 const CATEGORIA_FALLBACK = {
   'Mobile Developer': 'Mobile',
   'SysAdmin / DevOps / QA': 'DevOps',
-  'Data Science / Analytics': 'Data',
-  'Machine Learning & AI': 'Data',
+  'Data Science / Analytics': 'Data/BI',
+  'Machine Learning & AI': 'AI/ML',
+  Programming: 'Full Stack',
   Cybersecurity: 'Ciberseguridad',
+  'Design / UX': 'Diseño',
 };
 
 let total = 0;

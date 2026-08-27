@@ -16,6 +16,21 @@ export default defineNuxtConfig({
     defaultLocale: 'es',
   },
 
+  // Redirects 301 de las categorias renombradas (migrations/006). El slug de
+  // una categoria sale de slugify() sobre su nombre, asi que renombrar
+  // "Data" -> "Data/BI" y "Gestion" -> "Liderazgo" mueve tambien su URL. Las
+  // viejas estaban indexadas y en el sitemap: sin esto quedan 404 duras y se
+  // pierde el ranking en vez de traspasarlo.
+  //
+  // Van aca y NO en el nginx.conf de la raiz: ese sirve el sitio estatico
+  // legacy (pegas-v2), que no tiene rutas /categoria/* -- filtra en el
+  // cliente sobre un solo index.html. Quien responde /categoria/* es este
+  // servidor Nitro (confirmado: x-powered-by: Nuxt en produccion).
+  routeRules: {
+    '/categoria/data': { redirect: { to: '/categoria/data-bi', statusCode: 301 } },
+    '/categoria/gestion': { redirect: { to: '/categoria/liderazgo', statusCode: 301 } },
+  },
+
   // URLs dinamicas (pegas individuales, categorias): no hay rutas fisicas
   // que rastrear, asi que se registra el endpoint que las genera a partir
   // del mismo data.json (ver server/api/__sitemap__/urls.ts).
