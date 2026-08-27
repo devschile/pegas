@@ -4,3 +4,14 @@ if echo "$staged" | grep -q '^web/'; then
   echo "web/: corriendo tests con cobertura..."
   (cd web && pnpm run test:coverage) || exit 1
 fi
+
+# categorizar() vive en n8n/categorizar.js pero se copia a parser-code.js y a
+# los 5 nodos de workflow.json. Si alguien edita una copia en vez de la fuente,
+# el commit la reintroduce como drift -- que es exactamente como "Soporte"
+# terminó con 1 sola pega. El --check falla antes de que eso pase.
+if echo "$staged" | grep -qE '^n8n/'; then
+  echo "n8n/: verificando categorizar()..."
+  node n8n/sync-categorizar.js --check || exit 1
+  node n8n/test-categorizar.js > /dev/null || { node n8n/test-categorizar.js; exit 1; }
+  node n8n/test-parser.js > /dev/null || { node n8n/test-parser.js; exit 1; }
+fi

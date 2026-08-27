@@ -1,18 +1,21 @@
-name: Test parser
+name: Test n8n
 
 # El parser de LinkedIn se editaba a mano y se probaba a mano (o no se
-# probaba). Esto corre n8n/test-parser.js en cada push/PR que toque el
-# parser o sus tests, para que una regresión no llegue a producción sin
-# que nadie la note.
+# probaba). Esto corre los tests de n8n/ en cada push/PR que toque esos
+# archivos, para que una regresión no llegue a producción sin que nadie
+# la note.
+#
+# `sync-categorizar.js --check` es parte del gate: categorizar() vive en
+# n8n/categorizar.js pero se copia a parser-code.js y a los 5 nodos de
+# workflow.json. Hoy eso solo lo verifica el hook de Husky en la máquina de
+# quien commitea, que no protege un push directo ni un PR desde un fork.
 on:
   push:
     paths:
-      - 'n8n/parser-code.js'
-      - 'n8n/test-parser.js'
+      - 'n8n/**'
   pull_request:
     paths:
-      - 'n8n/parser-code.js'
-      - 'n8n/test-parser.js'
+      - 'n8n/**'
 
 jobs:
   test:
@@ -22,4 +25,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: node n8n/sync-categorizar.js --check
+      - run: node n8n/test-categorizar.js
       - run: node n8n/test-parser.js

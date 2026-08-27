@@ -48,16 +48,77 @@ Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detal
 ├── js/app.js               # Lógica: fetch, filtros, render
 ├── scripts/
 │   ├── generate-json.js    # Lee PostgreSQL → data.json
-│   └── init-db.js          # CREATE TABLE IF NOT EXISTS
+│   ├── init-db.js          # CREATE TABLE IF NOT EXISTS
+│   └── reclasificar.js     # Reaplica categorizar() sobre las pegas ya guardadas
 ├── schema.sql              # Esquema de la BD
 ├── n8n/
 │   ├── workflow.json       # Workflow de n8n (exportado)
+│   ├── categorizar.js      # Clasificador por título — FUENTE DE VERDAD
+│   ├── sync-categorizar.js # Reinyecta categorizar() en sus 6 copias
 │   ├── parser-code.js      # Parser LinkedIn standalone (para tests)
+│   ├── test-categorizar.js # Tests del clasificador
 │   └── test-getonbrd.js    # Valida en vivo el filtro Chile/Remoto de GetOnBoard
 ├── Dockerfile              # Multi-stage: build + nginx:alpine
 ├── nginx.conf              # Config nginx
 └── README.md
 ```
+
+## Categorización
+
+Cada pega recibe una de 13 categorías a partir de su **título**, con la función
+`categorizar()` de `n8n/categorizar.js`:
+
+`AI/ML` · `Backend` · `Ciberseguridad` · `Data/BI` · `DevOps` · `Diseño` ·
+`Frontend` · `Full Stack` · `Liderazgo` · `Mobile` · `Otros` · `QA` · `Soporte`
+
+Son reglas de regex evaluadas en orden, y **gana la primera que matchea**: el
+orden es la lógica, no un detalle. El stack explícito va primero (`React` →
+Frontend) porque es la señal más confiable; los roles transversales van al
+final (`Arquitecto de Datos` es Data/BI, no Liderazgo). `n8n/test-categorizar.js`
+fija esos desempates — si mueves un bloque de reglas, lo que se rompe ahí te
+dice a quién le sacaste la pega.
+
+GetOnBoard y WorkingNomads además traen su propia categoría de origen, que sus
+nodos usan **solo** como respaldo cuando el título no alcanza y `categorizar()`
+devuelve `Otros` (el `CATEGORIA_FALLBACK` de cada nodo).
+
+### Editarla
+
+Los nodos Code de n8n no pueden importar módulos, así que la función existe
+seis veces: una por fuente dentro de `workflow.json` (5) más la de
+`parser-code.js`. **Se edita solo `n8n/categorizar.js`** y después:
+
+```bash
+npm run sync:categorizar   # reinyecta la función en las 6 copias
+npm run test:n8n           # tests + chequeo de que no quedó drift
+```
+
+Mantenerlas a mano ya falló: las copias se separaron y a la de GetOnBoard le
+faltaban las reglas de `Gestión` y `Soporte`, así que esa fuente no podía
+producir ninguna de las dos. Por eso `Soporte` llegó a tener 1 sola pega con
+945 publicadas. El hook de pre-commit corre `--check` sobre cualquier cambio
+en `n8n/`.
+
+### Reclasificar lo ya guardado
+
+Los nodos categorizan al ingerir, así que un cambio de reglas solo aplica a lo
+que entre después. Para las pegas que ya están en la base:
+
+```bash
+node scripts/reclasificar.js              # simulación, no escribe
+node scripts/reclasificar.js --aplicar    # escribe
+```
+
+Corre dentro del contenedor (la base solo es alcanzable desde la red de
+Coolify). Es idempotente y **nunca degrada una pega a `Otros`**: eso borraría
+las clasificaciones que vinieron del `CATEGORIA_FALLBACK` de la fuente, que no
+se guardan en la tabla y no se pueden recuperar desde el título.
+
+Antes de escribir, `--aplicar` imprime un `UPDATE` que devuelve cada pega a su
+categoría anterior. **Hay que copiarlo de la terminal antes de seguir**: la
+categoría previa no queda guardada en ningún lado, así que sin ese SQL la
+reclasificación no tiene vuelta atrás. El tag `v1.0.0` documenta el
+procedimiento completo de rollback (`git tag -n99 v1.0.0`).
 
 ## Base de datos
 
@@ -70,7 +131,7 @@ Tabla `pegas`:
 | `titulo` | TEXT | Título de la oferta |
 | `empleador` | TEXT | Empresa |
 | `descripcion` | TEXT | Descripción extraída |
-| `categoria` | TEXT | Categoría (para filtros) |
+| `categoria` | TEXT | Categoría (para filtros) — ver [Categorización](#categorización) |
 | `ubicacion` | TEXT | Ubicación geográfica |
 | `sueldo` | TEXT | Sueldo/rango salarial detectado, si existe |
 | `tags` | TEXT | Tags separados por coma (ej. `remote`) |
