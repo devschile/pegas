@@ -1,40 +1,52 @@
 #!/bin/bash
-# Importa el workflow desde el repositorio a n8n
-# Requiere: n8n-cli instalado y configurado
-# Uso: ./n8n/import.sh [--activate]
+# Prepara la actualización de los nodos Code del workflow en n8n.
+#
+# NO importa el workflow completo, a propósito. Hacerlo rompe producción de dos
+# formas comprobadas el 26/8/2026:
+#
+#   1. Las credenciales no viajan en n8n/workflow.json, así que un import deja
+#      los 10 nodos que las usan (Gmail, 6 Postgres, 3 Slack) sin credencial:
+#      "10 nodes have issues, fix them before publishing".
+#   2. n8n importa AGREGANDO nodos al canvas, no reemplazando. Importar sobre
+#      el workflow equivocado le sumó 30 nodos a uno de 8 y encima lo renombró,
+#      porque el import también pisa el campo "name".
+#
+# Lo único que cambia entre el repo y n8n es el código de los nodos Code, y eso
+# se pega a mano: editar un nodo Code no toca credenciales ni nodos vecinos.
+#
+# Uso: ./n8n/import.sh
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-WORKFLOW_FILE="$REPO_DIR/n8n/workflow.json"
-ACTIVATE=false
+DESTINO="$REPO_DIR/.rollback/nodos-n8n"
 
-if [ "${1:-}" = "--activate" ]; then
-  ACTIVATE=true
-fi
+# El pipeline real. Se referencia por ID porque hay dos workflows con el mismo
+# nombre: este (30 nodos) y rTY2yr7I2OC5Gk5W, que en realidad es "GetOnBoard:
+# reintentar empleadores" y quedó mal nombrado por un import equivocado.
+WORKFLOW_ID="ah2kXtL4EtNVKEGW"
 
-if [ ! -f "$WORKFLOW_FILE" ]; then
-  echo "❌ No se encontró $WORKFLOW_FILE"
-  exit 1
-fi
+node "$REPO_DIR/n8n/sync-categorizar.js" --check
 
-echo "🔍 Buscando workflow existente 'pega-devschile'..."
-EXISTING_ID=$(n8n-cli workflow list --name="pega-devschile" --jq '.[0].id' 2>/dev/null || echo "")
+mkdir -p "$DESTINO"
+python3 - "$REPO_DIR" "$DESTINO" <<'PY'
+import json, re, sys, os
+repo, destino = sys.argv[1], sys.argv[2]
+d = json.load(open(os.path.join(repo, 'n8n/workflow.json')))
+n = 0
+for nodo in d['nodes']:
+    code = nodo.get('parameters', {}).get('jsCode')
+    if not code or 'categorizar' not in code:
+        continue
+    n += 1
+    slug = re.sub(r'[^a-z0-9]+', '-', nodo['name'].lower()).strip('-')
+    ruta = os.path.join(destino, f'{n}-{slug}.js')
+    open(ruta, 'w').write(code)
+    print(f'  {n}. {nodo["name"]}')
+    print(f'     {ruta}')
+PY
 
-if [ -n "$EXISTING_ID" ]; then
-  echo "📝 Actualizando workflow existente ($EXISTING_ID)..."
-  n8n-cli workflow update "$EXISTING_ID" --file="$WORKFLOW_FILE"
-  
-  if $ACTIVATE; then
-    n8n-cli workflow activate "$EXISTING_ID"
-  fi
-  echo "✅ Workflow actualizado"
-else
-  echo "📥 Creando nuevo workflow..."
-  NEW_ID=$(n8n-cli workflow create --file="$WORKFLOW_FILE" --jq '.id')
-  
-  if $ACTIVATE; then
-    n8n-cli workflow activate "$NEW_ID"
-  fi
-  echo "✅ Workflow creado: $NEW_ID"
-fi
+echo
+echo "Abrir https://n8n.devschile.cl/workflow/$WORKFLOW_ID"
+echo "Para cada nodo: abrirlo, clic en el editor, Cmd+A, pegar el archivo encima."
+echo "Después, Publish."

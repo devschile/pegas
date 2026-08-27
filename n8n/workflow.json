@@ -132,7 +132,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normaliza jobs de GetOnBoard (API pública v0, sin auth) al esquema de \"pegas\".\n// Filtra a Chile o remoto: GetOnBoard es una plataforma LatAm, así que su tag\n// \"Remote\" es mayormente remoto-LatAm-friendly (a diferencia de RemoteOK/WWR,\n// que son globales/US-centric y no se incluyeron por eso).\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = (t || '').toLowerCase();\n\n  // 0. Guarda de avisos que no son de TI. Va PRIMERO porque varios de estos\n  // títulos traen palabras que más abajo son señal fuerte de otra cosa:\n  // \"Social Media & Community *Analyst*\" caía en Data y \"*Community Manager*\"\n  // caería en Liderazgo. Lista corta y explícita a propósito — acá un falso\n  // positivo saca del listado una pega que sí era válida.\n  if (/\\bcontent (reviewer|creator|writer)\\b|\\besl\\b|\\bteacher\\b|\\bprofesor|\\btutor(ing|ía)?\\b|\\bredactor|\\bcopywriter\\b|\\bcommunity (manager|analyst)\\b|\\bsocial media\\b|\\bappointment setting?\\b|\\bvideo editor\\b|\\bshort-form video\\b|\\bcoletor de dados\\b|\\bphoto collection\\b|\\bdeduplication collection\\b/i.test(t)) return 'Otros';\n\n  // 1-4. Stack explícito en el título: la señal más confiable que hay, así que\n  // va antes que cualquier rol. Se conservan tal cual venían de producción,\n  // incluido que \\breact\\b gane antes que Mobile en \"React Native\" (cambiarlo\n  // movería pegas que hoy están clasificadas como Frontend).\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n\n  // Backend ampliado con lenguajes y runtimes de servidor que no estaban y por\n  // eso caían en Otros (COBOL/mainframe, Elixir/Phoenix, Scala, C++...).\n  // Ojo: acá NO van las plataformas de ecosistema (Shopify, Salesforce, SAP,\n  // ServiceNow, Oracle...) — esas tienen su propia regla más abajo, a Otros.\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bfastapi\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bc\\+\\+|\\bphp\\b|\\blaravel\\b|\\bsymfony\\b|\\brails\\b|\\bruby\\b|\\bnestjs\\b|\\bcobol\\b|\\bmainframe\\b|\\bas.?400\\b|\\bscala\\b|\\belixir\\b|\\bphoenix\\b|\\berlang\\b|\\bclojure\\b|\\bperl\\b|\\bdelphi\\b|\\brest api(s)?\\b|\\bapi(s)? rest\\b|\\bmicroservici/i.test(t)) return 'Backend';\n\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n\n  // \\binfra\\b no matcheaba \"Infraestructura\" ni \"Infrastructure\" (no hay borde\n  // de palabra dentro de la palabra), así que esos avisos dependían de que la\n  // fuente trajera categoría propia y si no se iban a Otros.\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra(estructura|structure)?\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b|\\bsys.?admin\\b/i.test(t)) return 'DevOps';\n\n  // 5. QA. Va antes de AI y de Data/BI —como ya hacían 4 de las 5 copias— para\n  // que \"Analista QA Funcional\" sea QA y no Data por la palabra \"analista\", y\n  // que \"Senior QA Engineer (AI Platform Systems)\" sea QA y no AI. La excepción\n  // por \\bdata\\b es para el caso inverso: \"Data Quality Analyst\" es Data/BI,\n  // el \"quality\" ahí califica al dato, no al rol.\n  if (/\\bqa\\b|\\bsdet\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t) && !/\\bdata\\b/i.test(t)) return 'QA';\n\n  // 6. Soporte. Antes de Data/BI por el mismo motivo que QA: \"Analista de\n  // Soporte Técnico\" y \"Analista de Soporte y Monitoreo (NOC)\" caían en Data\n  // por la palabra \"analista\". Además, esta regla solo existía en la copia de\n  // LinkedIn — las otras cuatro fuentes no podían producir la categoría nunca,\n  // y de ahí que \"Soporte\" tuviera 1 sola pega con 945 publicadas.\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.?desk\\b|\\bservice.?desk\\b|\\bmesa de ayuda\\b|\\bnoc\\b/i.test(t)) return 'Soporte';\n\n  // 6. IA/ML/LLM. Categoría nueva: estos términos vivían dentro de la regla de\n  // Data y se llevaban 72 de sus 194 pegas (\"AI Engineer\", \"AI Automation\n  // Engineer\", \"Forward Deployed AI Engineer\"), que no son ingeniería de datos.\n  // Va antes de Data/BI pero después del stack explícito, para que un\n  // \"Python ML Engineer\" siga siendo Backend igual que hoy.\n  if (/\\bia\\b|\\ba\\.?i\\.?\\b|\\bml\\b|\\bmlops\\b|\\bllm(s)?\\b|\\bgen.?ai\\b|\\bnlp\\b|\\bmachine.?learning\\b|\\bdeep.?learning\\b|\\bcomputer vision\\b|\\binteligencia artificial\\b|\\bartificial intelligence\\b|\\bprompt engineer/i.test(t)) return 'AI/ML';\n\n  // 7. Data/BI (antes \"Data\"). Sin los términos de IA, que subieron a la regla\n  // anterior, y con \\bbi\\b agregado: solo estaba \\bpower.bi\\b, así que\n  // \"Senior BI Developer (Tableau)\" no matcheaba por \"BI\".\n  if (/\\bdata\\b|\\bdatos\\b|\\banalis(ta|tas)\\b|\\banalyst(s)?\\b|\\banalytics\\b|\\betl\\b|\\belt\\b|\\bbi\\b|\\bpower.?bi\\b|\\btableau\\b|\\blooker\\b|\\bqlik\\b|\\bwarehouse\\b|\\bdbt\\b|\\bspark\\b|\\bsnowflake\\b|\\bdatabricks\\b/i.test(t)) return 'Data/BI';\n\n  if (/\\bmobile\\b|\\bm[oó]vil(es)?\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n\n  // \\bsecurity\\b no matcheaba \"cybersecurity\" por el mismo motivo que \\binfra\\b:\n  // \"Cybersecurity Lead\" terminaba en Liderazgo y \"Senior Cybersecurity\n  // Specialist\" en Otros.\n  if (/\\bsecurity\\b|\\bcyber|\\bciber|\\bseguridad\\b|\\bpentest|\\bethical hack|\\bdevsecops\\b|\\binfosec\\b|\\bappsec\\b|\\bsoc\\b/i.test(t)) return 'Ciberseguridad';\n\n  // 8. Diseño va ANTES de Liderazgo: \"Líder UX/UI\", \"UX Design Lead\" y\n  // \"UX Design Manager\" son pegas de diseño con un modificador de rol, no\n  // pegas de liderazgo. (La copia de LinkedIn las mandaba a Gestión.)\n  if (/\\bdiseñ|\\bdesign(er)?\\b|\\bart director\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n\n  // 9. Liderazgo (antes \"Gestión\"), ampliada con arquitecto/CTO/subgerente/VP,\n  // que caían en Otros. Va después del stack, de Data/BI y de Diseño a\n  // propósito: un \"Arquitecto de Datos\" o un \"Engineering Manager, Data\" siguen\n  // siendo pegas de datos — el liderazgo es el modificador, no el eje.\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\bsub.?gerente\\b|\\bl[ií]der\\b|\\blead\\b|\\btech.?lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b|\\barquitect|\\barchitect\\b|\\bcto\\b|\\bcio\\b|\\bciso\\b|\\bhead of\\b|\\bvp\\b|\\bvicepresident/i.test(t)) return 'Liderazgo';\n\n  // 11. Plataformas de ecosistema. Van ANTES de la regla de dev genérico\n  // porque si no \"Shopify Developer\" o \"Consultor/a SAP\" se colarían a\n  // Full Stack por la palabra \"developer\"/\"desarrollador\".\n  if (/\\bshopify\\b|\\bsalesforce\\b|\\bsap\\b|\\babap\\b|\\bservicenow\\b|\\bodoo\\b|\\bmagento\\b|\\bwordpress\\b|\\bdrupal\\b|\\bsharepoint\\b|\\bdynamics\\b|\\bsiebel\\b|\\bpeoplesoft\\b|\\boracle\\b/i.test(t)) return 'Otros';\n\n  // 12. Dev genérico sin stack en el título (\"Software Engineer\",\n  // \"Desarrollador/a Senior\", \"Programador/a\"): era el 70% de Otros. Va al\n  // final justo por eso — solo agarra lo que ninguna regla más específica\n  // reclamó. \"Ingeniero\" a secas NO entra: en el corpus hay \"Ingeniero Civil\n  // Industrial\" y \"Ingeniero de Estudios Actuariales\", que no son pegas dev.\n  if (/\\bsoftware engineer\\b|\\bsoftware develop|\\bingenier[oa]?(?:\\/a|\\(a\\))?\\s+(?:de\\s+|en\\s+)?software\\b|\\bingenier[ií]a de software\\b|\\bdesarrollador|\\bdesarrolladora|\\bdesarrollo de software\\b|\\bdeveloper\\b|\\bprogramador|\\bprogramadora|\\bweb develop/i.test(t)) return 'Full Stack';\n\n  return 'Otros';\n}\n\nconst CATEGORIA_FALLBACK = {\n  'Mobile Developer': 'Mobile',\n  'SysAdmin / DevOps / QA': 'DevOps',\n  'Data Science / Analytics': 'Data/BI',\n  'Machine Learning \u0026 AI': 'AI/ML',\n  'Programming': 'Full Stack',\n  'Cybersecurity': 'Ciberseguridad',\n  'Design / UX': 'Diseño'\n};\n\nconst vistos = new Set();\nconst output = [];\n\nfor (const item of items) {\n  const body = item.json;\n  const jobs = (body && body.data) || [];\n\n  for (const job of jobs) {\n    const id = job.id;\n    if (!id || vistos.has(id)) continue;\n    vistos.add(id);\n\n    const a = job.attributes || {};\n    const countries = a.countries || [];\n    const esChile = countries.includes('Chile');\n    const esRemoto = a.remote === true || countries.includes('Remote');\n    if (!esChile && !esRemoto) continue;\n\n    const titulo = a.title || '';\n    if (!titulo) continue;\n\n    const catTitulo = categorizar(titulo);\n    const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[a.category_name] || 'Otros');\n    const ubicacion = esChile ? 'Chile' : (countries[0] || 'Remoto');\n    const sueldo = (a.min_salary && a.max_salary) ? `USD ${a.min_salary} - ${a.max_salary} /mes` : null;\n\n    const tags = [];\n    if (esRemoto) tags.push('remote');\n\n    output.push({\n      json: {\n        company_id: (a.company && a.company.data && a.company.data.id) || null,\n        titulo,\n        url: (job.links && job.links.public_url) || `https://www.getonbrd.com/jobs/${id}`,\n        ubicacion,\n        categoria,\n        sueldo,\n        tags: tags.length ? tags.join(',') : null,\n        descripcion: `${titulo}${ubicacion ? ', ' + ubicacion : ''}`,\n        fuente: 'getonbrd',\n        email_origen: null,\n        fecha_publicacion: a.published_at ? new Date(a.published_at * 1000).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
+        "jsCode": "// Normaliza jobs de GetOnBoard (API pública v0, sin auth) al esquema de \"pegas\".\n// Filtra a Chile o remoto: GetOnBoard es una plataforma LatAm, así que su tag\n// \"Remote\" es mayormente remoto-LatAm-friendly (a diferencia de RemoteOK/WWR,\n// que son globales/US-centric y no se incluyeron por eso).\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = (t || '').toLowerCase();\n\n  // 0. Guarda de avisos que no son de TI. Va PRIMERO porque varios de estos\n  // títulos traen palabras que más abajo son señal fuerte de otra cosa:\n  // \"Social Media & Community *Analyst*\" caía en Data y \"*Community Manager*\"\n  // caería en Liderazgo. Lista corta y explícita a propósito — acá un falso\n  // positivo saca del listado una pega que sí era válida.\n  if (/\\bcontent (reviewer|creator|writer)\\b|\\besl\\b|\\bteacher\\b|\\bprofesor|\\btutor(ing|ía)?\\b|\\bredactor|\\bcopywriter\\b|\\bcommunity (manager|analyst)\\b|\\bsocial media\\b|\\bappointment setting?\\b|\\bvideo editor\\b|\\bshort-form video\\b|\\bcoletor de dados\\b|\\bphoto collection\\b|\\bdeduplication collection\\b/i.test(t)) return 'Otros';\n\n  // 1-4. Stack explícito en el título: la señal más confiable que hay, así que\n  // va antes que cualquier rol. Se conservan tal cual venían de producción,\n  // incluido que \\breact\\b gane antes que Mobile en \"React Native\" (cambiarlo\n  // movería pegas que hoy están clasificadas como Frontend).\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n\n  // Backend ampliado con lenguajes y runtimes de servidor que no estaban y por\n  // eso caían en Otros (COBOL/mainframe, Elixir/Phoenix, Scala, C++...).\n  // Ojo: acá NO van las plataformas de ecosistema (Shopify, Salesforce, SAP,\n  // ServiceNow, Oracle...) — esas tienen su propia regla más abajo, a Otros.\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bfastapi\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bc\\+\\+|\\bphp\\b|\\blaravel\\b|\\bsymfony\\b|\\brails\\b|\\bruby\\b|\\bnestjs\\b|\\bcobol\\b|\\bmainframe\\b|\\bas.?400\\b|\\bscala\\b|\\belixir\\b|\\bphoenix\\b|\\berlang\\b|\\bclojure\\b|\\bperl\\b|\\bdelphi\\b|\\brest api(s)?\\b|\\bapi(s)? rest\\b|\\bmicroservici/i.test(t)) return 'Backend';\n\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n\n  // \\binfra\\b no matcheaba \"Infraestructura\" ni \"Infrastructure\" (no hay borde\n  // de palabra dentro de la palabra), así que esos avisos dependían de que la\n  // fuente trajera categoría propia y si no se iban a Otros.\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra(estructura|structure)?\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b|\\bsys.?admin\\b/i.test(t)) return 'DevOps';\n\n  // 5. QA. Va antes de AI y de Data/BI —como ya hacían 4 de las 5 copias— para\n  // que \"Analista QA Funcional\" sea QA y no Data por la palabra \"analista\", y\n  // que \"Senior QA Engineer (AI Platform Systems)\" sea QA y no AI. La excepción\n  // por \\bdata\\b es para el caso inverso: \"Data Quality Analyst\" es Data/BI,\n  // el \"quality\" ahí califica al dato, no al rol.\n  if (/\\bqa\\b|\\bsdet\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t) && !/\\bdata\\b/i.test(t)) return 'QA';\n\n  // 6. Soporte. Antes de Data/BI por el mismo motivo que QA: \"Analista de\n  // Soporte Técnico\" y \"Analista de Soporte y Monitoreo (NOC)\" caían en Data\n  // por la palabra \"analista\". Además, esta regla solo existía en la copia de\n  // LinkedIn — las otras cuatro fuentes no podían producir la categoría nunca,\n  // y de ahí que \"Soporte\" tuviera 1 sola pega con 945 publicadas.\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.?desk\\b|\\bservice.?desk\\b|\\bmesa de ayuda\\b|\\bnoc\\b/i.test(t)) return 'Soporte';\n\n  // 6. IA/ML/LLM. Categoría nueva: estos términos vivían dentro de la regla de\n  // Data y se llevaban 72 de sus 194 pegas (\"AI Engineer\", \"AI Automation\n  // Engineer\", \"Forward Deployed AI Engineer\"), que no son ingeniería de datos.\n  // Va antes de Data/BI pero después del stack explícito, para que un\n  // \"Python ML Engineer\" siga siendo Backend igual que hoy.\n  if (/\\bia\\b|\\ba\\.?i\\.?\\b|\\bml\\b|\\bmlops\\b|\\bllm(s)?\\b|\\bgen.?ai\\b|\\bnlp\\b|\\bmachine.?learning\\b|\\bdeep.?learning\\b|\\bcomputer vision\\b|\\binteligencia artificial\\b|\\bartificial intelligence\\b|\\bprompt engineer/i.test(t)) return 'AI/ML';\n\n  // 7. Data/BI (antes \"Data\"). Sin los términos de IA, que subieron a la regla\n  // anterior, y con \\bbi\\b agregado: solo estaba \\bpower.bi\\b, así que\n  // \"Senior BI Developer (Tableau)\" no matcheaba por \"BI\".\n  if (/\\bdata\\b|\\bdatos\\b|\\banalis(ta|tas)\\b|\\banalyst(s)?\\b|\\banalytics\\b|\\betl\\b|\\belt\\b|\\bbi\\b|\\bpower.?bi\\b|\\btableau\\b|\\blooker\\b|\\bqlik\\b|\\bwarehouse\\b|\\bdbt\\b|\\bspark\\b|\\bsnowflake\\b|\\bdatabricks\\b/i.test(t)) return 'Data/BI';\n\n  if (/\\bmobile\\b|\\bm[oó]vil(es)?\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n\n  // \\bsecurity\\b no matcheaba \"cybersecurity\" por el mismo motivo que \\binfra\\b:\n  // \"Cybersecurity Lead\" terminaba en Liderazgo y \"Senior Cybersecurity\n  // Specialist\" en Otros.\n  if (/\\bsecurity\\b|\\bcyber|\\bciber|\\bseguridad\\b|\\bpentest|\\bethical hack|\\bdevsecops\\b|\\binfosec\\b|\\bappsec\\b|\\bsoc\\b/i.test(t)) return 'Ciberseguridad';\n\n  // 8. Diseño va ANTES de Liderazgo: \"Líder UX/UI\", \"UX Design Lead\" y\n  // \"UX Design Manager\" son pegas de diseño con un modificador de rol, no\n  // pegas de liderazgo. (La copia de LinkedIn las mandaba a Gestión.)\n  if (/\\bdiseñ|\\bdesign(er)?\\b|\\bart director\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n\n  // 9. Liderazgo (antes \"Gestión\"), ampliada con arquitecto/CTO/subgerente/VP,\n  // que caían en Otros. Va después del stack, de Data/BI y de Diseño a\n  // propósito: un \"Arquitecto de Datos\" o un \"Engineering Manager, Data\" siguen\n  // siendo pegas de datos — el liderazgo es el modificador, no el eje.\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\bsub.?gerente\\b|\\bl[ií]der\\b|\\blead\\b|\\btech.?lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b|\\barquitect|\\barchitect\\b|\\bcto\\b|\\bcio\\b|\\bciso\\b|\\bhead of\\b|\\bvp\\b|\\bvicepresident/i.test(t)) return 'Liderazgo';\n\n  // 11. Plataformas de ecosistema. Van ANTES de la regla de dev genérico\n  // porque si no \"Shopify Developer\" o \"Consultor/a SAP\" se colarían a\n  // Full Stack por la palabra \"developer\"/\"desarrollador\".\n  if (/\\bshopify\\b|\\bsalesforce\\b|\\bsap\\b|\\babap\\b|\\bservicenow\\b|\\bodoo\\b|\\bmagento\\b|\\bwordpress\\b|\\bdrupal\\b|\\bsharepoint\\b|\\bdynamics\\b|\\bsiebel\\b|\\bpeoplesoft\\b|\\boracle\\b/i.test(t)) return 'Otros';\n\n  // 12. Dev genérico sin stack en el título (\"Software Engineer\",\n  // \"Desarrollador/a Senior\", \"Programador/a\"): era el 70% de Otros. Va al\n  // final justo por eso — solo agarra lo que ninguna regla más específica\n  // reclamó. \"Ingeniero\" a secas NO entra: en el corpus hay \"Ingeniero Civil\n  // Industrial\" y \"Ingeniero de Estudios Actuariales\", que no son pegas dev.\n  if (/\\bsoftware engineer\\b|\\bsoftware develop|\\bingenier[oa]?(?:\\/a|\\(a\\))?\\s+(?:de\\s+|en\\s+)?software\\b|\\bingenier[ií]a de software\\b|\\bdesarrollador|\\bdesarrolladora|\\bdesarrollo de software\\b|\\bdeveloper\\b|\\bprogramador|\\bprogramadora|\\bweb develop/i.test(t)) return 'Full Stack';\n\n  return 'Otros';\n}\n\nconst CATEGORIA_FALLBACK = {\n  'Mobile Developer': 'Mobile',\n  'SysAdmin / DevOps / QA': 'DevOps',\n  'Data Science / Analytics': 'Data/BI',\n  'Machine Learning & AI': 'AI/ML',\n  'Programming': 'Full Stack',\n  'Cybersecurity': 'Ciberseguridad',\n  'Design / UX': 'Diseño'\n};\n\nconst vistos = new Set();\nconst output = [];\n\nfor (const item of items) {\n  const body = item.json;\n  const jobs = (body && body.data) || [];\n\n  for (const job of jobs) {\n    const id = job.id;\n    if (!id || vistos.has(id)) continue;\n    vistos.add(id);\n\n    const a = job.attributes || {};\n    const countries = a.countries || [];\n    const esChile = countries.includes('Chile');\n    const esRemoto = a.remote === true || countries.includes('Remote');\n    if (!esChile && !esRemoto) continue;\n\n    const titulo = a.title || '';\n    if (!titulo) continue;\n\n    const catTitulo = categorizar(titulo);\n    const categoria = catTitulo !== 'Otros' ? catTitulo : (CATEGORIA_FALLBACK[a.category_name] || 'Otros');\n    const ubicacion = esChile ? 'Chile' : (countries[0] || 'Remoto');\n    const sueldo = (a.min_salary && a.max_salary) ? `USD ${a.min_salary} - ${a.max_salary} /mes` : null;\n\n    const tags = [];\n    if (esRemoto) tags.push('remote');\n\n    output.push({\n      json: {\n        company_id: (a.company && a.company.data && a.company.data.id) || null,\n        titulo,\n        url: (job.links && job.links.public_url) || `https://www.getonbrd.com/jobs/${id}`,\n        ubicacion,\n        categoria,\n        sueldo,\n        tags: tags.length ? tags.join(',') : null,\n        descripcion: `${titulo}${ubicacion ? ', ' + ubicacion : ''}`,\n        fuente: 'getonbrd',\n        email_origen: null,\n        fecha_publicacion: a.published_at ? new Date(a.published_at * 1000).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
       },
       "id": "91567214-3687-4518-8b22-15eafcddf0fd",
       "name": "GetOnBoard: filtrar + normalizar",
@@ -263,16 +263,10 @@
         "rule": {
           "interval": [
             {
-              "field": "days",
-              "daysInterval": 1,
-              "triggerAtHour": 9,
-              "triggerAtMinute": 0
+              "triggerAtHour": 9
             },
             {
-              "field": "days",
-              "daysInterval": 1,
-              "triggerAtHour": 15,
-              "triggerAtMinute": 0
+              "triggerAtHour": 15
             }
           ]
         }
@@ -283,7 +277,7 @@
       "typeVersion": 1,
       "position": [
         -1168,
-        700
+        704
       ]
     },
     {
@@ -298,7 +292,7 @@
       "typeVersion": 2,
       "position": [
         -768,
-        700
+        704
       ],
       "onError": "continueErrorOutput"
     },
@@ -335,7 +329,6 @@
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "https://www.workingnomads.com/api/exposed_jobs/",
         "sendQuery": true,
         "queryParameters": {
@@ -363,11 +356,11 @@
       "name": "WorkingNomads: Jobs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "continueOnFail": true,
       "position": [
         -976,
-        500
-      ]
+        512
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -379,7 +372,7 @@
       "typeVersion": 2,
       "position": [
         -768,
-        500
+        512
       ],
       "onError": "continueErrorOutput"
     },
@@ -398,7 +391,7 @@
     },
     {
       "parameters": {
-        "channel": "<SLACK_MEMBER_ID>",
+        "channel": "U0R6AKR0Q",
         "text": "={{ $json.text }}",
         "otherOptions": {
           "unfurl_links": false,
@@ -411,7 +404,7 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 1,
       "position": [
-        460,
+        464,
         -320
       ]
     },
@@ -443,7 +436,7 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 1,
       "position": [
-        -360,
+        -368,
         -480
       ]
     },
@@ -459,7 +452,7 @@
       "typeVersion": 2,
       "position": [
         -976,
-        -260
+        -256
       ],
       "onError": "continueErrorOutput"
     },
@@ -475,7 +468,7 @@
       "typeVersion": 2,
       "position": [
         -976,
-        460
+        464
       ],
       "onError": "continueErrorOutput"
     },
@@ -491,7 +484,7 @@
       "typeVersion": 2,
       "position": [
         -976,
-        860
+        864
       ],
       "onError": "continueErrorOutput"
     },
@@ -524,27 +517,27 @@
           "timeout": 20000
         }
       },
-      "id": "8e670af4-ce7b-4411-81e9-06eb360e1016",
+      "id": "8766a6d4-3464-4a57-bc90-e918a8598dbf",
       "name": "Jobicy: Jobs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "continueOnFail": true,
       "position": [
         -976,
-        1080
-      ]
+        1088
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
         "jsCode": "// Normaliza jobs de Jobicy (API publica v2, sin auth) al esquema de \"pegas\".\n// geo=latam ya filtra del lado del servidor a avisos remotos LatAm-friendly\n// (confirmado con la API: /remote-jobs?get=locations expone un geoSlug\n// \"latam\" dedicado), asi que aca solo mapeamos campos -- mismo enfoque que\n// WorkingNomads, que tambien filtra location del lado del servidor.\nconst items = $input.all();\n\nfunction categorizar(t) {\n  t = (t || '').toLowerCase();\n\n  // 0. Guarda de avisos que no son de TI. Va PRIMERO porque varios de estos\n  // títulos traen palabras que más abajo son señal fuerte de otra cosa:\n  // \"Social Media & Community *Analyst*\" caía en Data y \"*Community Manager*\"\n  // caería en Liderazgo. Lista corta y explícita a propósito — acá un falso\n  // positivo saca del listado una pega que sí era válida.\n  if (/\\bcontent (reviewer|creator|writer)\\b|\\besl\\b|\\bteacher\\b|\\bprofesor|\\btutor(ing|ía)?\\b|\\bredactor|\\bcopywriter\\b|\\bcommunity (manager|analyst)\\b|\\bsocial media\\b|\\bappointment setting?\\b|\\bvideo editor\\b|\\bshort-form video\\b|\\bcoletor de dados\\b|\\bphoto collection\\b|\\bdeduplication collection\\b/i.test(t)) return 'Otros';\n\n  // 1-4. Stack explícito en el título: la señal más confiable que hay, así que\n  // va antes que cualquier rol. Se conservan tal cual venían de producción,\n  // incluido que \\breact\\b gane antes que Mobile en \"React Native\" (cambiarlo\n  // movería pegas que hoy están clasificadas como Frontend).\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n\n  // Backend ampliado con lenguajes y runtimes de servidor que no estaban y por\n  // eso caían en Otros (COBOL/mainframe, Elixir/Phoenix, Scala, C++...).\n  // Ojo: acá NO van las plataformas de ecosistema (Shopify, Salesforce, SAP,\n  // ServiceNow, Oracle...) — esas tienen su propia regla más abajo, a Otros.\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bfastapi\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bc\\+\\+|\\bphp\\b|\\blaravel\\b|\\bsymfony\\b|\\brails\\b|\\bruby\\b|\\bnestjs\\b|\\bcobol\\b|\\bmainframe\\b|\\bas.?400\\b|\\bscala\\b|\\belixir\\b|\\bphoenix\\b|\\berlang\\b|\\bclojure\\b|\\bperl\\b|\\bdelphi\\b|\\brest api(s)?\\b|\\bapi(s)? rest\\b|\\bmicroservici/i.test(t)) return 'Backend';\n\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n\n  // \\binfra\\b no matcheaba \"Infraestructura\" ni \"Infrastructure\" (no hay borde\n  // de palabra dentro de la palabra), así que esos avisos dependían de que la\n  // fuente trajera categoría propia y si no se iban a Otros.\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra(estructura|structure)?\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b|\\bsys.?admin\\b/i.test(t)) return 'DevOps';\n\n  // 5. QA. Va antes de AI y de Data/BI —como ya hacían 4 de las 5 copias— para\n  // que \"Analista QA Funcional\" sea QA y no Data por la palabra \"analista\", y\n  // que \"Senior QA Engineer (AI Platform Systems)\" sea QA y no AI. La excepción\n  // por \\bdata\\b es para el caso inverso: \"Data Quality Analyst\" es Data/BI,\n  // el \"quality\" ahí califica al dato, no al rol.\n  if (/\\bqa\\b|\\bsdet\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t) && !/\\bdata\\b/i.test(t)) return 'QA';\n\n  // 6. Soporte. Antes de Data/BI por el mismo motivo que QA: \"Analista de\n  // Soporte Técnico\" y \"Analista de Soporte y Monitoreo (NOC)\" caían en Data\n  // por la palabra \"analista\". Además, esta regla solo existía en la copia de\n  // LinkedIn — las otras cuatro fuentes no podían producir la categoría nunca,\n  // y de ahí que \"Soporte\" tuviera 1 sola pega con 945 publicadas.\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.?desk\\b|\\bservice.?desk\\b|\\bmesa de ayuda\\b|\\bnoc\\b/i.test(t)) return 'Soporte';\n\n  // 6. IA/ML/LLM. Categoría nueva: estos términos vivían dentro de la regla de\n  // Data y se llevaban 72 de sus 194 pegas (\"AI Engineer\", \"AI Automation\n  // Engineer\", \"Forward Deployed AI Engineer\"), que no son ingeniería de datos.\n  // Va antes de Data/BI pero después del stack explícito, para que un\n  // \"Python ML Engineer\" siga siendo Backend igual que hoy.\n  if (/\\bia\\b|\\ba\\.?i\\.?\\b|\\bml\\b|\\bmlops\\b|\\bllm(s)?\\b|\\bgen.?ai\\b|\\bnlp\\b|\\bmachine.?learning\\b|\\bdeep.?learning\\b|\\bcomputer vision\\b|\\binteligencia artificial\\b|\\bartificial intelligence\\b|\\bprompt engineer/i.test(t)) return 'AI/ML';\n\n  // 7. Data/BI (antes \"Data\"). Sin los términos de IA, que subieron a la regla\n  // anterior, y con \\bbi\\b agregado: solo estaba \\bpower.bi\\b, así que\n  // \"Senior BI Developer (Tableau)\" no matcheaba por \"BI\".\n  if (/\\bdata\\b|\\bdatos\\b|\\banalis(ta|tas)\\b|\\banalyst(s)?\\b|\\banalytics\\b|\\betl\\b|\\belt\\b|\\bbi\\b|\\bpower.?bi\\b|\\btableau\\b|\\blooker\\b|\\bqlik\\b|\\bwarehouse\\b|\\bdbt\\b|\\bspark\\b|\\bsnowflake\\b|\\bdatabricks\\b/i.test(t)) return 'Data/BI';\n\n  if (/\\bmobile\\b|\\bm[oó]vil(es)?\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n\n  // \\bsecurity\\b no matcheaba \"cybersecurity\" por el mismo motivo que \\binfra\\b:\n  // \"Cybersecurity Lead\" terminaba en Liderazgo y \"Senior Cybersecurity\n  // Specialist\" en Otros.\n  if (/\\bsecurity\\b|\\bcyber|\\bciber|\\bseguridad\\b|\\bpentest|\\bethical hack|\\bdevsecops\\b|\\binfosec\\b|\\bappsec\\b|\\bsoc\\b/i.test(t)) return 'Ciberseguridad';\n\n  // 8. Diseño va ANTES de Liderazgo: \"Líder UX/UI\", \"UX Design Lead\" y\n  // \"UX Design Manager\" son pegas de diseño con un modificador de rol, no\n  // pegas de liderazgo. (La copia de LinkedIn las mandaba a Gestión.)\n  if (/\\bdiseñ|\\bdesign(er)?\\b|\\bart director\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n\n  // 9. Liderazgo (antes \"Gestión\"), ampliada con arquitecto/CTO/subgerente/VP,\n  // que caían en Otros. Va después del stack, de Data/BI y de Diseño a\n  // propósito: un \"Arquitecto de Datos\" o un \"Engineering Manager, Data\" siguen\n  // siendo pegas de datos — el liderazgo es el modificador, no el eje.\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\bsub.?gerente\\b|\\bl[ií]der\\b|\\blead\\b|\\btech.?lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b|\\barquitect|\\barchitect\\b|\\bcto\\b|\\bcio\\b|\\bciso\\b|\\bhead of\\b|\\bvp\\b|\\bvicepresident/i.test(t)) return 'Liderazgo';\n\n  // 11. Plataformas de ecosistema. Van ANTES de la regla de dev genérico\n  // porque si no \"Shopify Developer\" o \"Consultor/a SAP\" se colarían a\n  // Full Stack por la palabra \"developer\"/\"desarrollador\".\n  if (/\\bshopify\\b|\\bsalesforce\\b|\\bsap\\b|\\babap\\b|\\bservicenow\\b|\\bodoo\\b|\\bmagento\\b|\\bwordpress\\b|\\bdrupal\\b|\\bsharepoint\\b|\\bdynamics\\b|\\bsiebel\\b|\\bpeoplesoft\\b|\\boracle\\b/i.test(t)) return 'Otros';\n\n  // 12. Dev genérico sin stack en el título (\"Software Engineer\",\n  // \"Desarrollador/a Senior\", \"Programador/a\"): era el 70% de Otros. Va al\n  // final justo por eso — solo agarra lo que ninguna regla más específica\n  // reclamó. \"Ingeniero\" a secas NO entra: en el corpus hay \"Ingeniero Civil\n  // Industrial\" y \"Ingeniero de Estudios Actuariales\", que no son pegas dev.\n  if (/\\bsoftware engineer\\b|\\bsoftware develop|\\bingenier[oa]?(?:\\/a|\\(a\\))?\\s+(?:de\\s+|en\\s+)?software\\b|\\bingenier[ií]a de software\\b|\\bdesarrollador|\\bdesarrolladora|\\bdesarrollo de software\\b|\\bdeveloper\\b|\\bprogramador|\\bprogramadora|\\bweb develop/i.test(t)) return 'Full Stack';\n\n  return 'Otros';\n}\n\nconst output = [];\nfor (const item of items) {\n  const jobs = (item.json && item.json.jobs) || [];\n  for (const j of jobs) {\n    const titulo = j.jobTitle || '';\n    if (!titulo || !j.url) continue;\n\n    const geo = j.jobGeo || '';\n    const ubicacion = /\\bchile\\b/i.test(geo) ? 'Chile' : 'Remoto';\n\n    output.push({\n      json: {\n        titulo,\n        url: j.url,\n        empleador: j.companyName || 'No especificado',\n        ubicacion,\n        categoria: categorizar(titulo),\n        sueldo: null,\n        tags: 'remote',\n        descripcion: `${titulo}, ${ubicacion}`,\n        fuente: 'jobicy',\n        email_origen: null,\n        fecha_publicacion: j.pubDate ? new Date(j.pubDate).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
       },
-      "id": "7550d940-a1fe-4e85-9545-5ef184a6e8b8",
+      "id": "78da32d7-9401-4364-983e-cec68ec0dafd",
       "name": "Jobicy: normalizar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -768,
-        1080
+        1088
       ],
       "onError": "continueErrorOutput"
     },
@@ -573,27 +566,27 @@
           "timeout": 20000
         }
       },
-      "id": "7ba623d2-b33a-4dbf-9f32-047a40ad3191",
+      "id": "0d0435c1-400a-41cf-abcc-42b23260df0d",
       "name": "Himalayas: Jobs",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "continueOnFail": true,
       "position": [
         -976,
-        1280
-      ]
+        1296
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
         "jsCode": "// Normaliza jobs de Himalayas (API publica /jobs/api, sin auth) al esquema\n// de \"pegas\". A diferencia de Jobicy, esta API no tiene filtro de pais del\n// lado del servidor (probado: parametros como country/location/region no\n// cambian el resultado), asi que el filtro LatAm/Chile se hace aca contra\n// \"locationRestrictions\". Un array vacio significa \"sin restriccion\"\n// (remoto mundial, se acepta -- mismo criterio que el flag remote:true de\n// GetOnBoard).\nconst items = $input.all();\n\nconst LATAM = ['Chile', 'Argentina', 'Brazil', 'Mexico', 'Colombia', 'Peru',\n  'Uruguay', 'Ecuador', 'Bolivia', 'Paraguay', 'Venezuela', 'Costa Rica',\n  'Panama', 'Guatemala', 'Honduras', 'El Salvador', 'Nicaragua',\n  'Dominican Republic', 'Latin America'];\n\nfunction categorizar(t) {\n  t = (t || '').toLowerCase();\n\n  // 0. Guarda de avisos que no son de TI. Va PRIMERO porque varios de estos\n  // títulos traen palabras que más abajo son señal fuerte de otra cosa:\n  // \"Social Media & Community *Analyst*\" caía en Data y \"*Community Manager*\"\n  // caería en Liderazgo. Lista corta y explícita a propósito — acá un falso\n  // positivo saca del listado una pega que sí era válida.\n  if (/\\bcontent (reviewer|creator|writer)\\b|\\besl\\b|\\bteacher\\b|\\bprofesor|\\btutor(ing|ía)?\\b|\\bredactor|\\bcopywriter\\b|\\bcommunity (manager|analyst)\\b|\\bsocial media\\b|\\bappointment setting?\\b|\\bvideo editor\\b|\\bshort-form video\\b|\\bcoletor de dados\\b|\\bphoto collection\\b|\\bdeduplication collection\\b/i.test(t)) return 'Otros';\n\n  // 1-4. Stack explícito en el título: la señal más confiable que hay, así que\n  // va antes que cualquier rol. Se conservan tal cual venían de producción,\n  // incluido que \\breact\\b gane antes que Mobile en \"React Native\" (cambiarlo\n  // movería pegas que hoy están clasificadas como Frontend).\n  if (/\\bfront.?end\\b|frontend|\\breact\\b|\\bvue\\b|\\bangular\\b|\\bui.ux\\b|\\bcss\\b|\\bhtml\\b|\\btypescript\\b|\\bjavascript\\b|\\bjs\\b/i.test(t)) return 'Frontend';\n\n  // Backend ampliado con lenguajes y runtimes de servidor que no estaban y por\n  // eso caían en Otros (COBOL/mainframe, Elixir/Phoenix, Scala, C++...).\n  // Ojo: acá NO van las plataformas de ecosistema (Shopify, Salesforce, SAP,\n  // ServiceNow, Oracle...) — esas tienen su propia regla más abajo, a Otros.\n  if (/\\bback.?end\\b|backend|\\bnode\\b|\\bpython\\b|\\bdjango\\b|\\bflask\\b|\\bfastapi\\b|\\bgo\\b|\\bgolang\\b|\\brust\\b|\\bjava\\b|\\bspring\\b|\\bquarkus\\b|\\.net\\b|\\bc#\\b|\\bc\\+\\+|\\bphp\\b|\\blaravel\\b|\\bsymfony\\b|\\brails\\b|\\bruby\\b|\\bnestjs\\b|\\bcobol\\b|\\bmainframe\\b|\\bas.?400\\b|\\bscala\\b|\\belixir\\b|\\bphoenix\\b|\\berlang\\b|\\bclojure\\b|\\bperl\\b|\\bdelphi\\b|\\brest api(s)?\\b|\\bapi(s)? rest\\b|\\bmicroservici/i.test(t)) return 'Backend';\n\n  if (/\\bfull.?stack\\b|fullstack/i.test(t)) return 'Full Stack';\n\n  // \\binfra\\b no matcheaba \"Infraestructura\" ni \"Infrastructure\" (no hay borde\n  // de palabra dentro de la palabra), así que esos avisos dependían de que la\n  // fuente trajera categoría propia y si no se iban a Otros.\n  if (/\\bdevops\\b|\\bsre\\b|\\binfra(estructura|structure)?\\b|\\bcloud\\b|\\baws\\b|\\bazure\\b|\\bgcp\\b|\\bkubernetes\\b|\\bdocker\\b|\\bterraform\\b|\\bdeploy(ment)?\\b|\\bsys.?admin\\b/i.test(t)) return 'DevOps';\n\n  // 5. QA. Va antes de AI y de Data/BI —como ya hacían 4 de las 5 copias— para\n  // que \"Analista QA Funcional\" sea QA y no Data por la palabra \"analista\", y\n  // que \"Senior QA Engineer (AI Platform Systems)\" sea QA y no AI. La excepción\n  // por \\bdata\\b es para el caso inverso: \"Data Quality Analyst\" es Data/BI,\n  // el \"quality\" ahí califica al dato, no al rol.\n  if (/\\bqa\\b|\\bsdet\\b|\\btester\\b|\\btesting\\b|\\bcalidad\\b|\\bquality\\b/i.test(t) && !/\\bdata\\b/i.test(t)) return 'QA';\n\n  // 6. Soporte. Antes de Data/BI por el mismo motivo que QA: \"Analista de\n  // Soporte Técnico\" y \"Analista de Soporte y Monitoreo (NOC)\" caían en Data\n  // por la palabra \"analista\". Además, esta regla solo existía en la copia de\n  // LinkedIn — las otras cuatro fuentes no podían producir la categoría nunca,\n  // y de ahí que \"Soporte\" tuviera 1 sola pega con 945 publicadas.\n  if (/\\bsoporte\\b|\\bsupport\\b|\\bhelp.?desk\\b|\\bservice.?desk\\b|\\bmesa de ayuda\\b|\\bnoc\\b/i.test(t)) return 'Soporte';\n\n  // 6. IA/ML/LLM. Categoría nueva: estos términos vivían dentro de la regla de\n  // Data y se llevaban 72 de sus 194 pegas (\"AI Engineer\", \"AI Automation\n  // Engineer\", \"Forward Deployed AI Engineer\"), que no son ingeniería de datos.\n  // Va antes de Data/BI pero después del stack explícito, para que un\n  // \"Python ML Engineer\" siga siendo Backend igual que hoy.\n  if (/\\bia\\b|\\ba\\.?i\\.?\\b|\\bml\\b|\\bmlops\\b|\\bllm(s)?\\b|\\bgen.?ai\\b|\\bnlp\\b|\\bmachine.?learning\\b|\\bdeep.?learning\\b|\\bcomputer vision\\b|\\binteligencia artificial\\b|\\bartificial intelligence\\b|\\bprompt engineer/i.test(t)) return 'AI/ML';\n\n  // 7. Data/BI (antes \"Data\"). Sin los términos de IA, que subieron a la regla\n  // anterior, y con \\bbi\\b agregado: solo estaba \\bpower.bi\\b, así que\n  // \"Senior BI Developer (Tableau)\" no matcheaba por \"BI\".\n  if (/\\bdata\\b|\\bdatos\\b|\\banalis(ta|tas)\\b|\\banalyst(s)?\\b|\\banalytics\\b|\\betl\\b|\\belt\\b|\\bbi\\b|\\bpower.?bi\\b|\\btableau\\b|\\blooker\\b|\\bqlik\\b|\\bwarehouse\\b|\\bdbt\\b|\\bspark\\b|\\bsnowflake\\b|\\bdatabricks\\b/i.test(t)) return 'Data/BI';\n\n  if (/\\bmobile\\b|\\bm[oó]vil(es)?\\b|\\bandroid\\b|\\bios\\b|\\bswift\\b|\\bkotlin\\b|\\bflutter\\b|\\breact.native\\b/i.test(t)) return 'Mobile';\n\n  // \\bsecurity\\b no matcheaba \"cybersecurity\" por el mismo motivo que \\binfra\\b:\n  // \"Cybersecurity Lead\" terminaba en Liderazgo y \"Senior Cybersecurity\n  // Specialist\" en Otros.\n  if (/\\bsecurity\\b|\\bcyber|\\bciber|\\bseguridad\\b|\\bpentest|\\bethical hack|\\bdevsecops\\b|\\binfosec\\b|\\bappsec\\b|\\bsoc\\b/i.test(t)) return 'Ciberseguridad';\n\n  // 8. Diseño va ANTES de Liderazgo: \"Líder UX/UI\", \"UX Design Lead\" y\n  // \"UX Design Manager\" son pegas de diseño con un modificador de rol, no\n  // pegas de liderazgo. (La copia de LinkedIn las mandaba a Gestión.)\n  if (/\\bdiseñ|\\bdesign(er)?\\b|\\bart director\\b|\\bux\\b|\\bui\\b|\\bfigma\\b|\\bsketch\\b|\\bphotoshop\\b|\\billustrator\\b/i.test(t)) return 'Diseño';\n\n  // 9. Liderazgo (antes \"Gestión\"), ampliada con arquitecto/CTO/subgerente/VP,\n  // que caían en Otros. Va después del stack, de Data/BI y de Diseño a\n  // propósito: un \"Arquitecto de Datos\" o un \"Engineering Manager, Data\" siguen\n  // siendo pegas de datos — el liderazgo es el modificador, no el eje.\n  if (/\\bproject.manager\\b|\\bscrum.master\\b|\\bproduct.manager\\b|\\bproduct.owner\\b|\\bagile\\b|\\bjefe\\b|\\bgerente\\b|\\bsub.?gerente\\b|\\bl[ií]der\\b|\\blead\\b|\\btech.?lead\\b|\\bmanager\\b|\\bdirector\\b|\\bcoordinador\\b|\\barquitect|\\barchitect\\b|\\bcto\\b|\\bcio\\b|\\bciso\\b|\\bhead of\\b|\\bvp\\b|\\bvicepresident/i.test(t)) return 'Liderazgo';\n\n  // 11. Plataformas de ecosistema. Van ANTES de la regla de dev genérico\n  // porque si no \"Shopify Developer\" o \"Consultor/a SAP\" se colarían a\n  // Full Stack por la palabra \"developer\"/\"desarrollador\".\n  if (/\\bshopify\\b|\\bsalesforce\\b|\\bsap\\b|\\babap\\b|\\bservicenow\\b|\\bodoo\\b|\\bmagento\\b|\\bwordpress\\b|\\bdrupal\\b|\\bsharepoint\\b|\\bdynamics\\b|\\bsiebel\\b|\\bpeoplesoft\\b|\\boracle\\b/i.test(t)) return 'Otros';\n\n  // 12. Dev genérico sin stack en el título (\"Software Engineer\",\n  // \"Desarrollador/a Senior\", \"Programador/a\"): era el 70% de Otros. Va al\n  // final justo por eso — solo agarra lo que ninguna regla más específica\n  // reclamó. \"Ingeniero\" a secas NO entra: en el corpus hay \"Ingeniero Civil\n  // Industrial\" y \"Ingeniero de Estudios Actuariales\", que no son pegas dev.\n  if (/\\bsoftware engineer\\b|\\bsoftware develop|\\bingenier[oa]?(?:\\/a|\\(a\\))?\\s+(?:de\\s+|en\\s+)?software\\b|\\bingenier[ií]a de software\\b|\\bdesarrollador|\\bdesarrolladora|\\bdesarrollo de software\\b|\\bdeveloper\\b|\\bprogramador|\\bprogramadora|\\bweb develop/i.test(t)) return 'Full Stack';\n\n  return 'Otros';\n}\n\n// Bug real de la API: en ~50% de los avisos de una muestra, \"companyName\"\n// viene literalmente como el string \"name\" (placeholder roto del lado de\n// Himalayas), en vez del nombre real o venir vacio. \"companySlug\" si trae\n// el dato correcto en esos casos, asi que se arma un nombre legible desde\n// ahi como fallback.\nfunction nombreEmpresa(j) {\n  if (j.companyName && j.companyName !== 'name') return j.companyName;\n  if (j.companySlug) {\n    return j.companySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');\n  }\n  return null;\n}\n\nconst output = [];\nfor (const item of items) {\n  const jobs = (item.json && item.json.jobs) || [];\n  for (const j of jobs) {\n    const restricciones = j.locationRestrictions || [];\n    const chile = restricciones.includes('Chile');\n    const latam = chile || restricciones.some(r => LATAM.includes(r));\n    const abierto = restricciones.length === 0;\n    if (!latam && !abierto) continue;\n\n    const titulo = j.title || '';\n    const url = j.applicationLink || j.guid;\n    if (!titulo || !url) continue;\n\n    const ubicacion = chile ? 'Chile' : 'Remoto';\n    const sueldo = (j.minSalary && j.maxSalary)\n      ? `USD ${j.minSalary} - ${j.maxSalary} /${j.salaryPeriod === 'monthly' ? 'mes' : 'año'}`\n      : null;\n\n    output.push({\n      json: {\n        titulo,\n        url,\n        empleador: nombreEmpresa(j) || 'No especificado',\n        ubicacion,\n        categoria: categorizar(titulo),\n        sueldo,\n        tags: 'remote',\n        descripcion: `${titulo}, ${ubicacion}`,\n        fuente: 'himalayas',\n        email_origen: null,\n        fecha_publicacion: j.pubDate ? new Date(j.pubDate * 1000).toISOString() : new Date().toISOString()\n      }\n    });\n  }\n}\n\nreturn output;\n"
       },
-      "id": "8d74f679-fec9-4b05-bbc1-a92634977948",
+      "id": "a9dcfb03-15a7-40e2-b11d-78c5d9750fdf",
       "name": "Himalayas: filtrar + normalizar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -768,
-        1280
+        1296
       ],
       "onError": "continueErrorOutput"
     }
@@ -627,16 +620,6 @@
           },
           {
             "node": "WorkingNomads: Jobs",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Jobicy: Jobs",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Himalayas: Jobs",
             "type": "main",
             "index": 0
           },
@@ -873,64 +856,6 @@
         ]
       ]
     },
-    "Jobicy: Jobs": {
-      "main": [
-        [
-          {
-            "node": "Jobicy: normalizar",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Jobicy: normalizar": {
-      "main": [
-        [
-          {
-            "node": "PostgreSQL INSERT",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Armar aviso de fallo aislado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Himalayas: Jobs": {
-      "main": [
-        [
-          {
-            "node": "Himalayas: filtrar + normalizar",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Himalayas: filtrar + normalizar": {
-      "main": [
-        [
-          {
-            "node": "PostgreSQL INSERT",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Armar aviso de fallo aislado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Restart pegas.devschile.cl": {
       "main": [
         [],
@@ -976,15 +901,65 @@
           }
         ]
       ]
+    },
+    "Jobicy: Jobs": {
+      "main": [
+        [
+          {
+            "node": "Jobicy: normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Himalayas: Jobs": {
+      "main": [
+        [
+          {
+            "node": "Himalayas: filtrar + normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jobicy: normalizar": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Himalayas: filtrar + normalizar": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL INSERT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
     }
   },
   "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
     "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true,
     "timezone": "America/Santiago",
-    "errorWorkflow": "<ID_WORKFLOW_ALERTA>"
+    "errorWorkflow": "droHBi5ngnNezaiD"
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "24957703-a897-4422-88f3-45bf7a714b07",
+  "versionId": "9e34894a-cd85-4a38-bde6-0a8ace38a95d",
   "active": true
 }
