@@ -200,7 +200,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Digest 2x/dia: resume las pegas nuevas desde el ultimo aviso agrupadas por\n// categoria. Antes se listaban 3 pegas con detalle, pero con una mediana de\n// ~24 pegas por envio eso mostraba una muestra arbitraria (y ademas las mas\n// viejas del lote, por el ORDER BY ASC de la query).\n//\n// OJO: el nodo Postgres de n8n, cuando el SELECT no encuentra filas, igual\n// emite 1 item falso {success:true} en vez de un array vacio. Por eso\n// filtramos por la presencia de \"titulo\", no por items.length.\nconst items = $input.all().filter(item => item.json && item.json.titulo).map(i => i.json);\nif (items.length === 0) return [];\n\nconst total = items.length;\nconst esUno = total === 1;\nconst pegas = esUno ? 'pega nueva' : 'pegas nuevas';\n\nconst aperturas = esUno\n  ? [`Hay *1* ${pegas}`, `Llegó *1* ${pegas}`, `Se sumó *1* ${pegas}`,\n     `Cayó *1* ${pegas}`, `Tenemos *1* ${pegas}`, `Apareció *1* ${pegas}`,\n     `*1* ${pegas} en la vitrina`]\n  : [`Hay *${total}* ${pegas}`, `Llegaron *${total}* ${pegas}`, `Se sumaron *${total}* ${pegas}`,\n     `Cayeron *${total}* ${pegas}`, `Tenemos *${total}* ${pegas}`, `Aparecieron *${total}* ${pegas}`,\n     `*${total}* ${pegas} en la vitrina`];\n\nconst cierres = esUno\n  ? ['Mírala en pegas.devschile.cl', 'Revísala en pegas.devschile.cl',\n     'Échale un ojo en pegas.devschile.cl', 'Está en pegas.devschile.cl',\n     'Pásate por pegas.devschile.cl']\n  : ['Míralas todas en pegas.devschile.cl', 'Revísalas en pegas.devschile.cl',\n     'Échales un ojo en pegas.devschile.cl', 'Están todas en pegas.devschile.cl',\n     'El listado completo en pegas.devschile.cl', 'Pásate por pegas.devschile.cl'];\n\nconst azar = arr => arr[Math.floor(Math.random() * arr.length)];\n\nconst conteo = {};\nfor (const p of items) {\n  const cat = p.categoria || 'Otros';\n  conteo[cat] = (conteo[cat] || 0) + 1;\n}\nconst filas = Object.entries(conteo).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));\n\nconst ancho = Math.max(...filas.map(([k]) => k.length));\nconst maxN = filas[0][1];\n// Con una sola categoria la barra siempre saldria llena, asi que no se dibuja.\nconst conBarras = filas.length > 1;\n\nlet msg = `${azar(aperturas)}:\\n\\n\\`\\`\\`\\n`;\nfor (const [cat, n] of filas) {\n  const barra = conBarras ? '  ' + '█'.repeat(Math.max(1, Math.round((n / maxN) * 14))) : '';\n  msg += `${cat.padEnd(ancho)} ${String(n).padStart(3)}${barra}\\n`;\n}\nmsg += `\\`\\`\\`\\n${azar(cierres)}`;\n\nconst ids = items.map(p => p.id);\nreturn [{ json: { text: msg, count: total, ids } }];"
+        "jsCode": "// Digest 2x/dia: resume las pegas nuevas desde el ultimo aviso.\n//\n// El canal ve solo el resumen (conteo por categoria + una linea de stats) y\n// el detalle pega por pega se publica como respuesta en el hilo. Antes se\n// listaban 3 pegas con detalle en el propio mensaje, pero con una mediana de\n// ~24 pegas por envio eso mostraba una muestra arbitraria (y ademas las mas\n// viejas del lote, por el ORDER BY ASC de la query); listarlas todas en el\n// canal inundaria #trabajos dos veces al dia. El hilo resuelve las dos cosas.\n//\n// Todo link del mensaje apunta a pegas.devschile.cl (a la pega, a la categoria\n// o al home), nunca al aviso original: el objetivo del digest es llevar\n// trafico al sitio, y la pagina de la pega ya ofrece el link para postular.\n//\n// Salida: { text } para el mensaje del canal y { hilo } con los bloques de la\n// respuesta -- los arma \"Armar hilo de detalle\", que necesita el ts que\n// devuelve el nodo de Slack y por eso corre despues.\n//\n// OJO: el nodo Postgres de n8n, cuando el SELECT no encuentra filas, igual\n// emite 1 item falso {success:true} en vez de un array vacio. Por eso\n// filtramos por la presencia de \"titulo\", no por items.length.\nconst items = $input.all().filter(item => item.json && item.json.titulo).map(i => i.json);\nif (items.length === 0) return [];\n\nconst total = items.length;\nconst esUno = total === 1;\nconst pegas = esUno ? 'pega nueva' : 'pegas nuevas';\n\nconst aperturas = esUno\n  ? [`Hay *1* ${pegas}`, `Llegó *1* ${pegas}`, `Se sumó *1* ${pegas}`,\n     `Cayó *1* ${pegas}`, `Tenemos *1* ${pegas}`, `Apareció *1* ${pegas}`,\n     `*1* ${pegas} en la vitrina`]\n  : [`Hay *${total}* ${pegas}`, `Llegaron *${total}* ${pegas}`, `Se sumaron *${total}* ${pegas}`,\n     `Cayeron *${total}* ${pegas}`, `Tenemos *${total}* ${pegas}`, `Aparecieron *${total}* ${pegas}`,\n     `*${total}* ${pegas} en la vitrina`];\n\nconst cierres = esUno\n  ? ['Mírala en pegas.devschile.cl', 'Revísala en pegas.devschile.cl',\n     'Échale un ojo en pegas.devschile.cl', 'Está en pegas.devschile.cl',\n     'Pásate por pegas.devschile.cl']\n  : ['Míralas todas en pegas.devschile.cl', 'Revísalas en pegas.devschile.cl',\n     'Échales un ojo en pegas.devschile.cl', 'Están todas en pegas.devschile.cl',\n     'El listado completo en pegas.devschile.cl', 'Pásate por pegas.devschile.cl'];\n\nconst azar = arr => arr[Math.floor(Math.random() * arr.length)];\n\n/**\n * Titulos, empleadores y sueldos vienen de LinkedIn y GetOnBoard sin ninguna\n * validacion, y en el hilo se interpolan dentro del mrkdwn de Slack. Sin\n * escapar, un aviso titulado `<https://phishing.cl|Postula aquí>` se\n * publicaria en #trabajos como un link de verdad, con el nombre que el\n * atacante quiera. Es el escape que pide la propia documentacion de Slack, y\n * el & va primero o si no se re-escapan los otros dos.\n */\nconst escapar = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n\n/**\n * Los links del digest apuntan al sitio, NO al aviso original: la gracia es\n * llevar trafico a pegas.devschile.cl, que ademas muestra la pega con su\n * categoria, reacciones y el boton para postular en la fuente. El link a\n * LinkedIn/GetOnBoard sigue estando, a un click, en la propia pagina.\n *\n * Como el destino lo construimos nosotros, ya no hay que validar una url de\n * terceros: se arma con el id (entero de la BD) y un slug que por definicion\n * solo tiene [a-z0-9-]. Un titulo hostil no puede colarse en el destino.\n */\nconst SITIO = 'https://pegas.devschile.cl';\n\n/** Para separar en PostHog las visitas que llegan del digest. */\nconst utm = contenido => `?utm_source=slack&utm_medium=digest&utm_content=${contenido}`;\n\n/** Mismo criterio que slugify() en web/app/utils/slug.ts. */\nconst slugify = texto => String(texto)\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/[^a-z0-9]+/g, '-')\n  .replace(/^-+|-+$/g, '');\n\n/**\n * `/pega/123-titulo-en-empresa`. El id manda y el resto del slug es solo\n * legibilidad: la pagina lo resuelve con idFromSlug(), asi que el link no se\n * rompe aunque el titulo cambie despues. Sin id no hay link posible -- no\n * deberia pasar nunca, id es la PK.\n */\nfunction linkPega(p) {\n  const id = Number(p.id);\n  if (!Number.isInteger(id) || id <= 0) return null;\n  // El slug se recorta: nadie lo ve (el texto visible es el titulo) y cada\n  // link se lleva el presupuesto de caracteres del mensaje. La pagina lo\n  // resuelve igual, solo mira el numero.\n  const slug = slugify(`${p.titulo || ''} ${empleadorDe(p) || ''}`).slice(0, 40).replace(/-+$/, '');\n  return `${SITIO}/pega/${id}${slug ? '-' + slug : ''}${utm('pega')}`;\n}\n\nconst truncar = (t, n) => (t.length <= n ? t : t.slice(0, n - 1).trimEnd() + '…');\n\n/** GetOnBoard manda \"No especificado\" cuando no logra resolver la empresa. */\nfunction empleadorDe(p) {\n  const e = String(p.empleador || '').trim();\n  return !e || /^no especificad[oa]$/i.test(e) ? null : e;\n}\n\nconst esRemota = p => /remot/i.test(String(p.ubicacion || ''));\n\n/**\n * La ubicacion llega de cinco fuentes y sin normalizar: \"Santiago\",\n * \"Santiago Metropolitan Region, Chile\", \"Santiago Metropolitan Area\",\n * \"Provincia de Santiago\", \"Remote\", \"Remoto\". Se colapsa a algo que quepa\n * en una linea y no repita lo mismo escrito de seis formas.\n */\nfunction ubicacionDe(p) {\n  const u = String(p.ubicacion || '').trim();\n  if (!u) return null;\n  if (esRemota(p)) return 'Remoto';\n  if (/santiago/i.test(u)) return 'Santiago';\n  return truncar(u.split(',')[0].trim(), 24);\n}\n\nfunction lineaDe(p) {\n  const titulo = escapar(truncar(String(p.titulo).trim(), 70));\n  const url = linkPega(p);\n  let linea = '• ' + (url ? `<${url}|${titulo}>` : titulo);\n\n  const empleador = empleadorDe(p);\n  if (empleador) linea += ` · ${escapar(truncar(empleador, 30))}`;\n\n  const donde = ubicacionDe(p);\n  if (donde) linea += ` — ${escapar(donde)}`;\n\n  const sueldo = String(p.sueldo || '').trim();\n  if (sueldo) linea += ` · 💰 ${escapar(truncar(sueldo, 28))}`;\n\n  return linea;\n}\n\nconst conteo = {};\nfor (const p of items) {\n  const cat = p.categoria || 'Otros';\n  conteo[cat] = (conteo[cat] || 0) + 1;\n}\nconst filas = Object.entries(conteo).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));\n\nconst ancho = Math.max(...filas.map(([k]) => k.length));\nconst maxN = filas[0][1];\n// Con una sola categoria la barra siempre saldria llena, asi que no se dibuja.\nconst conBarras = filas.length > 1;\n\nlet msg = `${azar(aperturas)}:\\n\\n\\`\\`\\`\\n`;\nfor (const [cat, n] of filas) {\n  const barra = conBarras ? '  ' + '█'.repeat(Math.max(1, Math.round((n / maxN) * 14))) : '';\n  msg += `${cat.padEnd(ancho)} ${String(n).padStart(3)}${barra}\\n`;\n}\nmsg += '```\\n';\n\n// Los dos datos que el resumen por categoria se comia y que son justo los que\n// hacen que alguien abra el hilo. Solo se muestran si hay algo que mostrar:\n// el sueldo lo publica ~1 de cada 10 avisos.\nconst remotas = items.filter(esRemota).length;\nconst conSueldo = items.filter(p => String(p.sueldo || '').trim()).length;\nconst stats = [];\nif (remotas) stats.push(`🌎 ${remotas} remota${esUno || remotas === 1 ? '' : 's'}`);\nif (conSueldo) stats.push(`💰 ${conSueldo} con sueldo`);\nif (stats.length) msg += `${stats.join(' · ')}\\n`;\n\n// Slack autolinkea el dominio suelto, pero sin utm y sin https explicito.\nmsg += azar(cierres).replace('pegas.devschile.cl',\n  () => `<${SITIO}${utm('cierre')}|pegas.devschile.cl>`);\n\n// Dentro de cada categoria, lo mas nuevo primero: la query trae ORDER BY\n// fecha_creacion ASC porque el resto del pipeline la necesita asi.\nconst porCategoria = new Map(filas.map(([cat]) => [cat, []]));\nfor (const p of items) porCategoria.get(p.categoria || 'Otros').push(p);\nfor (const lista of porCategoria.values()) lista.reverse();\n\n// El encabezado de cada categoria lleva al listado ya filtrado del sitio:\n// quien mira el hilo por una categoria puntual llega a esa vista y no al home.\nconst secciones = filas.map(([cat]) => {\n  const encabezado = `<${SITIO}/categoria/${slugify(cat)}${utm('categoria')}|${escapar(cat)}>`;\n  return `*${encabezado}*\\n${porCategoria.get(cat).map(lineaDe).join('\\n')}`;\n});\n\n// Slack recomienda no pasar los 4000 caracteres por mensaje, y el backlog del\n// 27/8 fueron 109 pegas de una sola vez: el detalle se parte en varias\n// respuestas del hilo en vez de perderse por el corte. Ojo que la mayor parte\n// del presupuesto se la llevan las urls, que no se ven.\nconst LIMITE = 3800;\nconst hilo = [];\nlet bloque = '';\nfor (const seccion of secciones) {\n  if (bloque && bloque.length + seccion.length + 2 > LIMITE) {\n    hilo.push(bloque);\n    bloque = '';\n  }\n  bloque = bloque ? `${bloque}\\n\\n${seccion}` : seccion;\n  // Una sola categoria puede pasarse del limite ella sola; ahi se corta entre\n  // lineas, nunca a mitad de una.\n  while (bloque.length > LIMITE) {\n    const corte = bloque.lastIndexOf('\\n', LIMITE);\n    if (corte <= 0) break;\n    hilo.push(bloque.slice(0, corte));\n    bloque = bloque.slice(corte + 1);\n  }\n}\nif (bloque) hilo.push(bloque);\n\nconst ids = items.map(p => p.id);\nreturn [{ json: { text: msg, hilo, count: total, ids } }];"
       },
       "id": "beb8e580-9963-49a3-a675-816617ec6288",
       "name": "Agrupar notificación",
@@ -589,6 +589,39 @@
         1296
       ],
       "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convierte los bloques de detalle que armó \"Agrupar notificación\" en items\n// para responder en el hilo del aviso recién publicado.\n//\n// El ts del mensaje padre solo existe después de que Slack contesta, por eso\n// este nodo va detrás del nodo de Slack y no dentro de \"Agrupar\n// notificación\". Según versión del nodo y tipo de credencial la respuesta\n// trae el ts en la raíz o dentro de message, así que se prueban las dos.\nconst respuesta = $input.first()?.json || {};\nconst thread_ts = respuesta.ts || respuesta.message?.ts;\n\n// Sin ts no hay hilo al cual colgarse. Se prefiere no publicar nada antes que\n// soltar el detalle como mensaje suelto en el canal: eso sería exactamente el\n// muro de texto que este cambio evita. El resumen ya salió y las pegas ya\n// quedaron marcadas como notificadas, así que no se repite en la próxima.\nif (!thread_ts) return [];\n\nconst bloques = $('Agrupar notificación').first().json.hilo || [];\nreturn bloques.map(text => ({ json: { text, thread_ts } }));"
+      },
+      "id": "digest-hilo-code",
+      "name": "Armar hilo de detalle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "#trabajos",
+        "text": "={{ $json.text }}",
+        "otherOptions": {
+          "thread_ts": "={{ $json.thread_ts }}",
+          "unfurl_links": false,
+          "unfurl_media": false
+        },
+        "attachments": []
+      },
+      "id": "digest-hilo-slack",
+      "name": "Detalle en el hilo",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -160
+      ]
     }
   ],
   "connections": {
@@ -946,6 +979,28 @@
           }
         ],
         []
+      ]
+    },
+    "Notificar en #trabajos": {
+      "main": [
+        [
+          {
+            "node": "Armar hilo de detalle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar hilo de detalle": {
+      "main": [
+        [
+          {
+            "node": "Detalle en el hilo",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },

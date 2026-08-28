@@ -37,7 +37,7 @@ Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detal
 3. **Deduplicación** → Verifica contra PostgreSQL (UNIQUE en `url`, `ON CONFLICT DO NOTHING`)
 4. **INSERT** → Guarda nueva pega en la BD (nodo único compartido por las tres fuentes)
 5. **Redeploy en tiempo real** → Si hubo pegas nuevas en esa corrida, n8n dispara restart en Coolify de inmediato, regenerando `data.json`
-6. **Digest de Slack (2x/día)** → A las 9:00 y 18:00, un trigger aparte junta en la BD todas las pegas nuevas desde el último aviso (de cualquier fuente, tracking vía static data del workflow) y manda un solo mensaje a `#trabajos` con hasta 5 listadas
+6. **Digest de Slack (2x/día)** → A las 9:00 y 15:00, un trigger aparte junta todas las pegas nuevas desde el último aviso (de cualquier fuente, marcadas con `notificado_en_digest`) y manda a `#trabajos` un resumen por categoría, con el detalle pega por pega colgando del hilo — ver [Digest de Slack](#digest-de-slack)
 7. **Frontend** → `index.html` carga `data/data.json` y renderiza con filtros
 
 ## Estructura del repositorio
@@ -57,6 +57,7 @@ Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detal
 │   ├── sync-categorizar.js # Reinyecta categorizar() en sus 6 copias
 │   ├── parser-code.js      # Parser LinkedIn standalone (para tests)
 │   ├── test-categorizar.js # Tests del clasificador
+│   ├── test-digest.js      # Tests del digest de Slack (corre el jsCode real del nodo)
 │   └── test-getonbrd.js    # Valida en vivo el filtro Chile/Remoto de GetOnBoard
 ├── Dockerfile              # Multi-stage: build + nginx:alpine
 ├── nginx.conf              # Config nginx
@@ -120,6 +121,76 @@ categoría previa no queda guardada en ningún lado, así que sin ese SQL la
 reclasificación no tiene vuelta atrás. El tag `v1.0.0` documenta el
 procedimiento completo de rollback (`git tag -n99 v1.0.0`).
 
+## Digest de Slack
+
+Dos veces al día (9:00 y 15:00, `America/Santiago`) el workflow publica en
+`#trabajos` un resumen de todo lo que entró desde el aviso anterior, y cuelga
+del **hilo** de ese mismo mensaje el detalle pega por pega:
+
+````
+Cayeron *13* pegas nuevas:
+
+```
+Backend      3  ██████████████
+DevOps       3  ██████████████
+Mobile       2  █████████
+```
+🌎 6 remotas · 💰 4 con sueldo
+Están todas en pegas.devschile.cl
+
+  └─ (en el hilo)
+     *Backend*        ← link a /categoria/backend
+     • Ingeniero/a de Software C/C++ · ATENTUS — Chile · 💰 USD 1500 - 2500 /mes
+       ↑ link a /pega/36991-ingeniero-a-de-software-c-c-atentus
+     • …
+````
+
+El canal se queda con el resumen para que un aviso ocupe siempre lo mismo,
+llegue con 5 pegas o con 109 (el backlog del 27/8/2026 fueron 109 de una);
+quien quiere el listado abre el hilo. Antes se listaban 3 pegas en el propio
+mensaje, pero con una mediana de ~24 por envío eso era una muestra arbitraria
+y encima las más viejas del lote, por el `ORDER BY fecha_creacion ASC` de la
+query.
+
+Lo arman cuatro nodos encadenados en `n8n/workflow.json`:
+
+| Nodo | Qué hace |
+|---|---|
+| `Agrupar notificación` (Code) | Arma el texto del canal y los bloques del hilo. `Marcar notificadas` cuelga de acá en paralelo, así que el digest no se repite aunque el hilo falle |
+| `Notificar en #trabajos` (Slack) | Publica el resumen. Su respuesta trae el `ts`, que es el ancla del hilo |
+| `Armar hilo de detalle` (Code) | Toma ese `ts` y emite un item por bloque. Sin `ts` no emite nada: mejor sin detalle que soltarlo como mensaje suelto en el canal |
+| `Detalle en el hilo` (Slack) | Publica cada bloque como respuesta, con los unfurl apagados |
+
+El detalle se parte en varios mensajes de hilo si pasa los 3800 caracteres
+(Slack recomienda no llegar a 4000), cortando entre categorías, o entre líneas
+si una sola categoría se pasa.
+
+**Todos los links van al sitio, ninguno al aviso original.** El título de cada
+pega lleva a `/pega/{id}-{slug}`, el encabezado de categoría a
+`/categoria/{slug}` y el cierre al home. El objetivo del digest es traer
+tráfico a pegas.devschile.cl; el link para postular en LinkedIn o GetOnBoard
+sigue estando, a un click, en la página de la pega. Todos llevan
+`?utm_source=slack&utm_medium=digest&utm_content=…` para poder separar en
+PostHog cuánto tráfico trae el digest y qué se clickea.
+
+Del slug solo importa el número: la página lo resuelve con `idFromSlug()`, así
+que se recorta a 40 caracteres. Nadie lo ve (el texto visible es el título) y
+cada URL se come el presupuesto de caracteres del mensaje — con los slugs
+completos, 13 pegas ya no cabían en una sola respuesta del hilo.
+
+**Escape obligatorio.** Los títulos, empleadores y sueldos vienen de LinkedIn y
+GetOnBoard, o sea de fuera, y desde este cambio se publican como mrkdwn. Un
+aviso titulado `<https://phishing.cl|Postula aquí>` se publicaría en el canal
+de la comunidad como un link real con el texto que quiera quien lo escribió.
+Por eso todo texto de terceros pasa por `escapar()` (`&` primero, después `<`
+y `>`). El destino ya no necesita validarse: se construye con el `id` (entero
+de la BD) y un slug que por definición solo tiene `[a-z0-9-]`, así que un
+título hostil no puede colarse ahí. `n8n/test-digest.js` fija esos casos.
+
+Ese test no copia el código del nodo: lo lee de `workflow.json` y lo ejecuta
+con un `$input` falso, así que siempre corre contra lo que se va a pegar en
+n8n. Con `--ver` imprime los mensajes de ejemplo renderizados.
+
 ## Base de datos
 
 Tabla `pegas`:
@@ -177,7 +248,8 @@ MIT
 - [x] Detección de sueldo/rango salarial
 - [x] **GetOnBoard** — API pública v0, sin auth, filtrada a Chile/Remoto (nodos `getonbrd-*` en `n8n/workflow.json`, validado con `n8n/test-getonbrd.js`)
 - [x] **WorkingNomads** — API pública `/api/exposed_jobs/`, sin auth, filtrada a LatAm/Chile
-- [x] Digest de Slack 2x/día (9:00 y 18:00) en vez de notificar en cada corrida — evita saturar el canal
+- [x] Digest de Slack 2x/día (9:00 y 15:00) en vez de notificar en cada corrida — evita saturar el canal
+- [x] Detalle de cada pega (link, empleador, ubicación, sueldo) en el hilo del digest, para no alargar el mensaje del canal
 - [ ] Fuentes adicionales — evaluadas y descartadas por ahora: ver tabla "Fuentes de pegas" más arriba. Candidata más viable a futuro: Himalayas (API pública real, pero requiere filtro geográfico más fino por su volumen global)
 - [ ] Auto-expiración de pegas antiguas
 - [ ] Dashboard de métricas

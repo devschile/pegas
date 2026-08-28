@@ -13,6 +13,6 @@
   "scripts": {
     "prepare": "husky",
     "sync:categorizar": "node n8n/sync-categorizar.js",
-    "test:n8n": "node n8n/sync-categorizar.js --check && node n8n/test-categorizar.js && node n8n/test-parser.js"
+    "test:n8n": "node n8n/sync-categorizar.js --check && node n8n/test-categorizar.js && node n8n/test-parser.js && node n8n/test-digest.js"
   }
 }

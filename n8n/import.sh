@@ -33,10 +33,16 @@ python3 - "$REPO_DIR" "$DESTINO" <<'PY'
 import json, re, sys, os
 repo, destino = sys.argv[1], sys.argv[2]
 d = json.load(open(os.path.join(repo, 'n8n/workflow.json')))
+
+# Nodos Code que no tocan categorizar() pero igual se editan desde el repo.
+# Sin esta lista el script los ignora en silencio y el cambio nunca llega a
+# n8n -- que es como el digest quedo un tiempo distinto en repo y produccion.
+EXTRA = {'Agrupar notificación', 'Armar hilo de detalle'}
+
 n = 0
 for nodo in d['nodes']:
     code = nodo.get('parameters', {}).get('jsCode')
-    if not code or 'categorizar' not in code:
+    if not code or ('categorizar' not in code and nodo['name'] not in EXTRA):
         continue
     n += 1
     slug = re.sub(r'[^a-z0-9]+', '-', nodo['name'].lower()).strip('-')
@@ -49,4 +55,10 @@ PY
 echo
 echo "Abrir https://n8n.devschile.cl/workflow/$WORKFLOW_ID"
 echo "Para cada nodo: abrirlo, clic en el editor, Cmd+A, pegar el archivo encima."
+echo
+echo "Si un nodo de la lista todavía no existe en el canvas, hay que crearlo a"
+echo "mano (los nodos nuevos no se pueden pegar): agregar un nodo Code, ponerle"
+echo "exactamente ese nombre — el código de otros nodos los referencia por"
+echo "nombre con \$('...') — y cablearlo como está en n8n/workflow.json."
+echo
 echo "Después, Publish."

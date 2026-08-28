@@ -12,6 +12,7 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - Unificada la frecuencia de todas las fuentes de ingesta.
 - Rediseñada la notificación por chat: en vez de avisar por cada pega nueva (saturaba el canal), ahora se manda un resumen dos veces al día con lo nuevo de todas las fuentes.
 - Corregido un bug donde el resumen podía mostrar un aviso vacío o incorrecto cuando no había pegas nuevas, y ajustado el horario para que corra en la zona horaria correcta.
+- Mejorado el resumen de chat: el canal ve el conteo por categoría más cuántas pegas son remotas y cuántas publican sueldo, y el detalle de cada pega (título con link, empresa, ubicación y sueldo) se publica en el hilo del mismo mensaje. Así un aviso ocupa siempre lo mismo en el canal, llegue con 5 pegas o con 109, y quien quiere el listado lo abre. Cada pega del hilo enlaza a su página en el sitio (y cada categoría a su listado filtrado), no al aviso original: la idea es llevar tráfico al sitio, donde el botón para postular en la fuente sigue estando a un click. Los enlaces van marcados para poder medir en las analíticas cuánto tráfico trae el resumen. Los textos vienen de fuentes externas, así que se escapan antes de publicarlos: sin eso, un aviso con sintaxis de link en el título podía publicar un enlace falso en el canal de la comunidad.
 - Recuperadas manualmente algunas pegas que se habían perdido por un problema puntual de sincronización de un disparador automático.
 - Investigadas y descartadas varias fuentes adicionales candidatas — sin API pública utilizable, bloqueadas por protección anti-bots, o de una sola empresa (detalle en el README).
 - Sumadas dos fuentes más de pegas (Jobicy y Himalayas), ambas remoto-LatAm.
@@ -28,6 +29,7 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - Agregar datos estructurados a las pegas para mejorar el posicionamiento en buscadores.
 - Auto-expiración de pegas antiguas.
 - Dashboard de métricas.
+- Medir en PostHog si el resumen de chat con enlaces al sitio efectivamente trae tráfico (llegan marcados con `utm_source=slack&utm_medium=digest`, y `utm_content` distingue si clickearon una pega, una categoría o el cierre). Sin ese número no se sabe si el cambio sirvió.
 - Evaluar migrar el frontend a un enfoque con renderizado en servidor para mejorar SEO e indexabilidad (cambio de arquitectura grande, no es urgente).
 
 ## Monetización
@@ -51,7 +53,7 @@ Orden acordado para llegar de `web/` (scaffold ya hecho) a la monetización. Se 
   - [x] Paginación
   - [x] Meta tags por página (title/description dinámico, OG tags, schema.org JobPosting) — aprovechando el SSR
 - [x] **2. Desplegar `web/` en paralelo al sitio estático** (Dockerfile en `web/`, app nueva en Coolify servida en `pegas-staging.devschile.cl`; el público sigue viendo el sitio actual en `pegas.devschile.cl`)
-- [ ] **3. Cutover del sitio estático al nuevo frontend** (swap de DNS/proxy una vez validado en paralelo; recién ahí se retira `index.html`/`css/`/`js/`)
+- [x] **3. Cutover del sitio estático al nuevo frontend** — `pegas.devschile.cl` ya sirve el Nuxt (verificado el 27/8/2026: el HTML trae `__NUXT`, y `/api/pegas`, `/pega/:slug` y las 13 rutas `/categoria/:slug` responden 200). Queda pendiente retirar `index.html`/`css/`/`js/` del repo y revisar si sobra alguna instancia vieja.
 - [x] **4. API REST** (reemplaza `usePegas()` leyendo `data.json` por Postgres real; prerequisito de todo lo que implica escritura — publicar pega, login, destacar, pagos; también la consumiría el bot de Slack)
   - [x] Endpoints de solo lectura: `GET /api/pegas` (filtros + paginación), `GET /api/pegas/:id`, `GET /api/meta` (cacheado 300s) — contra el esquema actual de `pegas` (sin `estado`/`destacada`/`fijada` todavía, esas columnas llegan con Fase 3/4 de moderación)
   - [x] Frontend conectado a la API en vez de `data.json`: `useJobs.ts`/`useJobsListing.ts` reescritos (paginación y filtrado en SQL, debounce 300ms + sync de query string), `SiteHeader.vue`/`index.vue`/`categoria/[categoria].vue`/`pega/[id].vue` y el sitemap consumen `/api/pegas`, `/api/pegas/:id` y `/api/meta`. Probado end-to-end contra Postgres local con datos reales.
@@ -60,6 +62,32 @@ Orden acordado para llegar de `web/` (scaffold ya hecho) a la monetización. Se 
   - [x] Reacciones y guardado: migración `003_reacciones.sql` (`pegas_estado_usuario`, fila se borra cuando queda vacía), `server/utils/reacciones.ts`, endpoints `/api/me`, `/api/me/pegas`, `/api/me/pegas-estado` y `POST /api/pegas/:id/{reaccion,guardado}`. Cada `PegaCard` tiene botones like/nolike (excluyentes)/guardar (independiente), deshabilitados sin sesión. `usePegaReactions` comparte estado entre cards vía `useState` y evita N+1 con un fetch batch por página. Página nueva `/mis-pegas`. Probado de punta a punta contra Postgres local con el bypass `/auth/dev`.
   - [ ] Publicar/gestionar pega (empresas) y alertas personalizadas (candidatos) — pendiente
 - [ ] **6. Monetización** (una vez hay registro: publicación paga, ranking/destacados, tracking tipo ecommerce en PostHog, suscripción paga — detalle arriba)
+
+## Feat pendiente: panel admin con tabs + Ads
+
+Hoy lo que hace de panel admin es la página `/mis-pegas`: muestra las pegas guardadas/reaccionadas del usuario y, si el rol es `admin`, agrega al final una sección suelta con las pegas desactivadas (`GET /api/pegas/desactivadas` + `POST /api/pegas/:id/activar`). Con la llegada de Ads eso deja de escalar como lista apilada, así que el pendiente tiene dos partes.
+
+**1. Tabs en el panel.** Reorganizar `/mis-pegas` en pestañas en vez de secciones apiladas: `Guardadas`, `Desactivadas` (solo admin) y `Ads` (solo admin). La tab activa debería quedar en la query string para poder compartir/recargar sin perderla.
+
+**2. CRUD de Ads.** Sección nueva para crear y administrar banners que se muestran en `pegas.devschile.cl`. Un ad tiene:
+- **Formato horizontal siempre** (no hay variante vertical ni cuadrada; conviene fijar una relación de aspecto y un alto máximo para que ningún ad rompa el layout del listado).
+- **Contenido**: HTML pegado o imagen subida (excluyentes entre sí).
+- **Link** de destino.
+- **Estado** activo / inactivo.
+- **Ubicaciones**: header (arriba de todo), entremedio de las cards de pegas (uno por página de paginación) y footer (antes de la paginación). Se puede elegir una, dos o las tres a la vez, así que la ubicación es un conjunto, no un valor único.
+
+**Notas de implementación**
+- Migración nueva `migrations/007_ads.sql` (la última aplicada es la `006`): tabla `ads` con las columnas de arriba y las ubicaciones como arreglo/`jsonb` o tabla puente `ads_ubicaciones`.
+- Endpoints de escritura (`POST`/`PATCH`/`DELETE /api/ads`) detrás de `requireAdmin` de `server/utils/admin.ts` — igual que `activar`/`desactivar`. El endpoint público de lectura debe devolver **solo** los ads activos y nada de metadatos internos.
+- El render del ad entremedio de las cards toca `PegaCard`/el grid del listado y la paginación; el del footer va antes de `PegasPaginacion.vue`.
+- Cobertura mínima 80% forzada por Husky: la migración, los endpoints y los componentes nuevos necesitan tests en el mismo commit.
+
+**Seguridad — esto es lo delicado del feat**
+- **HTML arbitrario = XSS con privilegios de la sesión de quien navega.** Un `v-html` directo con lo que pegó un admin permite robar la cookie de sesión de cualquier visitante, incluida la de otro admin. Las opciones sanas son sanitizar en el servidor con una allowlist estricta de tags/atributos antes de guardar y también al renderizar, o aislar el ad en un `iframe` con `sandbox` y CSP propia. Cualquiera de las dos, pero no `v-html` crudo.
+- **El link hay que validarlo por protocolo** (solo `http`/`https`): `javascript:` y `data:` en un `href` son ejecución de código. Los anchors salientes van con `rel="noopener noreferrer"` y `target="_blank"`.
+- **La subida de imágenes necesita validar tipo real y tamaño** (no confiar en la extensión ni en el `Content-Type` que manda el cliente), servir desde una ruta que no ejecute nada, y definir dónde viven los archivos — el contenedor es efímero, así que o va a un volumen persistente o a almacenamiento externo.
+- **Autorización en el servidor, no en la UI.** Esconder la tab no protege nada: cada endpoint de escritura revalida el rol contra la base (`getUserRole`), que es como ya funciona el resto.
+- Si se suma CSP para el iframe, ojo con no romper PostHog ni chucao.
 
 ## Pendiente técnico
 

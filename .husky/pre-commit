@@ -14,4 +14,5 @@ if echo "$staged" | grep -qE '^n8n/'; then
   node n8n/sync-categorizar.js --check || exit 1
   node n8n/test-categorizar.js > /dev/null || { node n8n/test-categorizar.js; exit 1; }
   node n8n/test-parser.js > /dev/null || { node n8n/test-parser.js; exit 1; }
+  node n8n/test-digest.js > /dev/null || { node n8n/test-digest.js; exit 1; }
 fi
