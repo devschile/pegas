@@ -10,12 +10,19 @@ vi.mock('../../../utils/db', () => ({
 
 describe('parseListJobsQuery', () => {
   it('usa los valores por defecto sin query params', () => {
-    expect(parseListJobsQuery({})).toEqual({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
+    expect(parseListJobsQuery({})).toEqual({ q: '', categoria: '', fuente: '', conSueldo: false, pagina: 1, porPagina: 25 });
   });
 
   it('recorta espacios en q, categoria y fuente', () => {
     const result = parseListJobsQuery({ q: '  vue  ', categoria: ' frontend ', fuente: ' getonboard ' });
     expect(result).toMatchObject({ q: 'vue', categoria: 'frontend', fuente: 'getonboard' });
+  });
+
+  it('lee conSueldo tanto de "1" como de "true", y lo deja en false para el resto', () => {
+    expect(parseListJobsQuery({ conSueldo: '1' }).conSueldo).toBe(true);
+    expect(parseListJobsQuery({ conSueldo: 'true' }).conSueldo).toBe(true);
+    expect(parseListJobsQuery({ conSueldo: 'false' }).conSueldo).toBe(false);
+    expect(parseListJobsQuery({ conSueldo: '0' }).conSueldo).toBe(false);
   });
 
   it('clampea porPagina a 50 como máximo', () => {
@@ -44,7 +51,7 @@ describe('listJobs', () => {
     queryMock.mockResolvedValueOnce({ rows: [{ count: '2' }] });
     queryMock.mockResolvedValueOnce({ rows: [{ id: 1 }, { id: 2 }] });
 
-    const result = await listJobs({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
+    const result = await listJobs({ q: '', categoria: '', fuente: '', conSueldo: false, pagina: 1, porPagina: 25 });
 
     expect(result.total).toBe(2);
     expect(result.pegas).toHaveLength(2);
@@ -58,7 +65,7 @@ describe('listJobs', () => {
     queryMock.mockResolvedValueOnce({ rows: [{ count: '0' }] });
     queryMock.mockResolvedValueOnce({ rows: [] });
 
-    await listJobs({ q: 'react', categoria: 'frontend', fuente: 'getonboard', pagina: 2, porPagina: 10 });
+    await listJobs({ q: 'react', categoria: 'frontend', fuente: 'getonboard', conSueldo: false, pagina: 2, porPagina: 10 });
 
     const [countSql, countValues] = queryMock.mock.calls[0];
     expect(countSql).toContain('categoria = $1');
@@ -70,11 +77,31 @@ describe('listJobs', () => {
     expect(listValues).toEqual(['frontend', 'getonboard', '%react%', 10, 10]);
   });
 
+  it('filtra por sueldo publicado sin agregar parametros a la query', async () => {
+    queryMock.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+    queryMock.mockResolvedValueOnce({ rows: [] });
+
+    await listJobs({ q: '', categoria: '', fuente: '', conSueldo: true, pagina: 1, porPagina: 25 });
+
+    const [countSql, countValues] = queryMock.mock.calls[0];
+    expect(countSql).toContain("(sueldo IS NOT NULL AND TRIM(sueldo) <> '')");
+    expect(countValues).toEqual([]);
+  });
+
+  it('no filtra por sueldo cuando conSueldo es false', async () => {
+    queryMock.mockResolvedValueOnce({ rows: [{ count: '0' }] });
+    queryMock.mockResolvedValueOnce({ rows: [] });
+
+    await listJobs({ q: '', categoria: '', fuente: '', conSueldo: false, pagina: 1, porPagina: 25 });
+
+    expect(queryMock.mock.calls[0][0]).not.toContain('sueldo');
+  });
+
   it('devuelve total 0 si COUNT no trae filas', async () => {
     queryMock.mockResolvedValueOnce({ rows: [] });
     queryMock.mockResolvedValueOnce({ rows: [] });
 
-    const result = await listJobs({ q: '', categoria: '', fuente: '', pagina: 1, porPagina: 25 });
+    const result = await listJobs({ q: '', categoria: '', fuente: '', conSueldo: false, pagina: 1, porPagina: 25 });
 
     expect(result.total).toBe(0);
   });

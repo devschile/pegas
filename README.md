@@ -246,6 +246,7 @@ MIT
 - [x] PostgreSQL + deduplicación por URL
 - [x] Frontend con buscador y filtros
 - [x] Detección de sueldo/rango salarial
+- [x] Filtro "solo pegas con sueldo publicado" en el listado (`?sueldo=1`)
 - [x] **GetOnBoard** — API pública v0, sin auth, filtrada a Chile/Remoto (nodos `getonbrd-*` en `n8n/workflow.json`, validado con `n8n/test-getonbrd.js`)
 - [x] **WorkingNomads** — API pública `/api/exposed_jobs/`, sin auth, filtrada a LatAm/Chile
 - [x] Digest de Slack 2x/día (9:00 y 15:00) en vez de notificar en cada corrida — evita saturar el canal

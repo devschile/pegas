@@ -27,15 +27,18 @@ function buildMeta(overrides: Partial<PegasMeta> = {}): PegasMeta {
 
 const queryRef = ref('');
 const sourceRef = ref('');
+const withSalaryRef = ref(false);
 
 function mockListing() {
   queryRef.value = '';
   sourceRef.value = '';
+  withSalaryRef.value = false;
   useJobsListingMock.mockReturnValue({
     query: queryRef,
     source: sourceRef,
+    withSalary: withSalaryRef,
     page: ref(1),
-    filters: ref({ q: '', categoria: '', fuente: '', pagina: 1 }),
+    filters: ref({ q: '', categoria: '', fuente: '', conSueldo: false, pagina: 1 }),
     nextPage: vi.fn(),
     prevPage: vi.fn(),
   });
@@ -104,14 +107,25 @@ describe('layouts/listado', () => {
     expect(wrapper.findComponent({ name: 'CategoriasNav' }).props('active')).toBe('Frontend');
   });
 
-  it('reset (click en "Todos" de CategoriasNav) limpia query y fuente', async () => {
+  it('reset (click en "Todos" de CategoriasNav) limpia query, fuente y el filtro de sueldo', async () => {
     queryRef.value = 'react';
     sourceRef.value = 'linkedin';
+    withSalaryRef.value = true;
     const wrapper = await mountLayout();
 
     await wrapper.findComponent({ name: 'CategoriasNav' }).vm.$emit('reset');
 
     expect(queryRef.value).toBe('');
     expect(sourceRef.value).toBe('');
+    expect(withSalaryRef.value).toBe(false);
+  });
+
+  it('reporta a PostHog cuando se usa el filtro de sueldo', async () => {
+    await mountLayout();
+
+    withSalaryRef.value = true;
+    await flushPromises();
+
+    expect(trackMock).toHaveBeenCalledWith('filtro_usado', { filtro: 'sueldo', valor: 'true' });
   });
 });

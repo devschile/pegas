@@ -5,6 +5,7 @@ export interface JobsFilters {
   q: string;
   categoria: string;
   fuente: string;
+  conSueldo: boolean;
   pagina: number;
 }
 
