@@ -87,6 +87,15 @@ Trabajo hecho localmente en el repo (no deployado, no probado contra la BD real 
   - **Laborum.cl, Computrabajo.cl, BuscoJobs.cl** (portales chilenos): no se encontró API pública ni RSS gratuito. Computrabajo tiene API pero vía agregadores de pago (ej. TheirStack) — no gratuita ni de acceso directo. Quedan descartados salvo que se opte por scraping (no evaluado, tiene implicancias de ToS).
   - **Arbeitnow**: el endpoint público redirigió (301) en la prueba — no se profundizó, baja prioridad por no tener foco Chile/LatAm de todos modos.
 
+### Evaluación 2026-08-27: Chiletrabajos
+
+- **Chiletrabajos** (`chiletrabajos.cl/rss.xml`): tiene RSS real y abierto (el `robots.txt` no lo prohíbe: solo bloquea `/partners/`, `/ofertasmuchomas` y al user-agent Scrapy), pero **el feed está congelado desde el 15/8/2026** — `Last-Modified` del archivo y el aviso más nuevo coinciden en esa fecha. Es un archivo estático que dejó de regenerarse.
+- Cuando estaba vivo traía **31.638 avisos en 18,7 MB**, ventana de tres meses (1/6 → 15/8), volcado completo y no incremental. No hay feeds por categoría: `/rss/informatica.xml` y `/rss` devuelven la home en HTML.
+- Solo **1.071 avisos (3,4%)** son de "Informática / Telecomunicaciones", ≈12 al día, y esa categoría igual mezcla no-dev ("Asistente Administrativa Operaciones", QA de contact center) — habría que pasarla por `categorizar()` de todas formas.
+- **El portal sí está vivo**: el `sitemap.xml` se regeneró el 27/8 y contiene **5.521 avisos posteriores** al último del RSS, de los cuales ~148 tienen pinta de TI por el slug. O sea, lo abandonado es el feed, no el sitio.
+- Dos carencias que quedarían aunque el feed reviviera: **no trae empleador** (`<author>` es literalmente `chiletrabajos` en todos los avisos, así que entrarían todas como "No especificado", justo el campo que el hilo del digest muestra por línea) y **no trae sueldo**; la ubicación viene pegada al final del título (`... (híbrido) | Santiago`).
+- **Decisión: no integrar por ahora.** Vigilarla sale gratis con un `HEAD` al feed, que devuelve el `Last-Modified` sin bajar los 18 MB. La única forma de obtener ese volumen hoy sería el `sitemap.xml` (sí se regenera a diario, con `lastmod` por aviso) más una visita a cada página nueva para sacar título, empresa y ubicación — eso ya es scraping, con su propio costo, fragilidad y discusión de ToS.
+
 ### Sesión 2026-07-26 (cont.): Google Jobs, beBee, FinderHR, JobLeads
 
 - **Google**: no existe una "Google Jobs API" pública para extraer datos. Google for Jobs es un agregador que lee marcado `schema.org/JobPosting` de otros sitios (LinkedIn, GetOnBoard, etc.) y los muestra en su buscador — no es una fuente que se pueda consultar. Lo aprovechable es al revés: si `pegas.devschile.cl` agrega ese schema a sus propias pegas, podría aparecer en Google for Jobs (visibilidad de salida, no de entrada). Anotado como idea de roadmap, no como fuente.

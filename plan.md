@@ -23,8 +23,10 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - Confirmar que el despliegue automático desde el repositorio funcione de punta a punta (hoy a veces requiere disparo manual).
 - Revisar si queda alguna instancia vieja o duplicada del sitio que se pueda dar de baja.
 - Cerrar issues abiertos en GitHub.
+- Los nodos de Jobicy e Himalayas quedaron en producción con una versión vieja del clasificador (sin la guarda de avisos que no son de TI, sin el Backend ampliado y sin el arreglo de "infraestructura"). Hoy no molesta porque ningún disparador los alimenta —están sueltos en el canvas—, pero si alguien los reconecta esas dos fuentes van a clasificar con las reglas viejas. El chequeo automático no lo detecta: compara el repositorio contra sí mismo, nunca contra lo que corre en producción. Se decidió dejarlos así por ahora (27/8/2026).
 - Confirmar en el próximo ciclo que la fuente de pegas agregada más recientemente sigue funcionando sin errores.
 - Evaluar sumar más fuentes de pegas.
+- Chequear de vez en cuando si Chiletrabajos revive su RSS: `curl -sI https://www.chiletrabajos.cl/rss.xml | grep -i last-modified` devuelve la fecha sin descargar los 18 MB. Hoy está congelado en el 15/8/2026 aunque el portal sigue publicando (~12 pegas de TI al día). Si vuelve a moverse vale la pena integrarlo; el detalle de la evaluación está en `resumen.md`.
 - Evaluar reemplazar el parseo de newsletters por email de LinkedIn por su API directamente (si es que ofrece una accesible para este uso). El parseo de emails es fundamentalmente frágil: cada vez que LinkedIn cambia el formato del newsletter hay que ajustar el parser, y ya tuvo varios bugs de esa naturaleza. El riesgo conocido es que la API de empleos de LinkedIn suele requerir partnership aprobado, no acceso self-service — hay que confirmar si existe alguna vía utilizable antes de invertir en esto.
 - Agregar datos estructurados a las pegas para mejorar el posicionamiento en buscadores.
 - Auto-expiración de pegas antiguas.
