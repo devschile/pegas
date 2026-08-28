@@ -23,6 +23,7 @@ function mountFilters(props: Partial<InstanceType<typeof PegasFiltros>['$props']
       totalGeneral: 10,
       query: '',
       source: '',
+      withSalary: false,
       ...props,
     },
   });
@@ -70,5 +71,24 @@ describe('PegasFiltros', () => {
     await sourceSelect.vm.$emit('ch-change', { detail: 'linkedin' });
 
     expect(wrapper.emitted('update:source')).toEqual([['linkedin']]);
+  });
+
+  it('emite update:withSalary al marcar el check de sueldo', async () => {
+    const wrapper = mountFilters();
+    const salaryCheck = wrapper.findComponent({ name: 'ChCheckbox' });
+
+    await salaryCheck.vm.$emit('ch-change', { detail: true });
+
+    expect(wrapper.emitted('update:withSalary')).toEqual([[true]]);
+  });
+
+  /** `?? ` solo cae con null/undefined, asi que un detail `false` tiene que llegar como false y no como el evento entero. */
+  it('emite update:withSalary con false al desmarcarlo', async () => {
+    const wrapper = mountFilters({ withSalary: true });
+    const salaryCheck = wrapper.findComponent({ name: 'ChCheckbox' });
+
+    await salaryCheck.vm.$emit('ch-change', { detail: false });
+
+    expect(wrapper.emitted('update:withSalary')).toEqual([[false]]);
   });
 });

@@ -7,6 +7,7 @@ export interface ListJobsParams {
   q: string;
   categoria: string;
   fuente: string;
+  conSueldo: boolean;
   pagina: number;
   porPagina: number;
 }
@@ -23,6 +24,12 @@ const PORPAGINA_MAX = 50;
 
 function toStringParam(value: unknown): string {
   return Array.isArray(value) ? String(value[0] ?? '') : String(value ?? '');
+}
+
+/** Acepta `?sueldo=1` (lo que escribe la URL del listado) y `?sueldo=true` (lo que serializa useFetch). */
+function toBoolParam(value: unknown): boolean {
+  const raw = toStringParam(value).trim().toLowerCase();
+  return raw === '1' || raw === 'true';
 }
 
 function toIntParam(value: unknown, fallback: number): number {
@@ -43,6 +50,7 @@ export function parseListJobsQuery(raw: Record<string, unknown>): ListJobsParams
     q: toStringParam(raw.q).trim(),
     categoria: toStringParam(raw.categoria).trim(),
     fuente: toStringParam(raw.fuente).trim(),
+    conSueldo: toBoolParam(raw.conSueldo),
     pagina,
     porPagina,
   };
@@ -65,6 +73,15 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
   if (params.fuente) {
     values.push(params.fuente);
     filters.push(`fuente = $${values.length}`);
+  }
+  /**
+   * Sin parametrizar: no hay entrada de usuario en la condición, solo el
+   * booleano decide si la condición se agrega o no. El `TRIM(...) <> ''` va
+   * además del IS NOT NULL porque los parsers de n8n guardan tanto NULL como
+   * string vacío según la fuente, y un '' no es un sueldo publicado.
+   */
+  if (params.conSueldo) {
+    filters.push(`(sueldo IS NOT NULL AND TRIM(sueldo) <> '')`);
   }
   if (params.q) {
     values.push(`%${params.q}%`);

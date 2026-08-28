@@ -18,11 +18,12 @@ const { data: meta } = await useFetch<PegasMeta>('/api/meta', { key: 'pegas-meta
 const categories = computed(() => meta.value?.categorias ?? []);
 const sources = computed(() => meta.value?.fuentes ?? []);
 
-const { query, source, filters: baseFilters } = useJobsListing();
+const { query, source, withSalary, filters: baseFilters } = useJobsListing();
 
 const track = useTrackEvent();
-/** Solo el select (acción discreta), no cada tecla del buscador. */
+/** Solo el select y el check (acciones discretas), no cada tecla del buscador. */
 watch(source, value => track('filtro_usado', { filtro: 'fuente', valor: value }));
+watch(withSalary, value => track('filtro_usado', { filtro: 'sueldo', valor: String(value) }));
 
 /** Página específica que se está mostrando (para resaltar el badge activo en CategoriasNav). */
 const activeCategory = computed(() => {
@@ -45,6 +46,7 @@ const countFilters = computed(() => ({
   q: baseFilters.value.q,
   categoria: activeCategory.value ?? '',
   fuente: source.value,
+  conSueldo: withSalary.value,
   pagina: 1,
   porPagina: 1,
 }));
@@ -57,6 +59,7 @@ const totalVisible = computed(() => countData.value?.total ?? 0);
 function resetFilters() {
   query.value = '';
   source.value = '';
+  withSalary.value = false;
 }
 </script>
 
@@ -65,6 +68,7 @@ function resetFilters() {
     <PegasFiltros
       v-model:query="query"
       v-model:source="source"
+      v-model:with-salary="withSalary"
       :sources="sources"
       :total-visible="totalVisible"
       :total-general="meta?.total ?? 0"

@@ -24,12 +24,15 @@ mockNuxtImport('useRouter', () => () => ({
   beforeResolve: vi.fn(),
 }));
 
-function buildRefs(overrides: Partial<{ query: string; source: string; page: number }> = {}): JobsListingRefs {
+function buildRefs(
+  overrides: Partial<{ query: string; source: string; withSalary: boolean; page: number }> = {},
+): JobsListingRefs {
   const query = ref(overrides.query ?? '');
   return {
     query,
     debouncedQuery: ref(query.value),
     source: ref(overrides.source ?? ''),
+    withSalary: ref(overrides.withSalary ?? false),
     page: ref(overrides.page ?? 1),
   };
 }
@@ -54,19 +57,20 @@ describe('createJobsListingStore', () => {
     expect(query.value).toBe('');
     expect(source.value).toBe('');
     expect(page.value).toBe(1);
-    expect(filters.value).toEqual({ q: '', categoria: '', fuente: '', pagina: 1 });
+    expect(filters.value).toEqual({ q: '', categoria: '', fuente: '', conSueldo: false, pagina: 1 });
   });
 
   it('respeta el estado inicial de los refs (deep-link)', () => {
-    const { query, source, page, filters } = createJobsListingStore(
-      buildRefs({ query: 'vue', source: 'getonbrd', page: 3 }),
+    const { query, source, withSalary, page, filters } = createJobsListingStore(
+      buildRefs({ query: 'vue', source: 'getonbrd', withSalary: true, page: 3 }),
       { categoriaParam, replaceQuery },
     );
 
     expect(query.value).toBe('vue');
     expect(source.value).toBe('getonbrd');
+    expect(withSalary.value).toBe(true);
     expect(page.value).toBe(3);
-    expect(filters.value).toEqual({ q: 'vue', categoria: '', fuente: 'getonbrd', pagina: 3 });
+    expect(filters.value).toEqual({ q: 'vue', categoria: '', fuente: 'getonbrd', conSueldo: true, pagina: 3 });
   });
 
   it('debouncea query 300ms antes de reflejarse en filters', async () => {
@@ -111,6 +115,18 @@ describe('createJobsListingStore', () => {
     expect(page.value).toBe(1);
   });
 
+  it('vuelve a la pagina 1 cuando se prende el filtro de sueldo', async () => {
+    const { withSalary, page, nextPage } = createJobsListingStore(buildRefs(), { categoriaParam, replaceQuery });
+
+    nextPage();
+    expect(page.value).toBe(2);
+
+    withSalary.value = true;
+    await nextTick();
+
+    expect(page.value).toBe(1);
+  });
+
   it('vuelve a la pagina 1 cuando cambia la categoria (navegacion de ruta)', async () => {
     const { page, nextPage } = createJobsListingStore(buildRefs(), { categoriaParam, replaceQuery });
 
@@ -138,15 +154,23 @@ describe('createJobsListingStore', () => {
   });
 
   it('sincroniza la query string solo con los parametros activos', async () => {
-    const { source, nextPage } = createJobsListingStore(buildRefs(), { categoriaParam, replaceQuery });
+    const { source, withSalary, nextPage } = createJobsListingStore(buildRefs(), { categoriaParam, replaceQuery });
 
     source.value = 'linkedin';
     await nextTick();
     expect(replaceQuery).toHaveBeenLastCalledWith({ fuente: 'linkedin' });
 
+    withSalary.value = true;
+    await nextTick();
+    expect(replaceQuery).toHaveBeenLastCalledWith({ fuente: 'linkedin', sueldo: '1' });
+
     nextPage();
     await nextTick();
-    expect(replaceQuery).toHaveBeenLastCalledWith({ fuente: 'linkedin', pagina: '2' });
+    expect(replaceQuery).toHaveBeenLastCalledWith({ fuente: 'linkedin', sueldo: '1', pagina: '2' });
+
+    withSalary.value = false;
+    await nextTick();
+    expect(replaceQuery).toHaveBeenLastCalledWith({ fuente: 'linkedin' });
   });
 });
 

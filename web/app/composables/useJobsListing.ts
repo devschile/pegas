@@ -9,6 +9,11 @@ function readStringParam(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
+/** Solo `?sueldo=1` prende el filtro; cualquier otro valor (o su ausencia) lo deja apagado. */
+function readSalaryParam(value: unknown): boolean {
+  return value === '1';
+}
+
 function readPageParam(value: unknown): number {
   const page = Number(value);
   return Number.isInteger(page) && page > 0 ? page : 1;
@@ -18,12 +23,13 @@ export interface JobsListingRefs {
   query: Ref<string>;
   debouncedQuery: Ref<string>;
   source: Ref<string>;
+  withSalary: Ref<boolean>;
   page: Ref<number>;
 }
 
 interface JobsListingDeps {
   categoriaParam: Ref<string | string[] | undefined>;
-  replaceQuery: (query: { q?: string; fuente?: string; pagina?: string }) => void;
+  replaceQuery: (query: { q?: string; fuente?: string; sueldo?: string; pagina?: string }) => void;
 }
 
 /**
@@ -35,7 +41,7 @@ interface JobsListingDeps {
  * usePegaReactions/createPegaReactionsStore.
  */
 export function createJobsListingStore(refs: JobsListingRefs, deps: JobsListingDeps) {
-  const { query, debouncedQuery, source, page } = refs;
+  const { query, debouncedQuery, source, withSalary, page } = refs;
 
   const applyDebouncedQuery = debounce((value: string) => {
     debouncedQuery.value = value;
@@ -43,7 +49,7 @@ export function createJobsListingStore(refs: JobsListingRefs, deps: JobsListingD
   watch(query, value => applyDebouncedQuery(value));
 
   /** Cualquier cambio de filtro vuelve a la página 1, igual que en el sitio anterior. */
-  watch([debouncedQuery, source], () => {
+  watch([debouncedQuery, source, withSalary], () => {
     page.value = 1;
   });
 
@@ -58,10 +64,11 @@ export function createJobsListingStore(refs: JobsListingRefs, deps: JobsListingD
     page.value = 1;
   });
 
-  watch([debouncedQuery, source, page], ([q, fuente, pagina]) => {
+  watch([debouncedQuery, source, withSalary, page], ([q, fuente, sueldo, pagina]) => {
     deps.replaceQuery({
       ...(q ? { q } : {}),
       ...(fuente ? { fuente } : {}),
+      ...(sueldo ? { sueldo: '1' } : {}),
       ...(pagina > 1 ? { pagina: String(pagina) } : {}),
     });
   });
@@ -70,6 +77,7 @@ export function createJobsListingStore(refs: JobsListingRefs, deps: JobsListingD
     q: debouncedQuery.value,
     categoria: '',
     fuente: source.value,
+    conSueldo: withSalary.value,
     pagina: page.value,
   }));
 
@@ -81,7 +89,7 @@ export function createJobsListingStore(refs: JobsListingRefs, deps: JobsListingD
     if (page.value > 1) page.value--;
   }
 
-  return { query, source, page, filters, nextPage, prevPage };
+  return { query, source, withSalary, page, filters, nextPage, prevPage };
 }
 
 /**
@@ -104,6 +112,7 @@ export function useJobsListing() {
     query: useState('listado-query', () => readStringParam(route.query.q)),
     debouncedQuery: useState('listado-debounced-query', () => readStringParam(route.query.q)),
     source: useState('listado-source', () => readStringParam(route.query.fuente)),
+    withSalary: useState('listado-con-sueldo', () => readSalaryParam(route.query.sueldo)),
     page: useState('listado-page', () => readPageParam(route.query.pagina)),
   };
 
@@ -122,12 +131,14 @@ export function useJobsListing() {
 export function useJobsListingState() {
   const debouncedQuery = useState('listado-debounced-query', () => '');
   const source = useState('listado-source', () => '');
+  const withSalary = useState('listado-con-sueldo', () => false);
   const page = useState('listado-page', () => 1);
 
   const filters = computed<JobsFilters>(() => ({
     q: debouncedQuery.value,
     categoria: '',
     fuente: source.value,
+    conSueldo: withSalary.value,
     pagina: page.value,
   }));
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChInput, ChSelect } from '@devschile/chucao/vue';
+import { ChCheckbox, ChInput, ChSelect } from '@devschile/chucao/vue';
 import { animate, RowValue, useMotionValue, useTransform } from 'motion-v';
 import { computed, watch } from 'vue';
 import { sourceLabel } from '~/utils/pegas';
@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const query = defineModel<string>('query', { required: true });
 const source = defineModel<string>('source', { required: true });
+const withSalary = defineModel<boolean>('withSalary', { required: true });
 
 const sourceOptions = computed(() => [
   { label: 'Todas las fuentes', value: '' },
@@ -60,6 +61,14 @@ watch(
         @ch-change="source = $event.detail ?? $event"
       />
     </div>
+    <div class="filtros__toggle">
+      <ChCheckbox
+        label="Solo pegas con sueldo publicado"
+        hint="La mayoría de los avisos no lo publica."
+        :checked="withSalary"
+        @ch-change="withSalary = $event.detail ?? $event"
+      />
+    </div>
   </section>
 </template>
 
@@ -72,6 +81,10 @@ watch(
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
+}
+
+.filtros__toggle {
+  margin-top: 1rem;
 }
 
 .filtros__stats {
