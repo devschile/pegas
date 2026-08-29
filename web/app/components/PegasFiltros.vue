@@ -63,8 +63,7 @@ watch(
     </div>
     <div class="filtros__toggle">
       <ChCheckbox
-        label="Solo pegas con sueldo publicado"
-        hint="La mayoría de los avisos no lo publica."
+        label="💰 con sueldo publicado"
         :checked="withSalary"
         @ch-change="withSalary = $event.detail ?? $event"
       />
@@ -85,6 +84,8 @@ watch(
 
 .filtros__toggle {
   margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .filtros__stats {
@@ -96,6 +97,12 @@ watch(
 @media (max-width: 640px) {
   .filtros__row {
     grid-template-columns: 1fr;
+  }
+
+  /* Con una sola columna no hay select a la derecha con el cual alinearse:
+     pegado al borde derecho queda suelto, así que vuelve a la izquierda. */
+  .filtros__toggle {
+    justify-content: flex-start;
   }
 }
 </style>
