@@ -1,5 +1,5 @@
 {
-  "name": "pegas: LinkedIn Jobs → PostgreSQL → Slack → Deploy",
+  "name": "pegas: LinkedIn Jobs → PostgreSQL → Slack",
   "nodes": [
     {
       "parameters": {
@@ -233,33 +233,6 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://coolify.devschile.cl/api/v1/applications/kje083n02of5w3nh6llm7sot/restart",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.COOLIFY_TOKEN }}"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "id": "8da9c8a4-5844-45fa-97f3-6f3e1df1c92e",
-      "name": "Restart pegas.devschile.cl",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [
-        32,
-        -160
-      ],
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
         "rule": {
           "interval": [
             {
@@ -316,19 +289,6 @@
     },
     {
       "parameters": {
-        "jsCode": "// Filtra a solo las filas realmente insertadas (RETURNING con ON CONFLICT\n// DO NOTHING deja pasar solo las nuevas). Si no hay nuevas, 0 items y el\n// restart se salta solo (no hace falta gatillarlo).\nreturn $input.all().filter(item => item.json.id);"
-      },
-      "id": "c6b219cb-428f-4e1c-9abb-5aa8b28c685d",
-      "name": "¿Insertó pegas nuevas?",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -576,
-        -112
-      ]
-    },
-    {
-      "parameters": {
         "url": "https://www.workingnomads.com/api/exposed_jobs/",
         "sendQuery": true,
         "queryParameters": {
@@ -375,38 +335,6 @@
         512
       ],
       "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const e = $input.first().json || {};\nconst detalle = (e.error && (e.error.message || e.error.description)) || 'sin detalle';\nlet msg = ':rotating_light: *No se pudo refrescar pegas.devschile.cl*\\n\\n```\\n';\nmsg += `Error   ${String(detalle).slice(0, 220)}\\n`;\nmsg += '```\\nLas pegas quedaron guardadas, pero el sitio no se actualizó.';\nreturn [{ json: { text: msg } }];"
-      },
-      "id": "alerta-restart-code",
-      "name": "Armar aviso de restart",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        240,
-        -320
-      ]
-    },
-    {
-      "parameters": {
-        "channel": "U0R6AKR0Q",
-        "text": "={{ $json.text }}",
-        "otherOptions": {
-          "unfurl_links": false,
-          "unfurl_media": false
-        },
-        "attachments": []
-      },
-      "id": "alerta-restart-slack",
-      "name": "Avisar fallo de restart",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 1,
-      "position": [
-        464,
-        -320
-      ]
     },
     {
       "parameters": {
@@ -760,13 +688,7 @@
     },
     "PostgreSQL INSERT": {
       "main": [
-        [
-          {
-            "node": "¿Insertó pegas nuevas?",
-            "type": "main",
-            "index": 0
-          }
-        ],
+        [],
         [
           {
             "node": "Armar aviso de fallo aislado",
@@ -809,17 +731,6 @@
           },
           {
             "node": "Latido: gmail",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "¿Insertó pegas nuevas?": {
-      "main": [
-        [
-          {
-            "node": "Restart pegas.devschile.cl",
             "type": "main",
             "index": 0
           }
@@ -889,29 +800,6 @@
         ]
       ]
     },
-    "Restart pegas.devschile.cl": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Armar aviso de restart",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Armar aviso de restart": {
-      "main": [
-        [
-          {
-            "node": "Avisar fallo de restart",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Armar aviso de fallo aislado": {
       "main": [
         [
@@ -965,8 +853,7 @@
             "type": "main",
             "index": 0
           }
-        ],
-        []
+        ]
       ]
     },
     "Himalayas: filtrar + normalizar": {
@@ -977,8 +864,7 @@
             "type": "main",
             "index": 0
           }
-        ],
-        []
+        ]
       ]
     },
     "Notificar en #trabajos": {
@@ -1015,6 +901,6 @@
   },
   "staticData": null,
   "pinData": {},
-  "versionId": "7f16f8f9-dc90-4941-bf77-0ead1db7f07b",
+  "versionId": "a7f5191e-b019-4cc9-9fdf-669cba64780c",
   "active": true
 }

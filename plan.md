@@ -17,11 +17,11 @@ Registro de trabajo hecho y tareas pendientes del proyecto. Se va actualizando a
 - Investigadas y descartadas varias fuentes adicionales candidatas — sin API pública utilizable, bloqueadas por protección anti-bots, o de una sola empresa (detalle en el README).
 - Sumadas dos fuentes más de pegas (Jobicy y Himalayas), ambas remoto-LatAm.
 - Scaffold del frontend nuevo (Nuxt SSR + chucao) en `web/`, consumiendo el `data.json` actual a través de un composable aislado. Tests con Vitest, cobertura mínima 80% forzada por Husky en cada commit.
+- **Retirado el sitio estático viejo (29/8/2026).** Al ir a borrarlo apareció que no estaba muerto: seguía siendo la única vía por la que se aplicaban las migraciones a la base de producción. La cadena era que n8n, cada vez que entraban pegas nuevas, pedía a Coolify reiniciar esa aplicación, y su arranque corría las migraciones de paso. El sitio real nunca necesitó ese reinicio (lee la base en cada visita), así que el reinicio solo servía, sin que nadie lo hubiera decidido, para migrar la base. Ahora esa responsabilidad es de una aplicación propia y explícita (`Dockerfile.mantenimiento`), que además sirve de acceso operativo a la base y no publica nada a internet. Con eso se pudo sacar del pipeline el paso de reinicio (y su alerta), borrar el sitio viejo del repositorio y dejar la documentación al día.
+- Confirmado que el despliegue automático funciona de punta a punta: un push a `main` despliega solo, sin intervención. Lo que fallaba era otra cosa — la aplicación vieja estaba conectada al repositorio de una forma que no recibe avisos de GitHub, así que solo se desplegaba cuando n8n se lo pedía. Corregido.
 
 ## Pendiente
 
-- Confirmar que el despliegue automático desde el repositorio funcione de punta a punta (hoy a veces requiere disparo manual).
-- Revisar si queda alguna instancia vieja o duplicada del sitio que se pueda dar de baja.
 - Cerrar issues abiertos en GitHub.
 - Los nodos de Jobicy e Himalayas quedaron en producción con una versión vieja del clasificador (sin la guarda de avisos que no son de TI, sin el Backend ampliado y sin el arreglo de "infraestructura"). Hoy no molesta porque ningún disparador los alimenta —están sueltos en el canvas—, pero si alguien los reconecta esas dos fuentes van a clasificar con las reglas viejas. El chequeo automático no lo detecta: compara el repositorio contra sí mismo, nunca contra lo que corre en producción. Se decidió dejarlos así por ahora (27/8/2026).
 - Confirmar en el próximo ciclo que la fuente de pegas agregada más recientemente sigue funcionando sin errores.
@@ -57,7 +57,7 @@ Orden acordado para llegar de `web/` (scaffold ya hecho) a la monetización. Se 
   - [x] Paginación
   - [x] Meta tags por página (title/description dinámico, OG tags, schema.org JobPosting) — aprovechando el SSR
 - [x] **2. Desplegar `web/` en paralelo al sitio estático** (Dockerfile en `web/`, app nueva en Coolify servida en `pegas-staging.devschile.cl`; el público sigue viendo el sitio actual en `pegas.devschile.cl`)
-- [x] **3. Cutover del sitio estático al nuevo frontend** — `pegas.devschile.cl` ya sirve el Nuxt (verificado el 27/8/2026: el HTML trae `__NUXT`, y `/api/pegas`, `/pega/:slug` y las 13 rutas `/categoria/:slug` responden 200). Queda pendiente retirar `index.html`/`css/`/`js/` del repo y revisar si sobra alguna instancia vieja.
+- [x] **3. Cutover del sitio estático al nuevo frontend** — `pegas.devschile.cl` ya sirve el Nuxt (verificado el 27/8/2026: el HTML trae `__NUXT`, y `/api/pegas`, `/pega/:slug` y las 13 rutas `/categoria/:slug` responden 200). El sitio viejo y su instancia duplicada quedaron retirados el 29/8/2026 (ver "Retirado el sitio estático viejo" más arriba).
 - [x] **4. API REST** (reemplaza `usePegas()` leyendo `data.json` por Postgres real; prerequisito de todo lo que implica escritura — publicar pega, login, destacar, pagos; también la consumiría el bot de Slack)
   - [x] Endpoints de solo lectura: `GET /api/pegas` (filtros + paginación), `GET /api/pegas/:id`, `GET /api/meta` (cacheado 300s) — contra el esquema actual de `pegas` (sin `estado`/`destacada`/`fijada` todavía, esas columnas llegan con Fase 3/4 de moderación)
   - [x] Frontend conectado a la API en vez de `data.json`: `useJobs.ts`/`useJobsListing.ts` reescritos (paginación y filtrado en SQL, debounce 300ms + sync de query string), `SiteHeader.vue`/`index.vue`/`categoria/[categoria].vue`/`pega/[id].vue` y el sitemap consumen `/api/pegas`, `/api/pegas/:id` y `/api/meta`. Probado end-to-end contra Postgres local con datos reales.

@@ -1,24 +1,28 @@
 # Pegas devsChile()
 
-Vitrina de ofertas de trabajo tech en Chile. Las pegas se obtienen parseando newsletters de LinkedIn Jobs (y otras fuentes), se almacenan en PostgreSQL y se publican como sitio estático.
+Vitrina de ofertas de trabajo tech en Chile. Las pegas se obtienen parseando newsletters de LinkedIn Jobs (y otras fuentes), se almacenan en PostgreSQL y se publican en un sitio con renderizado en servidor.
 
 ## Arquitectura
 
 ```
 Gmail (newsletters LinkedIn) ─┐
-GetOnBoard (API pública v0)   ├─→ n8n (parser + dedup) → PostgreSQL → Static Site (nginx)
+GetOnBoard (API pública v0)   ├─→ n8n (parser + dedup) → PostgreSQL ←→ Nuxt SSR (web/)
 WorkingNomads (API pública)  ─┘                                          │
                                                               pegas.devschile.cl
 ```
+
+El sitio consulta la base en cada request, así que una pega recién ingerida
+aparece sin necesidad de redeployar ni regenerar nada.
 
 ### Componentes
 
 | Componente | Descripción | Stack |
 |------------|-------------|-------|
-| **Frontend** | Sitio estático con buscador y filtros | HTML/CSS/JS vanilla, nginx:alpine |
-| **Backend** | API de datos | PostgreSQL 16 (Coolify) |
+| **Sitio** | Listado, filtros, fichas de pega y cuentas de usuario | Nuxt 4 SSR + chucao, en `web/` |
+| **API** | `/api/pegas`, `/api/meta`, reacciones y guardado | Nitro (dentro de `web/server/`) |
+| **Base** | Almacenamiento y deduplicación | PostgreSQL 16 (Coolify) |
 | **Ingestión** | Lee emails y APIs de portales, parsea, guarda en BD | n8n workflow |
-| **Build** | Genera `data.json` desde la BD | Node.js (Dockerfile multi-stage) |
+| **Mantenimiento** | Aplica migraciones y da acceso operativo a la base | `Dockerfile.mantenimiento` |
 
 ### Fuentes de pegas
 
@@ -36,21 +40,18 @@ Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detal
 2. **Parser/Fetch** → Extrae o normaliza título, empleador, link, descripción, categoría, sueldo, tags
 3. **Deduplicación** → Verifica contra PostgreSQL (UNIQUE en `url`, `ON CONFLICT DO NOTHING`)
 4. **INSERT** → Guarda nueva pega en la BD (nodo único compartido por las tres fuentes)
-5. **Redeploy en tiempo real** → Si hubo pegas nuevas en esa corrida, n8n dispara restart en Coolify de inmediato, regenerando `data.json`
-6. **Digest de Slack (2x/día)** → A las 9:00 y 15:00, un trigger aparte junta todas las pegas nuevas desde el último aviso (de cualquier fuente, marcadas con `notificado_en_digest`) y manda a `#trabajos` un resumen por categoría, con el detalle pega por pega colgando del hilo — ver [Digest de Slack](#digest-de-slack)
-7. **Frontend** → `index.html` carga `data/data.json` y renderiza con filtros
+5. **Digest de Slack (2x/día)** → A las 9:00 y 15:00, un trigger aparte junta todas las pegas nuevas desde el último aviso (de cualquier fuente, marcadas con `notificado_en_digest`) y manda a `#trabajos` un resumen por categoría, con el detalle pega por pega colgando del hilo — ver [Digest de Slack](#digest-de-slack)
+6. **Sitio** → Nada que publicar: `web/` lee la base en cada request, así que la pega ya está visible
 
 ## Estructura del repositorio
 
 ```
-├── index.html              # Frontend estático
-├── css/style.css           # Estilos
-├── js/app.js               # Lógica: fetch, filtros, render
+├── web/                    # El sitio: Nuxt 4 SSR + su API (ver web/README.md)
+├── migrations/             # Esquema de la BD, en orden; las aplica init-db.js
 ├── scripts/
-│   ├── generate-json.js    # Lee PostgreSQL → data.json
-│   ├── init-db.js          # CREATE TABLE IF NOT EXISTS
+│   ├── init-db.js          # Aplica las migraciones pendientes (con advisory lock)
+│   ├── seed.js             # Datos de prueba para desarrollo local
 │   └── reclasificar.js     # Reaplica categorizar() sobre las pegas ya guardadas
-├── schema.sql              # Esquema de la BD
 ├── n8n/
 │   ├── workflow.json       # Workflow de n8n (exportado)
 │   ├── categorizar.js      # Clasificador por título — FUENTE DE VERDAD
@@ -59,8 +60,8 @@ Fuentes evaluadas y descartadas por ahora (ver `plan.md`/`resumen.md` para detal
 │   ├── test-categorizar.js # Tests del clasificador
 │   ├── test-digest.js      # Tests del digest de Slack (corre el jsCode real del nodo)
 │   └── test-getonbrd.js    # Valida en vivo el filtro Chile/Remoto de GetOnBoard
-├── Dockerfile              # Multi-stage: build + nginx:alpine
-├── nginx.conf              # Config nginx
+├── Dockerfile.mantenimiento # Aplica migraciones y queda vivo para operar la base
+├── docker-compose.dev.yml   # Postgres local para desarrollo
 └── README.md
 ```
 
@@ -215,26 +216,42 @@ Tabla `pegas`:
 ## Desarrollo
 
 ```bash
-# Instalar dependencias
+# Postgres local (usuario/clave/base: pega)
+docker compose -f docker-compose.dev.yml up -d
+
 npm install
+node scripts/init-db.js   # aplica migrations/
+node scripts/seed.js      # datos de prueba
 
-# Generar data.json (requiere DATABASE_URL)
-DATABASE_URL=postgres://... node scripts/generate-json.js
-
-# Inicializar BD (crea tabla)
-DATABASE_URL=postgres://... node scripts/init-db.js
+# El sitio corre aparte, contra ese mismo Postgres
+cd web && pnpm install && pnpm dev
 ```
+
+Los scripts leen `PGHOST`/`PGPORT`/`PGDATABASE`/`PGUSER`/`PGPASSWORD`, y por
+defecto apuntan a `localhost:5432`, que es lo que publica el compose de arriba.
+Ver `web/.env.example` para lo que necesita el sitio.
 
 ## Deploy
 
-Hosteado en Coolify como aplicación GitHub (`devschile/pegas`).
+Hosteado en Coolify (proyecto `pegas.devschile.cl`), con dos aplicaciones sobre
+este mismo repositorio y branch `main`:
 
-**Build:** Dockerfile multi-stage — la etapa de build ejecuta `init-db.js` + `generate-json.js` y copia `data.json` a la imagen nginx final.
+| App | Qué corre | Dominio |
+|-----|-----------|---------|
+| `pegas` | `web/Dockerfile` — Nuxt SSR en el puerto 3000 | pegas.devschile.cl |
+| `pegas-mantenimiento` | `Dockerfile.mantenimiento` — migraciones y acceso a la base | ninguno |
 
-**Variables de entorno requeridas en Coolify:**
-- `DATABASE_URL`: connection string de PostgreSQL
+Las dos despliegan solas con cada push a `main` (webhook de la GitHub App
+`devschile`). `pegas-mantenimiento` tiene `watch_paths` acotado a `migrations/`,
+`scripts/`, su Dockerfile, su entrypoint y `package.json`, así que un cambio que
+solo toca `web/` no la despierta.
 
-**Redeploy trigger:** n8n llama a la API de Coolify para redeployar cuando hay pegas nuevas.
+**Variables de entorno en Coolify:** `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`,
+`PGPASSWORD` (runtime) en ambas aplicaciones; el sitio suma además las de sesión
+y OAuth que lista `web/.env.example`.
+
+**Migraciones:** las aplica `pegas-mantenimiento` al desplegarse, con un advisory
+lock para que dos arranques solapados no corran la misma dos veces.
 
 ## Licencia
 
