@@ -55,6 +55,7 @@ Gmail (2 casillas, label pegas-linkedin) → n8n (parser + dedup) → PostgreSQL
 ### 6. Seguridad / limpieza
 - Emails de prueba (`.eml`, ~176KB) eliminados del repo (contenían PII).
 - Revisión de todo el repo por credenciales hardcodeadas (password/secret/token/DATABASE_URL) → **limpio**, todo usa `process.env.PG*`. Repo confirmado seguro para volver a público.
+  > ⚠️ **Corregido el 29/8/2026: esa revisión fue incorrecta.** Miró el estado actual de los archivos, no el historial. El commit inicial del repositorio traía la cadena de conexión completa a la base de producción —usuario, contraseña, host y nombre— escrita como valor por defecto en `scripts/generate-json.js`; se quitó de los archivos ese mismo día, pero quedó en el historial de un repositorio público durante más de un mes. Se reescribió el historial para purgarla y la contraseña se rotó. Un repositorio no está limpio porque su última versión lo esté.
 
 ## Estado actual (según el chat, no verificado en vivo)
 
@@ -120,6 +121,7 @@ Trabajo hecho localmente en el repo (no deployado, no probado contra la BD real 
 El usuario dio un token de la API de Coolify (`coolify.devschile.cl`, permisos read/write/deploy) — se guardó en `.env` (gitignorado). Con eso se pudo confirmar en vivo:
 
 - **CI/CD: no confirmado (corrección de un error propio)**: se vio el deploy del commit `4fc112d` con `status: "finished"` y se concluyó que el CI/CD funcionaba — el usuario aclaró que ese deploy lo disparó **manualmente** él en Coolify, no un webhook automático de GitHub. Sigue sin confirmarse si push→deploy automático funciona; puede que el bloqueo de la GitHub App descrito en `context.md` siga vigente.
+  > **Confirmado el 29/8/2026: sí funciona.** Un push a `main` despliega el sitio solo, por webhook. Lo que fallaba era otra cosa: la aplicación vieja estaba conectada al repositorio por una vía que no recibe avisos de GitHub, así que solo se desplegaba cuando n8n se lo pedía. Corregido.
 - **`pega-db`**: `running:healthy`, mismo UUID (`***DB-HOST-INTERNO***`) que aparece en `context.md` — confirma que es el proyecto correcto.
 - **n8n**: sigue `running:unhealthy`, igual que en el último estado del chat. Sigue sin revisar a fondo (ver `plan.md` sección 3).
 - **El sitio en vivo mostraba 0 de 0 pegas** (antes eran 11). Causa raíz encontrada en los logs de runtime del contenedor: `seed.js` falla con `error: column "tags" of relation "pegas" does not exist`. `scripts/init-db.js` solo corre `CREATE TABLE IF NOT EXISTS`, que no modifica una tabla que ya existía — así que cuando se agregó la columna `tags` a `schema.sql` en una sesión anterior, nunca se propagó a la tabla real en producción. **Corregido localmente**: `init-db.js` ahora corre `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` para `sueldo`, `tags` y `fecha_actualizacion` después del `CREATE TABLE IF NOT EXISTS`, para que sea idempotente sin importar cuándo se creó la tabla. **Falta pushear y confirmar que el próximo deploy la corrige** (ver `plan.md` sección 0.5).
