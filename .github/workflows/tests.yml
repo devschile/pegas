@@ -1,0 +1,23 @@
+name: tests
+
+# El gate de cobertura (80% en vitest.config.mts) lo hace cumplir el hook de
+# Husky en la maquina de quien commitea -- eso no protege un push directo ni
+# un PR desde un fork sin el hook instalado. Esto corre lo mismo en CI para
+# que el gate valga siempre, no solo localmente.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:coverage

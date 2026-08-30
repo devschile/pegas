@@ -1,0 +1,7 @@
+# Todo cambio necesita revisión de quien mantiene el proyecto.
+# La API y el acceso a la base se revisan siempre: ahí viven las consultas
+# SQL, las sesiones y los roles.
+*                 @juanbrujo
+/server/          @juanbrujo
+/dev/             @juanbrujo
+/.github/         @juanbrujo

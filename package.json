@@ -1,18 +1,44 @@
 {
-  "name": "pega-devschile",
-  "author": "@huemul",
-  "version": "1.1.0",
+  "name": "web",
+  "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "packageManager": "pnpm@11.4.0",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "dev:db": "node dev/seed.mjs"
+  },
   "dependencies": {
-    "pg": "^8.22.0"
+    "@devschile/chucao": "^1.6.0",
+    "@nuxtjs/seo": "^5.3.12",
+    "@resvg/resvg-js": "^2.6.2",
+    "@stencil/vue-output-target": "^0.14.1",
+    "@tabler/icons": "^3.46.0",
+    "@tabler/icons-vue": "^3.46.0",
+    "morphicons": "^1.7.0",
+    "motion-v": "^2.3.0",
+    "nuxt": "^4.5.2",
+    "nuxt-auth-utils": "^0.5.30",
+    "pg": "^8.23.0",
+    "posthog-js": "^1.417.1",
+    "satori": "^0.33.0",
+    "unifont": "^0.7.0",
+    "vue": "^3.5.41",
+    "vue-router": "^5.2.0"
   },
   "devDependencies": {
-    "husky": "^9.1.7"
-  },
-  "scripts": {
-    "prepare": "husky",
-    "sync:categorizar": "node n8n/sync-categorizar.js",
-    "test:n8n": "node n8n/sync-categorizar.js --check && node n8n/test-categorizar.js && node n8n/test-parser.js && node n8n/test-digest.js"
+    "@nuxt/test-utils": "^4.1.0",
+    "@types/pg": "^8.21.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.11.2",
+    "playwright-core": "^1.62.1",
+    "vitest": "^4.1.10"
   }
 }

@@ -1,12 +1,12 @@
-# Postgres local para desarrollo. NO usar en produccion (ver Coolify).
+# Postgres para desarrollo local. No tiene nada que ver con producción, que
+# corre en Coolify con sus propias credenciales.
 #
-# Uso:
 #   docker compose -f docker-compose.dev.yml up -d
-#   node scripts/init-db.js   # aplica migrations/
-#   node scripts/seed.js      # datos de prueba
+#   pnpm dev:db     # aplica el esquema y carga las pegas de ejemplo
+#   pnpm dev
 #
-# La app en web/ lee PGHOST=localhost / PGPORT=5432 por defecto (ver
-# web/.env.example), que matchean lo publicado acá.
+# Usuario, clave y base son "pega" a propósito: son las que trae
+# .env.example, para que levantar esto no requiera configurar nada.
 services:
   postgres:
     image: postgres:16-alpine

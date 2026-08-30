@@ -1,7 +1,30 @@
-node_modules/
-data/data.json
-.env
-emails.txt
-context.md
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Test coverage reports
+coverage
+
+# Logs
+logs
+*.log
+
+# Misc
 .DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Respaldos locales de operaciones sobre git/n8n (nunca se versionan)
 .rollback/
