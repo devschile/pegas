@@ -1,0 +1,38 @@
+# Contenedor de mantenimiento de la base de pegas.
+#
+# Reemplaza al Dockerfile de la raiz (nginx + sitio estatico), que quedo
+# obsoleto tras el cutover a Nuxt del 27/8/2026 pero seguia siendo la UNICA
+# via por la que se aplicaban las migraciones a produccion: n8n reiniciaba
+# esta app dos veces al dia y el entrypoint corria init-db.js de paso.
+# Ese acoplamiento accidental es lo que este archivo vuelve explicito.
+#
+# No sirve HTTP. No lleva dominio. Hace dos cosas:
+#   1. aplica las migraciones pendientes al arrancar (init-db.js)
+#   2. queda vivo como acceso operativo a la base, que no es alcanzable
+#      desde fuera de la red de Coolify (ver scripts/reclasificar.js y las
+#      consultas a pipeline_heartbeat)
+FROM node:20-alpine
+
+# psql para inspeccionar la base desde la terminal del contenedor sin
+# escribir un script de Node para cada consulta puntual.
+RUN apk add --no-cache postgresql-client
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --production --ignore-scripts
+
+COPY scripts/ ./scripts/
+COPY migrations/ ./migrations/
+# Solo el clasificador, no todo n8n/: scripts/reclasificar.js lo importa para
+# volver a categorizar las pegas ya guardadas desde adentro del contenedor.
+COPY n8n/categorizar.js ./n8n/categorizar.js
+
+COPY docker-entrypoint.mantenimiento.sh /
+RUN chmod +x /docker-entrypoint.mantenimiento.sh
+
+# Menor privilegio: nada de lo que corre aca necesita root. Si alguna vez
+# hace falta instalar algo en caliente, `docker exec -u root`.
+USER node
+
+ENTRYPOINT ["/docker-entrypoint.mantenimiento.sh"]
