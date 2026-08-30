@@ -5,7 +5,10 @@ import { join } from 'path';
 const { Pool } = pg;
 
 const pool = new Pool({
-  host: process.env.PGHOST || '***DB-HOST-INTERNO***',
+  // 'localhost' como los demas scripts (docker-compose.dev.yml publica ahi).
+  // El default anterior era el hostname interno del Postgres de Coolify, o
+  // sea un identificador de infraestructura en un repositorio publico.
+  host: process.env.PGHOST || 'localhost',
   port: parseInt(process.env.PGPORT || '5432'),
   database: process.env.PGDATABASE || 'pega',
   user: process.env.PGUSER || 'pega',
