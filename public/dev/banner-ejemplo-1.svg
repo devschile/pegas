@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 970 90" width="970" height="90" role="img" aria-label="Banner de ejemplo">
+  <rect width="970" height="90" rx="8" fill="#1f2933"/>
+  <text x="485" y="42" fill="#8ed6c4" font-family="system-ui,sans-serif" font-size="22" font-weight="700" text-anchor="middle">Banner de ejemplo</text>
+  <text x="485" y="66" fill="#9aa5b1" font-family="system-ui,sans-serif" font-size="14" text-anchor="middle">970 × 90 — dato de desarrollo, no es un anunciante real</text>
+</svg>

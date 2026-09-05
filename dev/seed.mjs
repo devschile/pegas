@@ -47,10 +47,10 @@ async function main() {
   const client = await pool.connect();
   try {
     console.log('📐 Aplicando dev/schema.dev.sql...');
-    await client.query('DROP TABLE IF EXISTS pegas_estado_usuario, usuarios, pegas CASCADE');
+    await client.query('DROP TABLE IF EXISTS ads, pegas_estado_usuario, usuarios, pegas CASCADE');
     await client.query(readFileSync(join(aqui, 'schema.dev.sql'), 'utf8'));
 
-    const { pegas } = JSON.parse(readFileSync(join(aqui, 'fixtures.json'), 'utf8'));
+    const { pegas, ads } = JSON.parse(readFileSync(join(aqui, 'fixtures.json'), 'utf8'));
     console.log(`🌱 Cargando ${pegas.length} pegas de ejemplo...`);
 
     for (const p of pegas) {
@@ -64,10 +64,25 @@ async function main() {
       );
     }
 
+    // Los ads entran por acá y no por la API a propósito: sus imagen_url son
+    // rutas relativas a public/dev/ para que el listado se vea completo sin
+    // pedirle nada a internet, y la API real solo acepta https.
+    console.log(`📢 Cargando ${ads.length} ads de ejemplo...`);
+    for (const a of ads) {
+      await client.query(
+        `INSERT INTO ads (nombre, tipo, imagen_url, alt, html, link, activo, ubicaciones)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [a.nombre, a.tipo, a.imagen_url, a.alt, a.html, a.link, a.activo, a.ubicaciones],
+      );
+    }
+
     const { rows } = await client.query(
       'SELECT COUNT(*) FILTER (WHERE activo) AS activas, COUNT(*) AS total FROM pegas',
     );
-    console.log(`✅ Listo: ${rows[0].activas} pegas activas de ${rows[0].total}.`);
+    const { rows: ra } = await client.query(
+      'SELECT COUNT(*) FILTER (WHERE activo) AS activos, COUNT(*) AS total FROM ads',
+    );
+    console.log(`✅ Listo: ${rows[0].activas} pegas activas de ${rows[0].total}, y ${ra[0].activos} ads activos de ${ra[0].total}.`);
     console.log('   Ahora: pnpm dev → http://localhost:3000');
   } finally {
     client.release();

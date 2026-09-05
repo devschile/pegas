@@ -1,5 +1,5 @@
 {
-  "_comentario": "Datos SINTETICOS para desarrollo local. Empresas, avisos y URLs inventados: ningun dato viene de produccion, que contiene avisos reales y cuentas de personas.",
+  "_comentario": "Datos SINTETICOS para desarrollo local. Empresas, avisos y URLs inventados: ningun dato viene de produccion, que contiene avisos reales y cuentas de personas. Los ads apuntan a imagenes SVG servidas desde public/dev/: son rutas relativas a proposito, para que el listado se vea completo sin depender de ningun servicio externo. La API real solo acepta URLs https; estas filas entran por seed.mjs, que escribe directo en la base.",
   "pegas": [
     {
       "id": 1,
@@ -840,6 +840,57 @@
       "fecha_publicacion": "2026-08-09T20:00:00.000Z",
       "fuente": "himalayas",
       "activo": false
+    }
+  ],
+  "ads": [
+    {
+      "nombre": "Patrocinador de cabecera (ejemplo)",
+      "tipo": "imagen",
+      "imagen_url": "/dev/banner-ejemplo-1.svg",
+      "alt": "Banner de ejemplo en la cabecera",
+      "html": null,
+      "link": "https://ejemplo.invalid/patrocinador",
+      "activo": true,
+      "ubicaciones": [
+        "header"
+      ]
+    },
+    {
+      "nombre": "Bloque HTML entremedio del listado (ejemplo)",
+      "tipo": "html",
+      "imagen_url": null,
+      "alt": null,
+      "html": "<p><strong>Ejemplo de ad en HTML.</strong> Este bloque pasa por el sanitizador antes de guardarse y otra vez al renderizarse. <a href=\"https://ejemplo.invalid/oferta\">Ver mas</a></p>",
+      "link": null,
+      "activo": true,
+      "ubicaciones": [
+        "listado"
+      ]
+    },
+    {
+      "nombre": "Pie de pagina, dos ubicaciones (ejemplo)",
+      "tipo": "imagen",
+      "imagen_url": "/dev/banner-ejemplo-2.svg",
+      "alt": "Banner de ejemplo al pie",
+      "html": null,
+      "link": "https://ejemplo.invalid/otro-patrocinador",
+      "activo": true,
+      "ubicaciones": [
+        "footer",
+        "listado"
+      ]
+    },
+    {
+      "nombre": "Campana terminada (ejemplo, apagado)",
+      "tipo": "imagen",
+      "imagen_url": "/dev/banner-ejemplo-1.svg",
+      "alt": "Banner de una campana terminada",
+      "html": null,
+      "link": "https://ejemplo.invalid/campana-vieja",
+      "activo": false,
+      "ubicaciones": [
+        "header"
+      ]
     }
   ]
 }
