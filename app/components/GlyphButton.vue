@@ -71,7 +71,7 @@ const retardo = (i: number) => ({ '--glyph-delay': `${i * 18}ms` });
      En /publicitar es el vermellón: es el unico elemento que pide una acción y
      tiene que destacar sobre el verde del resto. */
   --relleno: var(--pub-accion, var(--accent, #2dd4bf));
-  --tinta: #2b0a02;
+  --tinta: var(--pub-accion-tinta, #06210f);
   color: var(--relleno);
 }
 

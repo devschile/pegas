@@ -206,9 +206,12 @@ useSeoMeta({
  * este fondo— y no se tocan los tokens globales: el resto del sitio sigue con
  * su acento.
  *
- * El vermellón es el color de acción: botones y remates. El verde acompaña.
- * Con un solo tono la página quedaba duotono y no llamaba la atención de nada,
- * que es justo lo contrario de lo que necesita una landing de venta.
+ * El ámbar es el color de acción: botones y remates. El verde acompaña. Con un
+ * solo tono la página quedaba duotono y no llamaba la atención de nada, que es
+ * justo lo contrario de lo que necesita una landing de venta.
+ *
+ * Cada color de acción necesita su tinta —el texto que va encima cuando el
+ * botón se rellena—, así que las dos variables viajan juntas.
  */
 .pub {
   --pub-verde: #3ecf8e;
@@ -216,7 +219,8 @@ useSeoMeta({
   --pub-vermellon: #ff6a45;
   --pub-ambar: #ffc247;
   --pub-tiza: #f2ede9;
-  --pub-accion: var(--pub-vermellon);
+  --pub-accion: var(--pub-ambar);
+  --pub-accion-tinta: #2a1a00;
 }
 
 .pub__volver {
@@ -237,7 +241,7 @@ useSeoMeta({
 
 /* Cada sección con su tono: es lo que rompe el duotono sin recargar. */
 .pub__seccion:nth-of-type(2) .pub__eyebrow { color: var(--pub-azul); }
-.pub__seccion:nth-of-type(3) .pub__eyebrow { color: var(--pub-ambar); }
+.pub__seccion:nth-of-type(3) .pub__eyebrow { color: var(--pub-vermellon); }
 
 .pub__mono {
   text-transform: none;
