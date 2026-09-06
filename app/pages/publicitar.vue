@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ChButton } from '@devschile/chucao/vue';
 import { IconArrowLeft, IconArrowUpRight, IconChartBar, IconShieldCheck } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
@@ -68,9 +67,9 @@ useSeoMeta({
 
 <template>
   <div class="pub">
-    <ChButton class="pub__volver" variant="secondary" @ch-click="$router.push('/')">
+    <GlyphButton class="pub__volver" variant="sutil" @click="$router.push('/')">
       <IconArrowLeft :size="16" aria-hidden="true" /> Volver
-    </ChButton>
+    </GlyphButton>
 
     <header class="pub__hero">
       <GlyphField />
@@ -83,9 +82,9 @@ useSeoMeta({
           Quien entra está buscando pega o mirando el mercado. Si es a esos profesionales a quien quieres
           llegar, acá tienes tres espacios.
         </p>
-        <ChButton :href="mailto">
+        <GlyphButton :href="mailto">
           Hablemos <IconArrowUpRight :size="16" aria-hidden="true" />
-        </ChButton>
+        </GlyphButton>
       </div>
     </header>
 
@@ -178,9 +177,9 @@ useSeoMeta({
           Los valores dependen de la ubicación y del tiempo, así que los conversamos directo.
           Cuéntanos qué espacio te interesa y para cuándo.
         </p>
-        <ChButton :href="mailto">
+        <GlyphButton :href="mailto">
           Escribir a {{ CONTACTO }} <IconArrowUpRight :size="16" aria-hidden="true" />
-        </ChButton>
+        </GlyphButton>
       </div>
     </section>
   </div>

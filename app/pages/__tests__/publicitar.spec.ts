@@ -38,7 +38,7 @@ describe('pages/publicitar', () => {
   });
 
   it('el contacto es un mailto con asunto y cuerpo preparados', () => {
-    const href = montar().find('ch-button[href^="mailto:"]').attributes('href')!;
+    const href = montar().find('a.glyph-btn[href^="mailto:"]').attributes('href')!;
     expect(href).toContain('subject=');
     expect(href).toContain('body=');
   });
