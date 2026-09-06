@@ -76,7 +76,7 @@ useSeoMeta({
       <GlyphField mirror />
       <div class="pub__hero-inner">
         <p class="pub__eyebrow">espacios disponibles</p>
-        <h1 class="pub__titulo">Tu marca, frente a quien programa en Chile.</h1>
+        <h1 class="pub__titulo">Tu marca, frente a la comunidad de programadores de Chile.</h1>
         <p class="pub__bajada">
           <strong>Pegas devsChile</strong> es la vitrina de trabajos de la comunidad devsChile.
           Quien entra está buscando pega o mirando el mercado. Si es a esos profesionales a quien quieres
@@ -185,13 +185,14 @@ useSeoMeta({
     <section class="pub__cierre">
       <GlyphField mirror />
       <div class="pub__hero-inner">
-        <h2 class="pub__titulo pub__titulo--chico">Hablemos</h2>
+        <h2 class="pub__titulo pub__titulo--chico">¿Quieres saber más?</h2>
         <p class="pub__bajada">
           Los valores dependen de la ubicación y del tiempo, así que los conversamos directo.
           Cuéntanos qué espacio te interesa y para cuándo.
         </p>
+        <h3>Tenemos evaluación y prueba gratuita :eyes:</h3>
         <GlyphButton :href="mailto">
-          Escribir a {{ CONTACTO }} <IconArrowUpRight :size="16" aria-hidden="true" />
+          Escríbenos a {{ CONTACTO }} <IconArrowUpRight :size="16" aria-hidden="true" />
         </GlyphButton>
       </div>
     </section>
@@ -199,6 +200,25 @@ useSeoMeta({
 </template>
 
 <style scoped>
+/*
+ * Paleta propia de esta página. Los tonos vienen de la pieza de referencia de
+ * `design/` —su verde es más cálido que el teal de chucao y se lee mejor sobre
+ * este fondo— y no se tocan los tokens globales: el resto del sitio sigue con
+ * su acento.
+ *
+ * El vermellón es el color de acción: botones y remates. El verde acompaña.
+ * Con un solo tono la página quedaba duotono y no llamaba la atención de nada,
+ * que es justo lo contrario de lo que necesita una landing de venta.
+ */
+.pub {
+  --pub-verde: #3ecf8e;
+  --pub-azul: #4aa8ff;
+  --pub-vermellon: #ff6a45;
+  --pub-ambar: #ffc247;
+  --pub-tiza: #f2ede9;
+  --pub-accion: var(--pub-vermellon);
+}
+
 .pub__volver {
   display: inline-block;
   margin-bottom: 1rem;
@@ -212,8 +232,12 @@ useSeoMeta({
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--pub-verde);
 }
+
+/* Cada sección con su tono: es lo que rompe el duotono sin recargar. */
+.pub__seccion:nth-of-type(2) .pub__eyebrow { color: var(--pub-azul); }
+.pub__seccion:nth-of-type(3) .pub__eyebrow { color: var(--pub-ambar); }
 
 .pub__mono {
   text-transform: none;
@@ -225,17 +249,25 @@ useSeoMeta({
   /* En sans: la mono ya la ocupan las etiquetas y los brackets del fondo, y
      con las tres cosas en monoespaciada el hero competia consigo mismo. */
   font-family: var(--font-body);
-  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  font-size: clamp(2rem, 4.2vw, 3.1rem);
   font-weight: var(--typography-weight-bold, 700);
   letter-spacing: -0.03em;
-  line-height: 1.06;
+  line-height: 1.08;
   margin: 1rem auto 1.5rem;
-  max-width: 20ch;
+  /* Suficiente para que entre en dos líneas: a 20ch cortaba en tres y el
+     bloque quedaba angosto y alto. */
+  max-width: 30ch;
   text-wrap: balance;
 }
 
 .pub__titulo--chico {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
+}
+
+/* El nombre del sitio, destacado: es lo primero que tiene que quedar claro. */
+.pub__bajada strong {
+  color: var(--pub-verde);
+  font-weight: var(--typography-weight-bold, 700);
 }
 
 .pub__bajada {
@@ -270,7 +302,7 @@ useSeoMeta({
 .pub__hero-inner {
   position: relative;
   z-index: 10;
-  max-width: 46rem;
+  max-width: 54rem;
 }
 
 /* --- secciones ------------------------------------------------------------ */
@@ -335,19 +367,19 @@ useSeoMeta({
   display: grid;
   place-items: center;
   height: 1.7rem;
-  border: 1px dashed var(--accent);
+  border: 1px dashed var(--pub-accion);
   border-radius: 0.3rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
-  color: var(--accent);
+  color: var(--pub-accion);
   opacity: 0.45;
   transition: opacity 0.2s ease, background-color 0.2s ease;
 }
 
 .pub__slot--on {
   opacity: 1;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  background: color-mix(in srgb, var(--pub-accion) 18%, transparent);
 }
 
 .pub__lista {

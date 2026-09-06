@@ -152,7 +152,7 @@ onBeforeUnmount(() => {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.8rem, 1.4vw, 1.05rem);
   line-height: 1;
-  opacity: 0.45;
+  opacity: 0.55;
   pointer-events: none;
   user-select: none;
 
@@ -162,12 +162,14 @@ onBeforeUnmount(() => {
   -webkit-mask-image: linear-gradient(to right, #000 0%, #000 35%, transparent 78%);
   mask-image: linear-gradient(to right, #000 0%, #000 35%, transparent 78%);
 
-  /* Rampa de devsChile: del acento a la tiza, cinco pasos. */
-  --banda-0: #2dd4bf;
-  --banda-1: #5ee8d4;
-  --banda-2: #93efe1;
-  --banda-3: #c9f6ee;
-  --banda-4: #f2ede9;
+  /* Cinco tonos distintos y no un degradado de uno solo: con la rampa
+     monocroma el campo se leía como una mancha y el conjunto quedaba duotono.
+     El barrido angular reparte los tonos, así que se ven todos girando. */
+  --banda-0: var(--pub-verde, #3ecf8e);
+  --banda-1: var(--pub-azul, #4aa8ff);
+  --banda-2: var(--pub-vermellon, #ff6a45);
+  --banda-3: var(--pub-ambar, #ffc247);
+  --banda-4: var(--pub-tiza, #f2ede9);
 }
 
 .glyph-field--mirror {

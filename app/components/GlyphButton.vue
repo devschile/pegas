@@ -67,8 +67,11 @@ const retardo = (i: number) => ({ '--glyph-delay': `${i * 18}ms` });
 }
 
 .glyph-btn--acento {
-  --relleno: var(--accent, #2dd4bf);
-  --tinta: #06210f;
+  /* Hereda el color de accion de la página si lo define; si no, el del sitio.
+     En /publicitar es el vermellón: es el unico elemento que pide una acción y
+     tiene que destacar sobre el verde del resto. */
+  --relleno: var(--pub-accion, var(--accent, #2dd4bf));
+  --tinta: #2b0a02;
   color: var(--relleno);
 }
 
