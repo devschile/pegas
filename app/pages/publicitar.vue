@@ -60,7 +60,7 @@ const ubicaciones = [
     id: 'pega' as const,
     n: '04',
     titulo: 'En el aviso',
-    donde: 'Otra pantalla: la página de cada pega, debajo del aviso. Va después y no antes, porque quien llega ahí vino a leer algo concreto. Es la audiencia más comprometida del sitio.',
+    donde: 'Otra pantalla: la página de cada pega, debajo del aviso. Va después y no antes, porque quien llega ahí vino a leer algo concreto. Puedes tener exclusividad, solo con tu aviso.',
     medidas: 'escritorio 970 × 90–200 · móvil 320 × 100–200',
   },
 ];
@@ -140,7 +140,9 @@ useSeoMeta({
       </div>
     </section>
 
-    <section class="pub__seccion">
+    <TerminalMarquee class="pub__marquesina" />
+
+    <section class="pub__seccion pub__seccion--tras-marquesina">
       <p class="pub__eyebrow">cómo</p>
       <div class="pub__dos">
         <article class="pub__caja">
@@ -328,6 +330,15 @@ useSeoMeta({
 /* --- secciones ------------------------------------------------------------ */
 .pub__seccion {
   margin-top: clamp(4rem, 8vw, 7rem);
+}
+
+.pub__marquesina {
+  margin-top: clamp(4rem, 8vw, 7rem);
+}
+
+/* La marquesina ya separa: la sección que la sigue no necesita repetirlo. */
+.pub__seccion--tras-marquesina {
+  margin-top: clamp(2.5rem, 5vw, 4rem);
 }
 
 .pub__seccion h2 {
