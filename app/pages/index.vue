@@ -26,6 +26,14 @@ const rangeEnd = computed(() => Math.min(page.value * porPagina.value, total.val
  * cambia client-side (paginación/filtros).
  */
 const { loadStates } = usePegaReactions();
+
+const { ads } = useAds();
+/**
+ * Determinística por página: el ad no salta de lugar al recargar (no hay
+ * layout shift) y el CTR queda atribuible a una posición concreta, que es lo
+ * que después permite comparar si rinde mejor arriba o abajo.
+ */
+const posicionAd = computed(() => posicionEnListado(page.value, jobs.value.length));
 await loadStates(jobs.value.map(job => job.id));
 watch(jobs, value => loadStates(value.map(job => job.id)));
 
@@ -67,7 +75,16 @@ defineOgImage('Pega', {
         <p v-if="jobs.length === 0" class="listado__mensaje"><IconSearchOff aria-hidden="true" /> Ninguna pega coincide</p>
 
         <div v-else class="pegas-grid">
-          <PegaCard v-for="(job, index) in jobs" :key="job.id" :job="job" :index="index" />
+          <template v-for="(job, index) in jobs" :key="job.id">
+            <AdSlot
+              v-if="index === posicionAd"
+              :ad="ads.listado"
+              ubicacion="listado"
+              :posicion="posicionAd"
+              :pagina="page"
+            />
+            <PegaCard :job="job" :index="index" />
+          </template>
         </div>
 
         <PegasPaginacion

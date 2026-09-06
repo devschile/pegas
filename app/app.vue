@@ -1,6 +1,12 @@
+<script setup lang="ts">
+const { ads } = useAds();
+</script>
+
 <template>
   <div class="app-shell">
     <NuxtRouteAnnouncer />
+    <!-- A todo el ancho y arriba del header: es la ubicacion mas visible. -->
+    <AdSlot :ad="ads.header" ubicacion="header" />
     <SiteHeader />
     <main class="app-shell__main">
       <!--
@@ -42,12 +48,22 @@
         </NuxtPage>
       </NuxtLayout>
     </main>
+    <!-- Al ancho del contenido, entre la paginacion y el copyright. -->
+    <div class="app-shell__ad-pie">
+      <AdSlot :ad="ads.footer" ubicacion="footer" />
+    </div>
     <SiteFooter />
     <UserMenu />
   </div>
 </template>
 
 <style scoped>
+.app-shell__ad-pie {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
 .app-shell__main {
   max-width: 800px;
   margin: 0 auto;
