@@ -112,12 +112,19 @@ describe('pages/mis-pegas', () => {
     expect(wrapper.text()).toContain('Error al cargar');
   });
 
-  it('no admin: no muestra la seccion de pegas desactivadas aunque el fetch devuelva datos', async () => {
+  /**
+   * ch-tabs usa shadow DOM: el contenido de todos los paneles se monta igual y
+   * solo se esconde. Por eso se afirma sobre la existencia del panel y no sobre
+   * que su texto no aparezca -- esconderlo no bastaria.
+   */
+  it('no admin: no monta el panel de desactivadas aunque el fetch devuelva datos', async () => {
     mockFetches({ data: [] }, { data: [{ id: 9, titulo: 'X', empleador: 'Y', categoria: 'Otros', fuente: 'jobicy', fecha_actualizacion: '2026-08-19' }] });
 
     const wrapper = await mountMisPegas();
 
-    expect(wrapper.text()).not.toContain('Pegas desactivadas');
+    expect(wrapper.find('[slot="panel-desactivadas"]').exists()).toBe(false);
+    expect(wrapper.find('[slot="panel-ads"]').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('X');
   });
 
   it('admin: muestra la seccion de pegas desactivadas', async () => {
@@ -126,7 +133,7 @@ describe('pages/mis-pegas', () => {
 
     const wrapper = await mountMisPegas();
 
-    expect(wrapper.text()).toContain('Pegas desactivadas');
+    expect(wrapper.find('[slot="panel-desactivadas"]').exists()).toBe(true);
     expect(wrapper.text()).toContain('Vendedor Puerta a Puerta');
   });
 
@@ -145,15 +152,15 @@ describe('pages/mis-pegas', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/pegas/9/activar', { method: 'POST' });
     expect(wrapper.text()).not.toContain('Vendedor Puerta a Puerta');
     expect(wrapper.text()).toContain('Otra pega');
-    expect(wrapper.text()).toContain('Pegas desactivadas (1)');
   });
 
-  it('admin sin pegas desactivadas: no muestra la seccion', async () => {
+  it('admin sin pegas desactivadas: el panel existe pero avisa que no hay', async () => {
     isAdminRef.value = true;
     mockFetches({ data: [] }, { data: [] });
 
     const wrapper = await mountMisPegas();
 
-    expect(wrapper.text()).not.toContain('Pegas desactivadas');
+    expect(wrapper.find('[slot="panel-desactivadas"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain('No hay pegas desactivadas');
   });
 });

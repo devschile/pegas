@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChButton } from '@devschile/chucao/vue';
+import { ChButton, ChTabs } from '@devschile/chucao/vue';
 import { IconAlertTriangle, IconArrowLeft, IconBan, IconBookmarkOff, IconArrowBackUp } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 import type { Pega } from '~/types/pega';
@@ -54,9 +54,33 @@ async function handleReactivarClick(id: number) {
 }
 
 const router = useRouter();
+const route = useRoute();
 
 function handleBackClick() {
   router.push('/');
+}
+
+/**
+ * La pestaña activa vive en la query string para que se pueda compartir y
+ * sobreviva a una recarga. `replace` y no `push`: alternar pestañas no debería
+ * llenar el historial ni hacer que "atrás" recorra el panel en vez de salir.
+ */
+const TABS_BASE = [{ value: 'guardadas', label: 'Guardadas' }];
+const TABS_ADMIN = [
+  { value: 'desactivadas', label: 'Desactivadas' },
+  { value: 'ads', label: 'Ads' },
+];
+
+const tabs = computed(() => (isAdmin.value ? [...TABS_BASE, ...TABS_ADMIN] : TABS_BASE));
+
+const tabActiva = computed(() => {
+  const pedida = Array.isArray(route.query.tab) ? route.query.tab[0] : route.query.tab;
+  return tabs.value.some(t => t.value === pedida) ? String(pedida) : 'guardadas';
+});
+
+function handleTabChange(e: Event) {
+  const valor = (e as CustomEvent<string>).detail;
+  router.replace({ query: { ...route.query, tab: valor === 'guardadas' ? undefined : valor } });
 }
 
 useSeoMeta({
@@ -73,33 +97,48 @@ useSeoMeta({
 
     <h1 class="mis-pegas__titulo">Mis pegas</h1>
 
-    <p v-if="error" class="mis-pegas__mensaje"><IconAlertTriangle aria-hidden="true" /> Error al cargar tus pegas</p>
-    <p v-else-if="pegas.length === 0" class="mis-pegas__mensaje"><IconBookmarkOff aria-hidden="true" /> Todavía no guardaste ni reaccionaste a ninguna pega</p>
+    <ChTabs :tabs="tabs" :value="tabActiva" label="Secciones del panel" @ch-change="handleTabChange">
+      <div slot="panel-guardadas">
+        <p v-if="error" class="mis-pegas__mensaje"><IconAlertTriangle aria-hidden="true" /> Error al cargar tus pegas</p>
+        <p v-else-if="pegas.length === 0" class="mis-pegas__mensaje"><IconBookmarkOff aria-hidden="true" /> Todavía no guardaste ni reaccionaste a ninguna pega</p>
 
-    <div v-else class="pegas-grid">
-      <PegaCard v-for="(job, index) in pegas" :key="job.id" :job="job" :index="index" />
-    </div>
+        <div v-else class="pegas-grid">
+          <PegaCard v-for="(job, index) in pegas" :key="job.id" :job="job" :index="index" />
+        </div>
+      </div>
 
-    <section v-if="isAdmin && desactivadas?.length" class="pegas-desactivadas">
-      <h2 class="pegas-desactivadas__titulo"><IconBan :size="20" aria-hidden="true" /> Pegas desactivadas ({{ desactivadas.length }})</h2>
-      <ul class="pegas-desactivadas__lista">
-        <li v-for="pega in desactivadas" :key="pega.id" class="pegas-desactivadas__item">
-          <div class="pegas-desactivadas__datos">
-            <span class="pegas-desactivadas__titulo-pega">{{ pega.titulo }}</span>
-            <span class="pegas-desactivadas__meta">{{ pega.empleador }} · {{ pega.categoria }} · {{ sourceLabel(pega.fuente) }} · {{ formatDate(pega.fecha_actualizacion) }}</span>
-          </div>
-          <button
+      <!--
+        v-if y no solo la pestaña oculta: ch-tabs usa shadow DOM, así que el
+        contenido de TODOS los paneles se monta igual y solo se esconde. Sin el
+        v-if, a quien no es admin se le montarían los paneles de admin.
+      -->
+      <div v-if="isAdmin" slot="panel-desactivadas">
+        <p v-if="!desactivadas?.length" class="mis-pegas__mensaje"><IconBan aria-hidden="true" /> No hay pegas desactivadas</p>
+        <section v-else class="pegas-desactivadas">
+          <ul class="pegas-desactivadas__lista">
+            <li v-for="pega in desactivadas" :key="pega.id" class="pegas-desactivadas__item">
+              <div class="pegas-desactivadas__datos">
+                <span class="pegas-desactivadas__titulo-pega">{{ pega.titulo }}</span>
+                <span class="pegas-desactivadas__meta">{{ pega.empleador }} · {{ pega.categoria }} · {{ sourceLabel(pega.fuente) }} · {{ formatDate(pega.fecha_actualizacion) }}</span>
+              </div>
+              <button
             type="button"
             class="pegas-desactivadas__reactivar"
             :disabled="reactivando === pega.id"
             :aria-label="`Reactivar ${pega.titulo}`"
             @click="handleReactivarClick(pega.id)"
           >
-            <IconArrowBackUp :size="16" aria-hidden="true" /> Reactivar
-          </button>
-        </li>
-      </ul>
-    </section>
+                <IconArrowBackUp :size="16" aria-hidden="true" /> Reactivar
+              </button>
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <div v-if="isAdmin" slot="panel-ads">
+        <PanelAds />
+      </div>
+    </ChTabs>
   </div>
 </template>
 
@@ -120,20 +159,6 @@ useSeoMeta({
   gap: 0.5rem;
   padding: 4rem 0;
   color: var(--text-muted, #666);
-}
-
-.pegas-desactivadas {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
-}
-
-.pegas-desactivadas__titulo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #f87171;
-  margin-bottom: 1rem;
 }
 
 .pegas-desactivadas__lista {

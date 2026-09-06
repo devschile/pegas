@@ -14,6 +14,9 @@ export interface AdPublico {
   es_casa: boolean;
 }
 
+/** Las tres ubicaciones, en el orden en que aparecen en la página. */
+export const UBICACIONES = ['header', 'listado', 'footer'] as const;
+
 export type AdsPorUbicacion = Record<'header' | 'listado' | 'footer', AdPublico | null>;
 
 const VACIO: AdsPorUbicacion = { header: null, listado: null, footer: null };
