@@ -105,7 +105,18 @@ describe('pages/publicitar', () => {
     expect(montar().findAll('[data-test="glyph"]').length).toBeGreaterThan(0);
   });
 
-  it('promete numeros del servidor, que es el diferencial', () => {
-    expect(montar().text()).toContain('en el servidor');
+  it('promete numeros propios del servidor, que es el diferencial', () => {
+    expect(montar().text()).toContain('en nuestro servidor');
+  });
+
+  /**
+   * Tres beneficios de largo parecido: en columnas, uno el doble de largo que
+   * los otros deja dos cajas medio vacias y descuadra la seccion entera.
+   */
+  it('los tres beneficios tienen largo comparable', () => {
+    const cajas = montar().findAll('.pub__tres .pub__caja');
+    expect(cajas).toHaveLength(3);
+    const largos = cajas.map(c => c.text().length);
+    expect(Math.max(...largos) / Math.min(...largos)).toBeLessThan(1.5);
   });
 });

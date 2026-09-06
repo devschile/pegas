@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconArrowLeft, IconArrowUpRight, IconChartBar, IconPencil, IconShieldCheck } from '@tabler/icons-vue';
+import { IconArrowLeft, IconArrowUpRight } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
 /**
@@ -30,6 +30,9 @@ const cuerpo = encodeURIComponent(
     '- Empresa:\n- Ubicación que me interesa:\n- Fechas:\n\nGracias.',
 );
 const mailto = `mailto:${CONTACTO}?subject=${asunto}&body=${cuerpo}`;
+
+/** El bloque del cierre se cala del campo de glifos que tiene detrás. */
+const cierre = ref<HTMLElement | null>(null);
 
 /** El esquema resalta la ubicación que se está mirando. */
 const resaltada = ref<'header' | 'listado' | 'footer' | 'pega' | null>(null);
@@ -169,40 +172,36 @@ useSeoMeta({
       <p class="pub__eyebrow">qué recibes</p>
       <div class="pub__tres">
         <article class="pub__caja">
-          <h2><IconChartBar :size="18" aria-hidden="true" /> Números que aguantan</h2>
+          <h2>Números que aguantan</h2>
           <p>
-            Contamos impresiones y clicks <strong>en el servidor</strong>, no con un analytics que
-            los bloqueadores de publicidad tumban. Te pasamos las cifras con su tamaño de muestra
-            al lado: si todavía no alcanza para concluir nada, lo decimos.
+            Contamos impresiones y clicks <strong>en nuestro servidor</strong>, no con un analytics
+            que los bloqueadores tumban. Y te decimos cuándo la muestra todavía no da para sacar
+            conclusiones.
           </p>
         </article>
         <article class="pub__caja">
-          <h2><IconShieldCheck :size="18" aria-hidden="true" /> El aviso que no bloquean</h2>
+          <h2>Una audiencia que no te bloquea</h2>
           <p>
-            Acá el público sabe exactamente cómo funciona un tracker, y por eso lo bloquea. No
-            aceptamos scripts de terceros ni píxeles de seguimiento: un ad no puede hacer <em>una
-            sola</em> petición fuera de este dominio. Sin cookies, sin perfilado, sin subastas.
-          </p>
-          <p>
-            Eso significa que renuncias a tu propio conteo —te damos el nuestro— y a cambio tu
-            marca llega entera a gente que a todos los demás los tiene bloqueados.
+            Sin scripts de terceros, sin píxeles, sin cookies. Resignas tu propio conteo y usas el
+            nuestro; a cambio tu marca llega entera a gente que tiene bloqueado a todo el resto.
           </p>
         </article>
         <article class="pub__caja">
-          <h2><IconPencil :size="18" aria-hidden="true" /> Lo diseñamos contigo</h2>
+          <h2>Lo diseñamos contigo</h2>
           <p>
-            Los límites de arriba son chicos a propósito: un banner de 2 MB y 600 px de alto es lo
-            que hace que esta gente instale un bloqueador. Si tu pieza no entra, la rehacemos
-            juntos —sin costo— hasta que pese poco y se vea como algo que un programador querría
-            mirar.
+            Si tu pieza no entra en esos límites, la rehacemos juntos y sin costo, hasta que pese
+            poco y se vea como algo que un programador querría mirar.
           </p>
         </article>
       </div>
     </section>
 
     <section class="pub__cierre">
-      <GlyphField mirror />
-      <div class="pub__hero-inner">
+      <!-- Dos campos y el texto calado entre ellos: el cierre es el clímax de
+           la página y necesita mas peso que el resto. -->
+      <GlyphField :recorte="cierre" />
+      <GlyphField mirror :recorte="cierre" />
+      <div ref="cierre" class="pub__hero-inner">
         <h2 class="pub__titulo pub__titulo--chico">¿Quieres saber más?</h2>
         <p class="pub__bajada">
           Los valores dependen de la ubicación y del tiempo, así que los conversamos directo.
@@ -486,10 +485,19 @@ useSeoMeta({
 }
 
 .pub__caja {
+  display: flex;
+  flex-direction: column;
   padding: 2rem;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   border-radius: 0.6rem;
   background: rgba(255, 255, 255, 0.02);
+}
+
+/* El título de una caja no lleva icono: a este ancho el icono se comía la
+   primera línea y no agregaba nada que el título no dijera. */
+.pub__caja h2 {
+  color: var(--pub-tiza);
+  margin-bottom: 0.75rem;
 }
 
 .pub__caja p:last-child {

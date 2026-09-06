@@ -14,7 +14,18 @@ import { ref } from 'vue';
  * depende de esto.
  */
 
-const props = withDefaults(defineProps<{ mirror?: boolean }>(), { mirror: false });
+const props = withDefaults(
+  defineProps<{
+    mirror?: boolean;
+    /**
+     * Elemento a calar. El campo mide su caja y no pinta las celdas que quedan
+     * detrás, así que el texto queda recortado del campo en vez de taparlo y
+     * los glifos siguen animándose hasta el borde mismo del bloque.
+     */
+    recorte?: HTMLElement | null;
+  }>(),
+  { mirror: false, recorte: null },
+);
 
 const raiz = ref<HTMLElement | null>(null);
 
@@ -50,7 +61,7 @@ function celda(x: number, y: number, cols: number, filas: number, t: number, esp
 }
 
 function construir(root: HTMLElement) {
-  const celdas: Array<{ el: HTMLElement; x: number; y: number; cols: number }> = [];
+  const celdas: Array<{ el: HTMLElement; x: number; y: number; cols: number; calada: boolean }> = [];
   for (const [y, cols] of FILAS.entries()) {
     const fila = document.createElement('div');
     fila.className = 'glyph-field__row';
@@ -59,13 +70,42 @@ function construir(root: HTMLElement) {
       const span = document.createElement('span');
       span.className = 'glyph-field__cell';
       fila.appendChild(span);
-      celdas.push({ el: span, x, y, cols });
+      celdas.push({ el: span, x, y, cols, calada: false });
     }
     root.appendChild(fila);
   }
 
+  /**
+   * Qué celdas caen bajo el recorte. Se calcula al montar y al redimensionar,
+   * no en cada fotograma: son ciento y tantos `getBoundingClientRect`, que
+   * fuerzan layout y no tienen por qué repetirse sesenta veces por segundo.
+   */
+  function medirRecorte() {
+    const caja = props.recorte?.getBoundingClientRect();
+    for (const c of celdas) {
+      if (!caja) {
+        c.calada = false;
+        continue;
+      }
+      const r = c.el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      // Un margen de holgura evita que queden glifos pegados a las letras.
+      const h = 10;
+      c.calada = cx > caja.left - h && cx < caja.right + h && cy > caja.top - h && cy < caja.bottom + h;
+    }
+  }
+  if (props.recorte) {
+    requestAnimationFrame(medirRecorte);
+    window.addEventListener('resize', medirRecorte);
+  }
+
   return (t: number) => {
     for (const c of celdas) {
+      if (c.calada) {
+        if (c.el.textContent !== ' ') c.el.textContent = ' ';
+        continue;
+      }
       const v = celda(c.x, c.y, c.cols, FILAS.length, t, props.mirror);
       if (c.el.textContent !== v.ch) c.el.textContent = v.ch;
       const banda = String(v.banda);
