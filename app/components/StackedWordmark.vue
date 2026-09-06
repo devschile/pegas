@@ -44,13 +44,13 @@ const TINTA = '#f2ede9';
 .wordmark {
   display: inline-flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   width: fit-content;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-weight: 400;
   line-height: 1;
   letter-spacing: 0;
-  font-size: clamp(34px, 8vw, 72px);
+  font-size: clamp(24px, 8vw, 52px);
   user-select: none;
 }
 
