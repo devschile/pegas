@@ -143,8 +143,6 @@ useSeoMeta({
       </div>
     </section>
 
-    <TerminalMarquee class="pub__marquesina" />
-
     <section class="pub__seccion pub__seccion--tras-marquesina">
       <p class="pub__eyebrow">cómo</p>
       <div class="pub__dos">
@@ -167,6 +165,8 @@ useSeoMeta({
         </article>
       </div>
     </section>
+
+    <TerminalMarquee class="pub__marquesina" />
 
     <section class="pub__seccion">
       <p class="pub__eyebrow">qué recibes</p>
@@ -197,22 +197,25 @@ useSeoMeta({
     </section>
 
     <section class="pub__cierre">
-      <!-- Dos campos y el texto calado entre ellos: el cierre es el clímax de
-           la página y necesita mas peso que el resto. -->
-      <GlyphField :recorte="cierre" />
-      <GlyphField mirror :recorte="cierre" />
+      <!-- El campo llena la banda entera y el bloque va calado encima: los
+           glifos siguen animandose hasta el borde mismo del texto. -->
+      <GlyphField expandir :recorte="cierre" />
       <div ref="cierre" class="pub__hero-inner">
         <h2 class="pub__titulo pub__titulo--chico">¿Quieres saber más?</h2>
         <p class="pub__bajada">
           Los valores dependen de la ubicación y del tiempo, así que los conversamos directo.
           Cuéntanos qué espacio te interesa y para cuándo.
         </p>
-        <h3>Tenemos evaluación y prueba gratuita :eyes:</h3>
+        <p class="pub__prueba">Tenemos evaluación y prueba gratuita 👀</p>
         <GlyphButton :href="mailto">
           Escríbenos a {{ CONTACTO }} <IconArrowUpRight :size="16" aria-hidden="true" />
         </GlyphButton>
       </div>
     </section>
+
+    <div class="pub__firma">
+      <StackedWordmark :lineas="['devs', 'Chile']" />
+    </div>
   </div>
 </template>
 
@@ -318,6 +321,27 @@ useSeoMeta({
 .pub__cierre {
   margin-top: clamp(4rem, 8vw, 7rem);
   border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  /* A todo el ancho de la ventana: el cierre es el climax y no puede quedar
+     encajonado en el contenedor. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: clamp(5rem, 12vw, 9rem) 1.5rem;
+}
+
+.pub__prueba {
+  margin: 0 0 1.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--pub-verde);
+}
+
+/* La firma cierra la pagina: va sola, con aire alrededor. */
+.pub__firma {
+  display: flex;
+  justify-content: center;
+  padding: clamp(3rem, 7vw, 5rem) 0 clamp(1rem, 3vw, 2rem);
 }
 
 .pub__hero-inner {

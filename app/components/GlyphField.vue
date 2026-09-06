@@ -18,21 +18,30 @@ const props = withDefaults(
   defineProps<{
     mirror?: boolean;
     /**
+     * Ocupa todo el ancho del contenedor en vez de quedarse a un lado. Se usa
+     * cuando el campo es el fondo de una banda entera y no un remate lateral.
+     */
+    expandir?: boolean;
+    /**
      * Elemento a calar. El campo mide su caja y no pinta las celdas que quedan
      * detrás, así que el texto queda recortado del campo en vez de taparlo y
      * los glifos siguen animándose hasta el borde mismo del bloque.
      */
     recorte?: HTMLElement | null;
   }>(),
-  { mirror: false, recorte: null },
+  { mirror: false, expandir: false, recorte: null },
 );
 
 const raiz = ref<HTMLElement | null>(null);
 
 const ABIERTOS = ['‹', '{', '[', '('];
 const CERRADOS = ['›', '}', ']', ')'];
-/** Filas de largo desparejo: un rectángulo perfecto se lee como una tabla. */
-const FILAS = [26, 24, 28, 24, 26];
+/** El desnivel entre filas evita que el campo se lea como una tabla. */
+const DESNIVEL = [0, -2, 2, -2, 0];
+const BASE = 26;
+
+/** Ancho de celda en em, la misma grilla que usa el wordmark. */
+const CELDA_EM = 22 / 34;
 const VELOCIDAD = 0.00055; // rad/ms
 const PASO_GLIFO = 170; // ms entre cambios de caracter
 
@@ -61,6 +70,16 @@ function celda(x: number, y: number, cols: number, filas: number, t: number, esp
 }
 
 function construir(root: HTMLElement) {
+  // Con `expandir`, el ancho sale del contenedor: el campo tiene que llenar la
+  // banda, no quedarse en un costado.
+  let base = BASE;
+  if (props.expandir) {
+    const fs = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const disponible = root.parentElement?.clientWidth ?? 0;
+    if (disponible) base = Math.max(BASE, Math.ceil(disponible / (fs * CELDA_EM)));
+  }
+  const FILAS = DESNIVEL.map(d => base + d);
+
   const celdas: Array<{ el: HTMLElement; x: number; y: number; cols: number; calada: boolean }> = [];
   for (const [y, cols] of FILAS.entries()) {
     const fila = document.createElement('div');
@@ -106,7 +125,7 @@ function construir(root: HTMLElement) {
         if (c.el.textContent !== ' ') c.el.textContent = ' ';
         continue;
       }
-      const v = celda(c.x, c.y, c.cols, FILAS.length, t, props.mirror);
+      const v = celda(c.x, c.y, c.cols, DESNIVEL.length, t, props.mirror);
       if (c.el.textContent !== v.ch) c.el.textContent = v.ch;
       const banda = String(v.banda);
       if (c.el.dataset.banda !== banda) c.el.dataset.banda = banda;
@@ -123,7 +142,7 @@ useAnimacionAscii(raiz, construir);
   <div
     ref="raiz"
     class="glyph-field"
-    :class="{ 'glyph-field--mirror': mirror }"
+    :class="{ 'glyph-field--mirror': mirror, 'glyph-field--expandir': expandir }"
     aria-hidden="true"
   />
 </template>
@@ -162,6 +181,16 @@ useAnimacionAscii(raiz, construir);
   --banda-4: var(--pub-tiza, #f2ede9);
 }
 
+/* Expandido no se enmascara: es el fondo de la banda, no un remate lateral. */
+.glyph-field--expandir {
+  left: 50%;
+  transform: translate(-50%, -50%);
+  align-items: center;
+  -webkit-mask-image: none;
+  mask-image: none;
+  opacity: 0.4;
+}
+
 .glyph-field--mirror {
   left: auto;
   right: 0;
@@ -176,6 +205,12 @@ useAnimacionAscii(raiz, construir);
   .glyph-field {
     display: flex;
   }
+}
+
+/* El expandido sí se muestra siempre: al ser el fondo de la banda no compite
+   con el texto, que va calado encima. */
+.glyph-field--expandir {
+  display: flex;
 }
 
 :deep(.glyph-field__row) {
