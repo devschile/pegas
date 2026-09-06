@@ -16,13 +16,13 @@ withDefaults(defineProps<{ lineas?: string[] }>(), {
   lineas: () => ['devs', 'Chile'],
 });
 
-/** Fondo y tinta por línea, en el orden de la rampa. */
-const TONOS = [
-  { fondo: 'var(--pub-verde, #3ecf8e)', tinta: '#052014' },
-  { fondo: 'var(--pub-ambar, #ffc247)', tinta: '#2a1a00' },
-  { fondo: 'var(--pub-vermellon, #ff6a45)', tinta: '#2b0a02' },
-  { fondo: 'var(--pub-azul, #4aa8ff)', tinta: '#04182e' },
-];
+/**
+ * Un solo tono que se va oscureciendo línea a línea, con la letra clara
+ * encima. Es lo que hace que se lea como un logo de bloques y no como líneas
+ * de colores distintos peleando entre sí.
+ */
+const TONOS = ['#2f8f63', '#256f4d', '#1b5038', '#123424'];
+const TINTA = '#f2ede9';
 </script>
 
 <template>
@@ -33,10 +33,7 @@ const TONOS = [
       :key="i"
       class="wordmark__linea"
       aria-hidden="true"
-      :style="{
-        '--fondo': TONOS[i % TONOS.length]!.fondo,
-        '--tinta': TONOS[i % TONOS.length]!.tinta,
-      }"
+      :style="{ '--fondo': TONOS[i % TONOS.length], '--tinta': TINTA }"
     >
       <span v-for="(letra, j) in [...linea]" :key="j" class="wordmark__celda">{{ letra }}</span>
     </div>

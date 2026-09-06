@@ -23,11 +23,13 @@ const props = withDefaults(
      */
     expandir?: boolean;
     /**
-     * Elemento a calar. El campo mide su caja y no pinta las celdas que quedan
-     * detrás, así que el texto queda recortado del campo en vez de taparlo y
-     * los glifos siguen animándose hasta el borde mismo del bloque.
+     * Elementos a calar. El campo mide la caja de cada uno y no pinta las
+     * celdas que quedan detrás, así que el texto queda recortado del campo en
+     * vez de taparlo. Se pasan por separado y no un contenedor: recortando el
+     * bloque entero queda un rectángulo enorme y los glifos se arrinconan en
+     * los bordes, que es justo lo contrario del efecto.
      */
-    recorte?: HTMLElement | null;
+    recorte?: HTMLElement | (HTMLElement | null)[] | null;
   }>(),
   { mirror: false, expandir: false, recorte: null },
 );
@@ -40,8 +42,9 @@ const CERRADOS = ['›', '}', ']', ')'];
 const DESNIVEL = [0, -2, 2, -2, 0];
 const BASE = 26;
 
-/** Ancho de celda en em, la misma grilla que usa el wordmark. */
+/** Celda en em, la misma grilla que usa el wordmark. */
 const CELDA_EM = 22 / 34;
+const FILA_EM = 40 / 34;
 const VELOCIDAD = 0.00055; // rad/ms
 const PASO_GLIFO = 170; // ms entre cambios de caracter
 
@@ -73,12 +76,20 @@ function construir(root: HTMLElement) {
   // Con `expandir`, el ancho sale del contenedor: el campo tiene que llenar la
   // banda, no quedarse en un costado.
   let base = BASE;
+  let desnivel = DESNIVEL;
   if (props.expandir) {
     const fs = parseFloat(getComputedStyle(root).fontSize) || 16;
-    const disponible = root.parentElement?.clientWidth ?? 0;
-    if (disponible) base = Math.max(BASE, Math.ceil(disponible / (fs * CELDA_EM)));
+    const ancho = root.parentElement?.clientWidth ?? 0;
+    const alto = root.parentElement?.clientHeight ?? 0;
+    if (ancho) base = Math.max(BASE, Math.ceil(ancho / (fs * CELDA_EM)));
+    // Tambien en alto: con cinco filas el campo era una franja delgada en
+    // medio de la banda, no un fondo. Denso es lo que hace el efecto.
+    if (alto) {
+      const filas = Math.max(5, Math.ceil(alto / (fs * FILA_EM)));
+      desnivel = Array.from({ length: filas }, (_, i) => DESNIVEL[i % DESNIVEL.length]!);
+    }
   }
-  const FILAS = DESNIVEL.map(d => base + d);
+  const FILAS = desnivel.map(d => base + d);
 
   const celdas: Array<{ el: HTMLElement; x: number; y: number; cols: number; calada: boolean }> = [];
   for (const [y, cols] of FILAS.entries()) {
@@ -100,18 +111,21 @@ function construir(root: HTMLElement) {
    * fuerzan layout y no tienen por qué repetirse sesenta veces por segundo.
    */
   function medirRecorte() {
-    const caja = props.recorte?.getBoundingClientRect();
+    const objetivos = (Array.isArray(props.recorte) ? props.recorte : [props.recorte]).filter(Boolean);
+    const cajas = (objetivos as HTMLElement[]).map(e => e.getBoundingClientRect());
+    // Holgura chica: el agujero tiene que abrazar el texto, no rodearlo de aire.
+    const h = 6;
     for (const c of celdas) {
-      if (!caja) {
+      if (cajas.length === 0) {
         c.calada = false;
         continue;
       }
       const r = c.el.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      // Un margen de holgura evita que queden glifos pegados a las letras.
-      const h = 10;
-      c.calada = cx > caja.left - h && cx < caja.right + h && cy > caja.top - h && cy < caja.bottom + h;
+      c.calada = cajas.some(
+        b => cx > b.left - h && cx < b.right + h && cy > b.top - h && cy < b.bottom + h,
+      );
     }
   }
   if (props.recorte) {
@@ -125,7 +139,7 @@ function construir(root: HTMLElement) {
         if (c.el.textContent !== ' ') c.el.textContent = ' ';
         continue;
       }
-      const v = celda(c.x, c.y, c.cols, DESNIVEL.length, t, props.mirror);
+      const v = celda(c.x, c.y, c.cols, FILAS.length, t, props.mirror);
       if (c.el.textContent !== v.ch) c.el.textContent = v.ch;
       const banda = String(v.banda);
       if (c.el.dataset.banda !== banda) c.el.dataset.banda = banda;

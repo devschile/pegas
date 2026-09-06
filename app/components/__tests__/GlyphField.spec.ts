@@ -42,6 +42,28 @@ describe('GlyphField', () => {
     expect(Number(celda.attributes('data-banda'))).toBeLessThanOrEqual(4);
   });
 
+  /**
+   * Expandido el campo tiene que llenar la banda: con las cinco filas fijas
+   * quedaba una franja delgada en el medio, no un fondo.
+   */
+  it('expandido calcula filas y columnas desde su contenedor', () => {
+    // El entorno de test no hace layout, asi que clientWidth/clientHeight son 0
+    // para todo el mundo. Se fijan en el prototipo y se sueltan al salir.
+    const medidas = { clientWidth: 1200, clientHeight: 400 };
+    for (const [k, v] of Object.entries(medidas)) {
+      Object.defineProperty(HTMLElement.prototype, k, { value: v, configurable: true });
+    }
+
+    const normal = mount(GlyphField).findAll('.glyph-field__cell').length;
+    const ancho = mount(GlyphField, { props: { expandir: true }, attachTo: document.body });
+
+    expect(ancho.findAll('.glyph-field__row').length).toBeGreaterThan(5);
+    expect(ancho.findAll('.glyph-field__cell').length).toBeGreaterThan(normal);
+    expect(ancho.classes()).toContain('glyph-field--expandir');
+
+    for (const k of Object.keys(medidas)) delete (HTMLElement.prototype as never)[k];
+  });
+
   it('el modo espejado invierte el lado', () => {
     expect(mount(GlyphField, { props: { mirror: true } }).classes()).toContain('glyph-field--mirror');
   });
@@ -96,6 +118,19 @@ describe('GlyphField — recorte', () => {
     const w = montarCon(rect(5000, 5000, 6000, 6000));
     const conGlifo = w.findAll('.glyph-field__cell').filter(c => c.text() !== '');
     expect(conGlifo.length).toBe(128);
+  });
+
+  it('acepta varios recortes y cala todos', () => {
+    const a = document.createElement('div');
+    const b = document.createElement('div');
+    a.getBoundingClientRect = () => rect(-50, -50, 5, 200);
+    b.getBoundingClientRect = () => rect(5000, 5000, 6000, 6000);
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(rect(0, 0, 10, 10));
+    const w = mount(GlyphField, { props: { recorte: [a, null, b] } });
+    encolados[0]?.(0);
+    encolados[1]?.(16);
+    // Todas las celdas comparten caja en el test, asi que la primera las cala.
+    expect(w.findAll('.glyph-field__cell').filter(c => c.text() === '').length).toBe(128);
   });
 
   it('sin recorte no cala nada', () => {

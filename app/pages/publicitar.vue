@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconArrowLeft, IconArrowUpRight } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 /**
  * Página de venta de los espacios publicitarios.
@@ -31,8 +31,16 @@ const cuerpo = encodeURIComponent(
 );
 const mailto = `mailto:${CONTACTO}?subject=${asunto}&body=${cuerpo}`;
 
-/** El bloque del cierre se cala del campo de glifos que tiene detrás. */
-const cierre = ref<HTMLElement | null>(null);
+/**
+ * Cada pieza del cierre se cala por separado del campo que tiene detrás. Si se
+ * recortara el bloque entero quedaría un rectángulo enorme y los glifos se
+ * arrinconarían en los bordes.
+ */
+const caladoTitulo = ref<HTMLElement | null>(null);
+const caladoBajada = ref<HTMLElement | null>(null);
+const caladoPrueba = ref<HTMLElement | null>(null);
+const caladoBoton = ref<HTMLElement | null>(null);
+const calados = computed(() => [caladoTitulo.value, caladoBajada.value, caladoPrueba.value, caladoBoton.value]);
 
 /** El esquema resalta la ubicación que se está mirando. */
 const resaltada = ref<'header' | 'listado' | 'footer' | 'pega' | null>(null);
@@ -199,17 +207,19 @@ useSeoMeta({
     <section class="pub__cierre">
       <!-- El campo llena la banda entera y el bloque va calado encima: los
            glifos siguen animandose hasta el borde mismo del texto. -->
-      <GlyphField expandir :recorte="cierre" />
-      <div ref="cierre" class="pub__hero-inner">
-        <h2 class="pub__titulo pub__titulo--chico">¿Quieres saber más?</h2>
-        <p class="pub__bajada">
+      <GlyphField expandir :recorte="calados" />
+      <div class="pub__hero-inner">
+        <h2 ref="caladoTitulo" class="pub__titulo pub__titulo--chico">¿Quieres saber más?</h2>
+        <p ref="caladoBajada" class="pub__bajada">
           Los valores dependen de la ubicación y del tiempo, así que los conversamos directo.
           Cuéntanos qué espacio te interesa y para cuándo.
         </p>
-        <p class="pub__prueba">Tenemos evaluación y prueba gratuita 👀</p>
-        <GlyphButton :href="mailto">
-          Escríbenos a {{ CONTACTO }} <IconArrowUpRight :size="16" aria-hidden="true" />
-        </GlyphButton>
+        <p ref="caladoPrueba" class="pub__prueba">Tenemos evaluación y prueba gratuita 👀</p>
+        <div ref="caladoBoton" class="pub__cta">
+          <GlyphButton :href="mailto">
+            Escríbenos a {{ CONTACTO }} <IconArrowUpRight :size="16" aria-hidden="true" />
+          </GlyphButton>
+        </div>
       </div>
     </section>
 
@@ -338,6 +348,10 @@ useSeoMeta({
 }
 
 /* La firma cierra la pagina: va sola, con aire alrededor. */
+.pub__cta {
+  display: inline-flex;
+}
+
 .pub__firma {
   display: flex;
   justify-content: center;
