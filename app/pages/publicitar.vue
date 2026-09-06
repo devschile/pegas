@@ -20,7 +20,7 @@ import { ref } from 'vue';
  * el hero de esta página, y no tiene sentido ocupar con publicidad la página
  * que vende esos mismos espacios.
  */
-definePageMeta({ marco: false });
+definePageMeta({ marco: false, ancho: 'amplio' });
 
 // TODO: reemplazar por la dirección real de contacto comercial.
 const CONTACTO = 'hola@devschile.cl';
@@ -79,8 +79,8 @@ useSeoMeta({
         <p class="pub__eyebrow">espacios disponibles</p>
         <h1 class="pub__titulo">Tu marca, frente a quien programa en Chile.</h1>
         <p class="pub__bajada">
-          <strong>Pegas devsChile</strong> es la bolsa de trabajo de la comunidad devsChile.
-          Quien entra está buscando pega o mirando el mercado. Si es a esa gente a quien quieres
+          <strong>Pegas devsChile</strong> es la vitrina de trabajos de la comunidad devsChile.
+          Quien entra está buscando pega o mirando el mercado. Si es a esos profesionales a quien quieres
           llegar, acá tienes tres espacios.
         </p>
         <ChButton :href="mailto">
@@ -210,13 +210,15 @@ useSeoMeta({
 }
 
 .pub__titulo {
-  /* Techo mas bajo que el original: a 3.5rem el titulo dominaba tanto que el
-     resto del bloque parecia una nota al pie. */
-  font-size: clamp(1.9rem, 4.6vw, 3rem);
+  /* En sans: la mono ya la ocupan las etiquetas y los brackets del fondo, y
+     con las tres cosas en monoespaciada el hero competia consigo mismo. */
+  font-family: var(--font-body);
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  font-weight: var(--typography-weight-bold, 700);
   letter-spacing: -0.03em;
-  line-height: 1.08;
-  margin: 0.75rem auto 1.25rem;
-  max-width: 18ch;
+  line-height: 1.06;
+  margin: 1rem auto 1.5rem;
+  max-width: 20ch;
   text-wrap: balance;
 }
 
@@ -228,8 +230,9 @@ useSeoMeta({
   margin: 0 auto 2rem;
   /* Mas ancha que antes para que el bloque se lea como una unidad y no como
      una columna angosta debajo de un titulo enorme. */
-  max-width: 54ch;
+  max-width: 58ch;
   color: var(--text-muted, #888);
+  font-size: 1.05rem;
   line-height: 1.7;
   text-wrap: pretty;
 }
@@ -243,32 +246,33 @@ useSeoMeta({
   display: grid;
   place-items: center;
   text-align: center;
-  padding: clamp(3rem, 9vw, 6rem) 1rem;
+  padding: clamp(4rem, 11vw, 8rem) 1rem;
   margin: 0 -1.5rem;
 }
 
 .pub__cierre {
-  margin-top: 4rem;
+  margin-top: clamp(4rem, 8vw, 7rem);
   border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
 }
 
 .pub__hero-inner {
   position: relative;
   z-index: 10;
-  max-width: 42rem;
+  max-width: 46rem;
 }
 
 /* --- secciones ------------------------------------------------------------ */
 .pub__seccion {
-  margin-top: 4rem;
+  margin-top: clamp(4rem, 8vw, 7rem);
 }
 
 .pub__seccion h2 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.05rem;
-  margin: 0 0 0.4rem;
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
 }
 
 .pub__seccion p {
@@ -285,7 +289,8 @@ useSeoMeta({
 
 @media (min-width: 800px) {
   .pub__donde {
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 300px 1fr;
+    gap: 3.5rem;
     align-items: start;
   }
 }
@@ -343,9 +348,9 @@ useSeoMeta({
 
 .pub__item {
   display: grid;
-  grid-template-columns: 2.5rem 1fr;
-  gap: 0.5rem;
-  padding: 1.25rem 0;
+  grid-template-columns: 3rem 1fr;
+  gap: 0.75rem;
+  padding: 1.75rem 0;
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.07));
 }
 
@@ -367,11 +372,12 @@ useSeoMeta({
 @media (min-width: 720px) {
   .pub__dos {
     grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
   }
 }
 
 .pub__caja {
-  padding: 1.4rem;
+  padding: 2rem;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   border-radius: 0.6rem;
   background: rgba(255, 255, 255, 0.02);

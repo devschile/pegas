@@ -13,6 +13,13 @@ const { ads } = useAds();
  */
 const route = useRoute();
 const conMarco = computed(() => route.meta.marco !== false);
+
+/**
+ * Los 800px del contenedor son los correctos para el listado —una columna de
+ * tarjetas se lee mal si es mas ancha— pero ahogan a una landing. Una pagina
+ * puede pedir mas aire con `definePageMeta({ ancho: 'amplio' })`.
+ */
+const anchoAmplio = computed(() => route.meta.ancho === 'amplio');
 </script>
 
 <template>
@@ -21,7 +28,7 @@ const conMarco = computed(() => route.meta.marco !== false);
     <!-- A todo el ancho y arriba del header: es la ubicacion mas visible. -->
     <AdSlot v-if="conMarco" :ad="ads.header" ubicacion="header" />
     <SiteHeader v-if="conMarco" />
-    <main class="app-shell__main">
+    <main class="app-shell__main" :class="{ 'app-shell__main--amplio': anchoAmplio }">
       <!--
         NuxtLayout envuelve NuxtPage: el layout (ej. app/layouts/listado.vue,
         con la barra de filtros) es persistente entre paginas que lo
@@ -75,6 +82,10 @@ const conMarco = computed(() => route.meta.marco !== false);
   max-width: 800px;
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+.app-shell__main--amplio {
+  max-width: 1180px;
 }
 
 .app-shell__main {
