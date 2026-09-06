@@ -39,7 +39,7 @@ const ubicaciones = [
     id: 'header' as const,
     n: '01',
     titulo: 'Cabecera',
-    donde: 'A todo el ancho, arriba de todo. Es lo primero que se ve al entrar, y está en todas las páginas.',
+    donde: 'A todo el ancho, antes que todo. Es lo primero que se ve al entrar, y está en todas las páginas.',
     medidas: '970 × 90 escritorio · 320 × 100 móvil',
   },
   {

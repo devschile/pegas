@@ -8,3 +8,12 @@ minimumReleaseAgeExclude:
   - '@devschile/chucao@1.6.0'
 onlyBuiltDependencies:
   - esbuild
+
+# `effect` entra como transitivo de uploadthing (via @effect/platform) y la
+# 3.17.7 arrastra un aviso de severidad alta: bajo carga concurrente con RPC se
+# pierde o se contamina el contexto de AsyncLocalStorage entre fibras. Acá se
+# usa para una sola llamada de subida desde un endpoint de admin, asi que la
+# exposicion practica es minima, pero el override cuesta una linea.
+overrides:
+  effect: ">=3.20.0"
+
