@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChButton, ChInput, ChSwitch } from '@devschile/chucao/vue';
-import { IconAlertTriangle, IconPencil, IconPlus, IconTrash } from '@tabler/icons-vue';
+import { IconAlertTriangle, IconFileTypeCsv, IconPencil, IconPlus, IconTrash } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
 /**
@@ -32,6 +32,25 @@ interface Empresa {
   ads_activos: number;
 }
 
+interface UbicacionStat {
+  ubicacion: string;
+  impresiones: number;
+  clicks: number;
+  ctr: number | null;
+  muestraSuficiente: boolean;
+}
+
+interface ResumenAd {
+  ad_id: number;
+  nombre: string;
+  empresa_nombre: string;
+  impresiones: number;
+  clicks: number;
+  ctr: number | null;
+  muestraSuficiente: boolean;
+  porUbicacion: UbicacionStat[];
+}
+
 interface EntradaLog {
   id: number;
   ad_id: number | null;
@@ -46,6 +65,9 @@ const { data: empresas, refresh: refrescarEmpresas } = await useFetch<Empresa[]>
 const { data: log, refresh: refrescarLog } = await useFetch<EntradaLog[]>('/api/ads/log', {
   key: 'ads-log',
   query: { limite: 20 },
+});
+const { data: stats } = await useFetch<{ desde: string; hasta: string; ads: ResumenAd[] }>('/api/ads/stats', {
+  key: 'ads-stats',
 });
 
 const { actualizarAd, borrarAd: borrarAdApi, crearEmpresa: crearEmpresaApi, actualizarEmpresa } = useAdsAdmin();
@@ -126,6 +148,15 @@ const opcionesEmpresa = computed(() =>
 /** Un ad prendido cuya empresa está apagada no se publica: hay que decirlo. */
 const silenciado = (ad: AdAdmin) => ad.activo && !ad.empresa_activa;
 
+const dia = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('es-CL') : '');
+
+/**
+ * El CTR se muestra siempre, pero con la advertencia al lado cuando la muestra
+ * no alcanza. Esconderlo obligaría a adivinar; presentarlo sin contexto
+ * invitaría a sacar conclusiones de tres clicks.
+ */
+const ctrTexto = (v: number | null) => (v === null ? '—' : `${v}%`);
+
 const fecha = (iso: string) =>
   new Date(iso).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 </script>
@@ -203,6 +234,46 @@ const fecha = (iso: string) =>
           </div>
         </li>
       </ul>
+    </section>
+
+    <section>
+      <div class="panel-ads__cabecera">
+        <h2>Rendimiento</h2>
+        <span class="panel-ads__meta">{{ dia(stats?.desde) }} — {{ dia(stats?.hasta) }}</span>
+      </div>
+
+      <p v-if="!stats?.ads?.length" class="panel-ads__vacio">
+        Todavía no hay impresiones ni clicks registrados en este rango.
+      </p>
+
+      <ul v-else class="panel-ads__lista">
+        <li v-for="r in stats?.ads ?? []" :key="r.ad_id" class="panel-ads__item panel-ads__item--stat">
+          <div class="panel-ads__datos">
+            <span class="panel-ads__nombre">{{ r.nombre }}</span>
+            <span class="panel-ads__meta">{{ r.empresa_nombre }}</span>
+            <span v-for="u in r.porUbicacion" :key="u.ubicacion" class="panel-ads__meta">
+              {{ u.ubicacion }}: {{ u.impresiones }} impr · {{ u.clicks }} clicks · {{ ctrTexto(u.ctr) }}
+            </span>
+          </div>
+          <div class="panel-ads__cifras">
+            <span class="panel-ads__ctr">{{ ctrTexto(r.ctr) }}</span>
+            <span class="panel-ads__meta">{{ r.impresiones }} impresiones · {{ r.clicks }} clicks</span>
+            <span v-if="!r.muestraSuficiente" class="panel-ads__aviso">
+              <IconAlertTriangle :size="14" aria-hidden="true" />
+              Muestra chica: todavía no concluye nada
+            </span>
+          </div>
+        </li>
+      </ul>
+
+      <!--
+        Deshabilitado a proposito hasta que exista el informe. Se deja visible
+        porque es lo que se le va a entregar al anunciante, y tenerlo a la vista
+        recuerda que los numeros de arriba tienen que aguantar esa conversacion.
+      -->
+      <ChButton class="panel-ads__informe" variant="secondary" :disabled="true">
+        <IconFileTypeCsv :size="16" aria-hidden="true" /> Informe por empresa (CSV) — pronto
+      </ChButton>
     </section>
 
     <section>
@@ -337,6 +408,28 @@ const fecha = (iso: string) =>
 .panel-ads__vacio {
   color: var(--text-muted, #666);
   padding: 2rem 0;
+}
+
+.panel-ads__item--stat {
+  align-items: flex-start;
+}
+
+.panel-ads__cifras {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.panel-ads__ctr {
+  font-size: 1.3em;
+  font-weight: var(--typography-weight-bold);
+}
+
+.panel-ads__informe {
+  margin-top: 1.25rem;
 }
 
 .panel-ads__log {

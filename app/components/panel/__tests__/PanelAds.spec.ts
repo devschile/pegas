@@ -41,9 +41,20 @@ const empresaBase = {
   ads_activos: 1,
 };
 
-function mockDatos(ads: unknown[] = [adBase], empresas: unknown[] = [empresaBase], log: unknown[] = []) {
+const statsVacias = { desde: '2026-08-31T00:00:00Z', hasta: '2026-09-30T00:00:00Z', ads: [] };
+
+function mockDatos(
+  ads: unknown[] = [adBase],
+  empresas: unknown[] = [empresaBase],
+  log: unknown[] = [],
+  stats: unknown = statsVacias,
+) {
   useFetchMock.mockImplementation((url: string) => {
-    const data = url === '/api/ads/admin' ? ads : url === '/api/empresas' ? empresas : log;
+    const data =
+      url === '/api/ads/admin' ? ads
+      : url === '/api/empresas' ? empresas
+      : url === '/api/ads/stats' ? stats
+      : log;
     return { data: ref(data), refresh: refrescar };
   });
 }
@@ -150,5 +161,56 @@ describe('PanelAds', () => {
     const w = await montar();
     expect(w.text()).toContain('activar');
     expect(w.text()).toContain('Dev Local');
+  });
+});
+
+describe('PanelAds — rendimiento', () => {
+  const stat = {
+    ad_id: 1,
+    nombre: 'Cabecera comprada',
+    empresa_nombre: 'Ñandú Software',
+    impresiones: 1200,
+    clicks: 30,
+    ctr: 2.5,
+    muestraSuficiente: true,
+    porUbicacion: [{ ubicacion: 'header', impresiones: 1200, clicks: 30, ctr: 2.5, muestraSuficiente: true }],
+  };
+
+  it('sin eventos lo dice en vez de mostrar una tabla vacía', async () => {
+    const w = await montar();
+    expect(w.text()).toContain('Todavía no hay impresiones ni clicks');
+  });
+
+  it('muestra CTR, impresiones y el desglose por ubicación', async () => {
+    mockDatos([adBase], [empresaBase], [], { ...statsVacias, ads: [stat] });
+    const w = await montar();
+    expect(w.text()).toContain('2.5%');
+    expect(w.text()).toContain('1200 impresiones');
+    expect(w.text()).toContain('header: 1200 impr');
+  });
+
+  it('advierte cuando la muestra no alcanza, pero igual muestra el número', async () => {
+    mockDatos([adBase], [empresaBase], [], {
+      ...statsVacias,
+      ads: [{ ...stat, impresiones: 40, clicks: 2, ctr: 5, muestraSuficiente: false }],
+    });
+    const w = await montar();
+    expect(w.text()).toContain('Muestra chica');
+    expect(w.text()).toContain('5%');
+  });
+
+  it('no advierte cuando la muestra alcanza', async () => {
+    mockDatos([adBase], [empresaBase], [], { ...statsVacias, ads: [stat] });
+    expect((await montar()).text()).not.toContain('Muestra chica');
+  });
+
+  it('el botón de informe está deshabilitado: todavía no existe', async () => {
+    const w = await montar();
+    // El wrapper de Vue de chucao pasa `disabled` como propiedad del elemento,
+    // no como atributo, asi que se afirma sobre la prop del componente.
+    const boton = w.findAllComponents({ name: 'ChButton' })
+      .find(b => b.classes().includes('panel-ads__informe'));
+    expect(boton).toBeDefined();
+    expect(boton!.props('disabled')).toBe(true);
   });
 });

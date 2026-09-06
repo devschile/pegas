@@ -57,12 +57,19 @@ function mockFetches(
   });
 }
 
+/**
+ * PanelAds tiene su propio spec y hace sus propios fetch; acá solo interesa
+ * que la pestaña exista para admin, así que se reemplaza por un marcador.
+ */
+const stubPanelAds = { name: 'PanelAds', template: '<div data-test="panel-ads" />' };
+
 async function mountMisPegas() {
   const { default: MisPegasPage } = await import('../mis-pegas.vue');
   const wrapper = mount(
     defineComponent({
       render: () => h(Suspense, null, { default: () => h(MisPegasPage) }),
     }),
+    { global: { stubs: { PanelAds: stubPanelAds } } },
   );
   await flushPromises();
   return wrapper;
