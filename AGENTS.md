@@ -1,7 +1,32 @@
 # AGENTS.md
 
-Convenciones de código para este proyecto (`web/`). Aplican a todo el código
-nuevo y al que se toque durante un refactor.
+Convenciones de código para este proyecto. Aplican a todo el código nuevo y
+al que se toque durante un refactor.
+
+## Este repositorio es público
+
+Se ve desde fuera de la organización y va a seguir así. Eso impone una regla
+que no es de estilo: **la lógica de negocio no vive acá.**
+
+Lo comercial —tarifas, reglas de descuento, condiciones pactadas con un
+auspiciador, calendarios de campaña, cualquier cosa que forme parte de un
+acuerdo— vive en `pegas-core`, que es privado, o directamente en la base de
+datos. Acá vive cómo se ve el sitio: páginas, componentes, la API que consume
+el propio front, y lo necesario para renderizar lo que la base ya tiene.
+
+La prueba práctica: **si el dato cambia cuando se renegocia un acuerdo, no va
+en este repositorio.** Un banner es contenido; su tarifa es un acuerdo.
+
+**Los mensajes de commit y los títulos de PR tampoco nombran acuerdos.** Son
+lo primero que se lee desde afuera y quedan indexados. Se describe el cambio
+técnico, no con quién se cerró: `feat(ads): campañas con fecha de término`,
+nunca el nombre de la empresa que la pidió. Lo mismo vale para comentarios,
+nombres de rama y `dev/fixtures.json`, donde los datos de ejemplo son
+inventados — ningún auspiciador real, igual que ninguna pega real.
+
+Borrarlo después no arregla nada: el historial de un repositorio público
+queda, y los forks ajenos **no** se vuelven privados si algún día se cierra
+el original.
 
 ## Nombres de identificadores
 
