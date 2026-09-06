@@ -951,6 +951,24 @@
       ],
       "inicia_en": null,
       "termina_en": null
+    },
+    {
+      "empresa_slug": "nandu-software",
+      "nombre": "Detalle de pega",
+      "formato": "imagen",
+      "imagen_desktop_url": "/dev/banner-ejemplo-1.svg",
+      "imagen_movil_url": "/dev/banner-ejemplo-1-movil.svg",
+      "alt": "Nandu Software esta contratando",
+      "html": null,
+      "alto_desktop": null,
+      "alto_movil": null,
+      "link": "https://ejemplo.invalid/nandu",
+      "activo": true,
+      "ubicaciones": [
+        "pega"
+      ],
+      "inicia_en": null,
+      "termina_en": null
     }
   ],
   "empresas": [

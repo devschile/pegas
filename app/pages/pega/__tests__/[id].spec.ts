@@ -13,6 +13,12 @@ mockNuxtImport('useFetch', () => useFetchMock);
 mockNuxtImport('useRoute', () => useRouteMock);
 mockNuxtImport('useTrackEvent', () => () => trackMock);
 
+/**
+ * La página monta un espacio publicitario. Tiene su propio spec, y si no se
+ * simula acá su `useFetch` se mezcla con el de la pega.
+ */
+mockNuxtImport('useAds', () => () => ({ ads: ref({ header: null, listado: null, footer: null, pega: null }) }));
+
 function buildJob(overrides: Partial<Pega> = {}): Pega {
   return {
     id: 123,

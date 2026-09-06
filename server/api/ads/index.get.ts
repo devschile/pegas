@@ -2,11 +2,13 @@ import { defineEventHandler, getQuery } from 'h3';
 import { query } from '../../utils/db';
 
 /**
- * Las tres ubicaciones que un ad puede ocupar. Es la misma lista que impone el
- * CHECK `ads_ubicaciones_validas` en la migración 007: si acá se agrega una,
- * hay que agregarla allá también o la base rechaza la fila.
+ * Las cuatro ubicaciones que un ad puede ocupar. La misma lista vive en
+ * `ads-validacion.ts`, en `composables/useAds.ts` y en el CHECK
+ * `ads_ubicaciones_validas` de la migración 007: agregar una obliga a tocar
+ * las cuatro, o la base rechaza la fila. Están separadas porque unas viven en
+ * el bundle del servidor y otras en el del cliente.
  */
-export const UBICACIONES = ['header', 'listado', 'footer'] as const;
+export const UBICACIONES = ['header', 'listado', 'footer', 'pega'] as const;
 export type Ubicacion = (typeof UBICACIONES)[number];
 
 /**
@@ -113,9 +115,9 @@ export function limpiar(ad: AdPublico | null): AdPublico | null {
 }
 
 /**
- * Sin `ubicacion` devuelve las tres de una vez, que es lo que necesita una
- * página para renderizarse completa sin encadenar llamadas. Con `ubicacion`
- * devuelve solo esa.
+ * Sin `ubicacion` devuelve todas de una vez, que es lo que necesita una página
+ * para renderizarse completa sin encadenar llamadas. Con `ubicacion` devuelve
+ * solo esa.
  */
 export default defineEventHandler(async event => {
   const ubicacion = parseUbicacion(getQuery(event).ubicacion);

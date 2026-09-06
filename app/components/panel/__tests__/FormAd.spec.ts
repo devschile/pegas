@@ -145,7 +145,8 @@ describe('FormAd — ubicaciones', () => {
   it('marca y desmarca sin duplicar', async () => {
     const w = montar();
     const casillas = w.findAll('.form-ad__ubicacion input');
-    expect(casillas).toHaveLength(3);
+    // header, listado, footer y la página de la pega.
+    expect(casillas).toHaveLength(4);
 
     await casillas[0]!.trigger('change');
     await casillas[2]!.trigger('change');
@@ -154,6 +155,9 @@ describe('FormAd — ubicaciones', () => {
 
     await casillas[0]!.trigger('change');
     expect(form.ubicaciones).toEqual(['footer']);
+
+    await casillas[3]!.trigger('change');
+    expect(form.ubicaciones).toEqual(['footer', 'pega']);
   });
 
   it('avisa cuál empresa está apagada al elegirla', () => {

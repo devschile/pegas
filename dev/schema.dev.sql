@@ -36,7 +36,7 @@ CREATE TABLE public.ads (
     CONSTRAINT ads_html_acotado CHECK (((html IS NULL) OR (length(html) <= 100000))),
     CONSTRAINT ads_imagenes_origen CHECK ((((imagen_desktop_url IS NULL) OR (imagen_desktop_url ~* '^(https?://|/)'::text)) AND ((imagen_movil_url IS NULL) OR (imagen_movil_url ~* '^(https?://|/)'::text)))),
     CONSTRAINT ads_link_protocolo CHECK (((link IS NULL) OR (link ~* '^https?://'::text))),
-    CONSTRAINT ads_ubicaciones_validas CHECK (((cardinality(ubicaciones) >= 1) AND (NOT (ubicaciones @> ARRAY[NULL::text])) AND (ubicaciones <@ ARRAY['header'::text, 'listado'::text, 'footer'::text]))),
+    CONSTRAINT ads_ubicaciones_validas CHECK (((cardinality(ubicaciones) >= 1) AND (NOT (ubicaciones @> ARRAY[NULL::text])) AND (ubicaciones <@ ARRAY['header'::text, 'listado'::text, 'footer'::text, 'pega'::text]))),
     CONSTRAINT ads_vigencia_coherente CHECK (((inicia_en IS NULL) OR (termina_en IS NULL) OR (termina_en > inicia_en)))
 );
 
@@ -52,7 +52,7 @@ CREATE TABLE public.ads_eventos (
     CONSTRAINT ads_eventos_dispositivo_check CHECK ((dispositivo = ANY (ARRAY['desktop'::text, 'movil'::text]))),
     CONSTRAINT ads_eventos_posicion_solo_listado CHECK (((ubicacion = 'listado'::text) OR ((posicion IS NULL) AND (pagina IS NULL)))),
     CONSTRAINT ads_eventos_tipo_check CHECK ((tipo = ANY (ARRAY['impresion'::text, 'click'::text]))),
-    CONSTRAINT ads_eventos_ubicacion_check CHECK ((ubicacion = ANY (ARRAY['header'::text, 'listado'::text, 'footer'::text])))
+    CONSTRAINT ads_eventos_ubicacion_check CHECK ((ubicacion = ANY (ARRAY['header'::text, 'listado'::text, 'footer'::text, 'pega'::text])))
 );
 
 CREATE SEQUENCE public.ads_eventos_id_seq

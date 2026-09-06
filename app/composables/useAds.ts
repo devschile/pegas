@@ -14,15 +14,15 @@ export interface AdPublico {
   es_casa: boolean;
 }
 
-/** Las tres ubicaciones, en el orden en que aparecen en la página. */
-export const UBICACIONES = ['header', 'listado', 'footer'] as const;
+/** Las cuatro ubicaciones donde puede caer un ad. */
+export const UBICACIONES = ['header', 'listado', 'footer', 'pega'] as const;
 
-export type AdsPorUbicacion = Record<'header' | 'listado' | 'footer', AdPublico | null>;
+export type AdsPorUbicacion = Record<'header' | 'listado' | 'footer' | 'pega', AdPublico | null>;
 
-const VACIO: AdsPorUbicacion = { header: null, listado: null, footer: null };
+const VACIO: AdsPorUbicacion = { header: null, listado: null, footer: null, pega: null };
 
 /**
- * Los ads de las tres ubicaciones en una sola llamada, que es lo que necesita
+ * Los ads de todas las ubicaciones en una sola llamada, que es lo que necesita
  * una página para renderizarse completa sin encadenar fetches.
  *
  * La `key` fija hace que varios componentes que lo llamen compartan la misma

@@ -27,7 +27,7 @@ interface AdPublico {
 
 const props = defineProps<{
   ad: AdPublico | null;
-  ubicacion: 'header' | 'listado' | 'footer';
+  ubicacion: 'header' | 'listado' | 'footer' | 'pega';
   posicion?: number | null;
   pagina?: number | null;
 }>();

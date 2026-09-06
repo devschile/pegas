@@ -32,7 +32,7 @@ const cuerpo = encodeURIComponent(
 const mailto = `mailto:${CONTACTO}?subject=${asunto}&body=${cuerpo}`;
 
 /** El esquema resalta la ubicación que se está mirando. */
-const resaltada = ref<'header' | 'listado' | 'footer' | null>(null);
+const resaltada = ref<'header' | 'listado' | 'footer' | 'pega' | null>(null);
 
 const ubicaciones = [
   {
@@ -54,6 +54,13 @@ const ubicaciones = [
     n: '03',
     titulo: 'Pie',
     donde: 'Al ancho del contenido, después del listado. Lo ve quien busca navegar.',
+    medidas: 'escritorio 970 × 90–200 · móvil 320 × 100–200',
+  },
+  {
+    id: 'pega' as const,
+    n: '04',
+    titulo: 'En el aviso',
+    donde: 'Otra pantalla: la página de una pega, debajo del aviso. Va después y no antes, porque quien llega ahí vino a leer algo concreto. Es la audiencia más comprometida del sitio.',
     medidas: 'escritorio 970 × 90–200 · móvil 320 × 100–200',
   },
 ];
@@ -93,6 +100,7 @@ useSeoMeta({
       <div class="pub__donde">
         <!-- Esquema del sitio: se entiende mucho más rápido que describirlo. -->
         <div class="pub__esquema" aria-hidden="true">
+          <p class="pub__esquema-rotulo">listado</p>
           <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'header' }">
             <AsciiFill :activo="resaltada === 'header'" />
             <span>cabecera</span>
@@ -109,6 +117,18 @@ useSeoMeta({
           <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'footer' }">
             <AsciiFill :activo="resaltada === 'footer'" />
             <span>pie</span>
+          </div>
+        </div>
+
+        <!-- La cuarta ubicación vive en otra pantalla, así que va en su propio
+             esquema en vez de forzarla dentro del listado. -->
+        <div class="pub__esquema pub__esquema--pega" aria-hidden="true">
+          <p class="pub__esquema-rotulo">página de una pega</p>
+          <div class="pub__barra" />
+          <div class="pub__card pub__card--alta" />
+          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'pega' }">
+            <AsciiFill :activo="resaltada === 'pega'" />
+            <span>en el aviso</span>
           </div>
         </div>
 
@@ -363,6 +383,24 @@ useSeoMeta({
     gap: 4rem;
     align-items: start;
   }
+}
+
+.pub__esquema-rotulo {
+  margin: 0 0 0.15rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted, #777);
+}
+
+.pub__esquema--pega {
+  margin-top: 1rem;
+  position: static;
+}
+
+.pub__card--alta {
+  height: 5.5rem;
 }
 
 .pub__esquema {

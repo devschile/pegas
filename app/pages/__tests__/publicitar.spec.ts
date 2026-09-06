@@ -61,14 +61,25 @@ describe('pages/publicitar', () => {
     expect(href).toContain('body=');
   });
 
-  it('el esquema del sitio marca los tres espacios', () => {
+  it('los esquemas marcan los cuatro espacios, en sus dos pantallas', () => {
     const w = montar();
     const etiquetas = w.findAll('.pub__slot span');
-    expect(etiquetas.map(s => s.text())).toEqual(['cabecera', 'entre las pegas', 'pie']);
+    expect(etiquetas.map(s => s.text())).toEqual([
+      'cabecera',
+      'entre las pegas',
+      'pie',
+      'en el aviso',
+    ]);
+    // La cuarta vive en otra pantalla, asi que va en su propio esquema.
+    expect(w.findAll('.pub__esquema')).toHaveLength(2);
   });
 
   it('cada espacio del esquema lleva su textura animada', () => {
-    expect(montar().findAll('.pub__slot [data-test="ascii"]')).toHaveLength(3);
+    expect(montar().findAll('.pub__slot [data-test="ascii"]')).toHaveLength(4);
+  });
+
+  it('la lista describe las cuatro ubicaciones', () => {
+    expect(montar().findAll('.pub__item')).toHaveLength(4);
   });
 
   it('pasar por una ubicación la resalta en el esquema', async () => {

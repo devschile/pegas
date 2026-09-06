@@ -27,7 +27,8 @@ const raiz = ref<HTMLElement | null>(null);
 /** De menos a más denso. El espacio deja respirar la caja. */
 const RAMPA = [' ', '░', '░', '▒', '▓'];
 const COLUMNAS = 44;
-const VELOCIDAD = 0.00022; // columnas por ms
+/** Columnas por ms: un barrido completo dura ~3,5 s. */
+const VELOCIDAD = 0.017;
 
 function construir(root: HTMLElement) {
   const celdas: HTMLElement[] = [];

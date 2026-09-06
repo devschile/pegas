@@ -19,7 +19,7 @@ import { validarLink } from './ads-sanitize';
 export const ALTO_MAXIMO = 200;
 export const HTML_MAXIMO = 100_000;
 
-export const UBICACIONES_VALIDAS = ['header', 'listado', 'footer'] as const;
+export const UBICACIONES_VALIDAS = ['header', 'listado', 'footer', 'pega'] as const;
 export type Ubicacion = (typeof UBICACIONES_VALIDAS)[number];
 
 export type Resultado<T> = { ok: true; valor: T } | { ok: false; error: string };

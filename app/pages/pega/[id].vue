@@ -6,6 +6,8 @@ import { formatDate, sourceLabel } from '~/utils/pegas';
 import { categorySlug, idFromSlug, jobSlug } from '~/utils/slug';
 import type { Pega } from '~/types/pega';
 
+const { ads } = useAds();
+
 const route = useRoute();
 const track = useTrackEvent();
 
@@ -129,6 +131,13 @@ function handleBackClick() {
         <span class="pega-detalle__fuente">Publicada en {{ sourceLabel(job.fuente) }}</span>
       </div>
     </ChCard>
+
+    <!--
+      Despues de la tarjeta y no antes: quien llega aca vino a leer un aviso
+      concreto, y meterle publicidad delante seria exactamente lo que hace que
+      esta audiencia instale un bloqueador.
+    -->
+    <AdSlot :ad="ads.pega" ubicacion="pega" />
   </article>
 </template>
 
