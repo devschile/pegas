@@ -12,9 +12,9 @@ import { onBeforeUnmount, onMounted, type Ref } from 'vue';
  * una vez de inmediato para que el primer fotograma exista aunque la
  * animación esté desactivada.
  */
-export function useAnimacionAscii(
-  elemento: Ref<HTMLElement | null>,
-  preparar: (root: HTMLElement) => (t: number) => void,
+export function useAnimacionAscii<T extends HTMLElement>(
+  elemento: Ref<T | null>,
+  preparar: (root: T) => (t: number) => void,
 ) {
   let raf = 0;
   let observer: IntersectionObserver | null = null;

@@ -1,29 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
+import {
+  BANDAS,
+  celda,
+  construirGrilla,
+  desplazamiento,
+  estaCalada,
+  type Alineacion,
+  type Caja,
+  type Grilla,
+} from '~/utils/glyph-field';
 
 /**
  * Campo de brackets con barrido radial, de fondo.
  *
- * La técnica viene de la pieza de referencia que guardamos en `design/`: una
- * grilla de caracteres monoespaciados donde un barrido angular decide el
- * color y la intensidad de cada celda. La rampa de tonos es la de devsChile
- * —del acento a la tiza— y no la de la pieza original: tomamos el recurso, no
- * la identidad de otra marca.
+ * Pinta en canvas y no con un `<span>` por celda. Expandido son ~4.300 celdas
+ * y con DOM cada fotograma obligaba al navegador a recalcular estilo y
+ * repintar las 4.300: medido con 4x de CPU throttling daban 94 ms de
+ * fotograma —11 fps— de los cuales solo 14 eran JS. En canvas el mismo dibujo
+ * son 15 ms. No se pierde nada por el camino: la pieza ya era `aria-hidden` y
+ * `user-select: none`, así que el DOM no aportaba texto ni selección.
  *
- * Es decorativo, así que va con `aria-hidden`. Nada de lo que dice la página
- * depende de esto.
+ * La rampa de tonos es la de devsChile —del acento a la tiza— y no la de la
+ * pieza de referencia: tomamos el recurso, no la identidad de otra marca.
  */
 
 const props = withDefaults(
   defineProps<{
     mirror?: boolean;
     /**
-     * Ocupa todo el ancho del contenedor en vez de quedarse a un lado. Se usa
-     * cuando el campo es el fondo de una banda entera y no un remate lateral.
+     * Ocupa todo el contenedor en vez de quedarse a un lado. Se usa cuando el
+     * campo es el fondo de una banda entera y no un remate lateral.
      */
     expandir?: boolean;
     /**
-     * Elementos a calar. El campo mide la caja de cada uno y no pinta las
+     * Elementos a calar. El campo mide la caja de cada uno y no dibuja las
      * celdas que quedan detrás, así que el texto queda recortado del campo en
      * vez de taparlo. Se pasan por separado y no un contenedor: recortando el
      * bloque entero queda un rectángulo enorme y los glifos se arrinconan en
@@ -34,117 +45,127 @@ const props = withDefaults(
   { mirror: false, expandir: false, recorte: null },
 );
 
-const raiz = ref<HTMLElement | null>(null);
+const raiz = ref<HTMLCanvasElement | null>(null);
 
-const ABIERTOS = ['‹', '{', '[', '('];
-const CERRADOS = ['›', '}', ']', ')'];
-/** El desnivel entre filas evita que el campo se lea como una tabla. */
-const DESNIVEL = [0, -2, 2, -2, 0];
-const BASE = 26;
+/** Se guardan para poder soltarlos: `construir` corre dentro de `onMounted`,
+    fuera del contexto síncrono del setup. */
+let alRedimensionar: (() => void) | null = null;
+let observador: ResizeObserver | null = null;
+onBeforeUnmount(() => {
+  if (alRedimensionar) window.removeEventListener('resize', alRedimensionar);
+  observador?.disconnect();
+});
 
-/** Celda en em, la misma grilla que usa el wordmark. */
-const CELDA_EM = 22 / 34;
-const FILA_EM = 40 / 34;
-const VELOCIDAD = 0.00055; // rad/ms
-const PASO_GLIFO = 170; // ms entre cambios de caracter
+function construir(root: HTMLCanvasElement) {
+  const ctx = root.getContext('2d');
+  if (!ctx) return () => {};
 
-const mod = (a: number, n: number) => ((a % n) + n) % n;
+  const alineacion: Alineacion = props.expandir ? 'centro' : props.mirror ? 'fin' : 'inicio';
 
-function celda(x: number, y: number, cols: number, filas: number, t: number, espejo: boolean) {
-  const cx = (cols - 1) / 2;
-  const cy = (filas - 1) / 2;
-  const nx = x - cx;
-  const angulo = Math.atan2(y - cy, nx);
-  const barrido = mod(t * VELOCIDAD, Math.PI * 2);
-
-  const paso = Math.floor(t / PASO_GLIFO + y * 1.7 + Math.abs(nx) * 0.8);
-  const izquierda = espejo ? x > cx : x <= cx;
-  const glifos = izquierda ? ABIERTOS : CERRADOS;
-
-  const tono = mod(angulo - barrido, Math.PI * 2) / (Math.PI * 2);
-  const distancia = Math.min(mod(angulo - barrido, Math.PI * 2), mod(barrido - angulo, Math.PI * 2));
-
-  return {
-    ch: glifos[mod(paso, glifos.length)]!,
-    banda: Math.min(4, Math.floor(tono * 5)),
-    // El haz va nítido y el resto se apaga: es lo que da la sensación de radar.
-    peso: distancia < 0.16 ? 1 : distancia < 0.42 ? 0.85 : distancia < 0.78 ? 0.55 : 0.28,
-  };
-}
-
-function construir(root: HTMLElement) {
-  // Con `expandir`, el ancho sale del contenedor: el campo tiene que llenar la
-  // banda, no quedarse en un costado.
-  let base = BASE;
-  let desnivel = DESNIVEL;
-  if (props.expandir) {
-    const fs = parseFloat(getComputedStyle(root).fontSize) || 16;
-    const ancho = root.parentElement?.clientWidth ?? 0;
-    const alto = root.parentElement?.clientHeight ?? 0;
-    if (ancho) base = Math.max(BASE, Math.ceil(ancho / (fs * CELDA_EM)));
-    // Tambien en alto: con cinco filas el campo era una franja delgada en
-    // medio de la banda, no un fondo. Denso es lo que hace el efecto.
-    if (alto) {
-      const filas = Math.max(5, Math.ceil(alto / (fs * FILA_EM)));
-      desnivel = Array.from({ length: filas }, (_, i) => DESNIVEL[i % DESNIVEL.length]!);
-    }
-  }
-  const FILAS = desnivel.map(d => base + d);
-
-  const celdas: Array<{ el: HTMLElement; x: number; y: number; cols: number; calada: boolean }> = [];
-  for (const [y, cols] of FILAS.entries()) {
-    const fila = document.createElement('div');
-    fila.className = 'glyph-field__row';
-    fila.style.gridTemplateColumns = `repeat(${cols}, calc(22 / 34 * 1em))`;
-    for (let x = 0; x < cols; x++) {
-      const span = document.createElement('span');
-      span.className = 'glyph-field__cell';
-      fila.appendChild(span);
-      celdas.push({ el: span, x, y, cols, calada: false });
-    }
-    root.appendChild(fila);
-  }
+  let grilla: Grilla = construirGrilla(16);
+  let fs = 16;
+  let tonos: string[] = [];
+  /** Las celdas caladas, por índice de fila y columna. */
+  let calado: boolean[][] = [];
 
   /**
-   * Qué celdas caen bajo el recorte. Se calcula al montar y al redimensionar,
-   * no en cada fotograma: son ciento y tantos `getBoundingClientRect`, que
-   * fuerzan layout y no tienen por qué repetirse sesenta veces por segundo.
+   * Mide, dimensiona el lienzo y calcula el calado. Va junto porque las tres
+   * cosas dependen del mismo layout, y se hace al montar y al redimensionar
+   * —nunca por fotograma: `getBoundingClientRect` fuerza layout.
    */
-  function medirRecorte() {
-    const objetivos = (Array.isArray(props.recorte) ? props.recorte : [props.recorte]).filter(Boolean);
-    const cajas = (objetivos as HTMLElement[]).map(e => e.getBoundingClientRect());
-    // Holgura chica: el agujero tiene que abrazar el texto, no rodearlo de aire.
-    const h = 6;
-    for (const c of celdas) {
-      if (cajas.length === 0) {
-        c.calada = false;
-        continue;
-      }
-      const r = c.el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      c.calada = cajas.some(
-        b => cx > b.left - h && cx < b.right + h && cy > b.top - h && cy < b.bottom + h,
-      );
-    }
-  }
-  if (props.recorte) {
-    requestAnimationFrame(medirRecorte);
-    window.addEventListener('resize', medirRecorte);
+  function medir() {
+    const estilo = getComputedStyle(root);
+    fs = parseFloat(estilo.fontSize) || 16;
+    tonos = BANDAS.map(b => estilo.getPropertyValue(b).trim() || '#f2ede9');
+
+    // Expandido el tamaño sale del contenedor; si no, de la grilla fija.
+    const padre = root.parentElement;
+    grilla = props.expandir
+      ? construirGrilla(fs, padre?.clientWidth ?? 0, padre?.clientHeight ?? 0)
+      : construirGrilla(fs);
+
+    const dpr = window.devicePixelRatio || 1;
+    root.style.width = `${grilla.ancho}px`;
+    root.style.height = `${grilla.alto}px`;
+    root.width = Math.round(grilla.ancho * dpr);
+    root.height = Math.round(grilla.alto * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = `${fs}px ${estilo.fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    medirCalado();
   }
 
+  function medirCalado() {
+    const objetivos = (Array.isArray(props.recorte) ? props.recorte : [props.recorte]).filter(
+      Boolean,
+    ) as HTMLElement[];
+    if (objetivos.length === 0) {
+      calado = [];
+      return;
+    }
+    // Las cajas vienen en coordenadas de ventana, así que el origen del
+    // lienzo las traduce a coordenadas locales de una sola vez.
+    const origen = root.getBoundingClientRect();
+    const cajas: Caja[] = objetivos.map(e => {
+      const b = e.getBoundingClientRect();
+      return {
+        left: b.left - origen.left,
+        top: b.top - origen.top,
+        right: b.right - origen.left,
+        bottom: b.bottom - origen.top,
+      };
+    });
+
+    const { ancho: ca, alto: cl } = grilla.celda;
+    calado = grilla.filas.map((cols, y) => {
+      const dx = desplazamiento(cols, grilla.cols, ca, alineacion);
+      const cy = (y + 0.5) * cl;
+      return Array.from({ length: cols }, (_, x) => estaCalada(dx + (x + 0.5) * ca, cy, cajas));
+    });
+  }
+
+  medir();
+  alRedimensionar = medir;
+  window.addEventListener('resize', medir);
+
+  /*
+   * Medir una sola vez al montar no alcanza: en ese momento la tipografía
+   * puede no haber cargado todavía y el bloque de texto reflow-ea después,
+   * con lo que el agujero queda corrido para siempre —medido, el campo salía
+   * con la misma densidad de tinta encima del titulo que a los lados—. El
+   * observador lo vuelve a medir cuando el contenedor cambia de caja.
+   */
+  const padre = root.parentElement;
+  if (padre && typeof ResizeObserver !== 'undefined') {
+    observador = new ResizeObserver(() => medir());
+    observador.observe(padre);
+  }
+  document.fonts?.ready.then(medir).catch(() => {});
+
   return (t: number) => {
-    for (const c of celdas) {
-      if (c.calada) {
-        if (c.el.textContent !== ' ') c.el.textContent = ' ';
-        continue;
+    const { ancho: ca, alto: cl } = grilla.celda;
+    ctx.clearRect(0, 0, grilla.ancho, grilla.alto);
+
+    // El estado del contexto solo se toca cuando cambia: cada asignación de
+    // `fillStyle` o `globalAlpha` cuesta, y las celdas vecinas suelen
+    // compartir tono y peso porque el barrido es continuo.
+    let tono = '';
+    let peso = -1;
+
+    for (const [y, cols] of grilla.filas.entries()) {
+      const dx = desplazamiento(cols, grilla.cols, ca, alineacion);
+      const py = (y + 0.5) * cl;
+      const filaCalada = calado[y];
+      for (let x = 0; x < cols; x++) {
+        if (filaCalada?.[x]) continue;
+        const v = celda(x, y, cols, grilla.filas.length, t, props.mirror);
+        const color = tonos[v.banda]!;
+        if (color !== tono) ctx.fillStyle = tono = color;
+        if (v.peso !== peso) ctx.globalAlpha = peso = v.peso;
+        ctx.fillText(v.ch, dx + (x + 0.5) * ca, py);
       }
-      const v = celda(c.x, c.y, c.cols, FILAS.length, t, props.mirror);
-      if (c.el.textContent !== v.ch) c.el.textContent = v.ch;
-      const banda = String(v.banda);
-      if (c.el.dataset.banda !== banda) c.el.dataset.banda = banda;
-      const op = String(v.peso);
-      if (c.el.style.opacity !== op) c.el.style.opacity = op;
     }
   };
 }
@@ -153,7 +174,7 @@ useAnimacionAscii(raiz, construir);
 </script>
 
 <template>
-  <div
+  <canvas
     ref="raiz"
     class="glyph-field"
     :class="{ 'glyph-field--mirror': mirror, 'glyph-field--expandir': expandir }"
@@ -168,13 +189,9 @@ useAnimacionAscii(raiz, construir);
   z-index: -10;
   transform: translateY(-50%);
   display: none;
-  flex-direction: column;
-  width: max-content;
   left: 0;
-  align-items: flex-start;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.8rem, 1.4vw, 1.05rem);
-  line-height: 1;
   opacity: 0.55;
   pointer-events: none;
   user-select: none;
@@ -185,9 +202,9 @@ useAnimacionAscii(raiz, construir);
   -webkit-mask-image: linear-gradient(to right, #000 0%, #000 35%, transparent 78%);
   mask-image: linear-gradient(to right, #000 0%, #000 35%, transparent 78%);
 
-  /* Cinco tonos distintos y no un degradado de uno solo: con la rampa
-     monocroma el campo se leía como una mancha y el conjunto quedaba duotono.
-     El barrido angular reparte los tonos, así que se ven todos girando. */
+  /* La rampa la lee el componente de estas propiedades, no el navegador: en
+     canvas no hay un nodo por celda al que aplicarle una regla. Siguen acá
+     para que la página pueda cambiarlas sin tocar el JS. */
   --banda-0: var(--pub-verde, #3ecf8e);
   --banda-1: var(--pub-azul, #4aa8ff);
   --banda-2: var(--pub-vermellon, #ff6a45);
@@ -199,7 +216,6 @@ useAnimacionAscii(raiz, construir);
 .glyph-field--expandir {
   left: 50%;
   transform: translate(-50%, -50%);
-  align-items: center;
   -webkit-mask-image: none;
   mask-image: none;
   opacity: 0.4;
@@ -208,7 +224,6 @@ useAnimacionAscii(raiz, construir);
 .glyph-field--mirror {
   left: auto;
   right: 0;
-  align-items: flex-end;
   -webkit-mask-image: linear-gradient(to left, #000 0%, #000 35%, transparent 78%);
   mask-image: linear-gradient(to left, #000 0%, #000 35%, transparent 78%);
 }
@@ -217,32 +232,13 @@ useAnimacionAscii(raiz, construir);
    el campo quedaria detras del texto, que es peor que no tenerlo. */
 @media (min-width: 1000px) {
   .glyph-field {
-    display: flex;
+    display: block;
   }
 }
 
 /* El expandido sí se muestra siempre: al ser el fondo de la banda no compite
    con el texto, que va calado encima. */
 .glyph-field--expandir {
-  display: flex;
+  display: block;
 }
-
-:deep(.glyph-field__row) {
-  display: grid;
-  width: fit-content;
-  flex-shrink: 0;
-}
-
-:deep(.glyph-field__cell) {
-  display: grid;
-  place-items: center;
-  width: calc(22 / 34 * 1em);
-  height: calc(40 / 34 * 1em);
-}
-
-:deep(.glyph-field__cell[data-banda='0']) { color: var(--banda-0); }
-:deep(.glyph-field__cell[data-banda='1']) { color: var(--banda-1); }
-:deep(.glyph-field__cell[data-banda='2']) { color: var(--banda-2); }
-:deep(.glyph-field__cell[data-banda='3']) { color: var(--banda-3); }
-:deep(.glyph-field__cell[data-banda='4']) { color: var(--banda-4); }
 </style>
