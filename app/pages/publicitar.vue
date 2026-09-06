@@ -79,9 +79,9 @@ useSeoMeta({
         <p class="pub__eyebrow">espacios disponibles</p>
         <h1 class="pub__titulo">Tu marca, frente a quien programa en Chile.</h1>
         <p class="pub__bajada">
-          <strong>pegas.devschile.cl</strong> es la bolsa de trabajo de la comunidad devsChile.
+          <strong>Pegas devsChile</strong> es la bolsa de trabajo de la comunidad devsChile.
           Quien entra está buscando pega o mirando el mercado. Si es a esa gente a quien quieres
-          llegar —para contratar, o para mostrarle una herramienta— acá tienes tres espacios.
+          llegar, acá tienes tres espacios.
         </p>
         <ChButton :href="mailto">
           Hablemos <IconArrowUpRight :size="16" aria-hidden="true" />
@@ -210,10 +210,14 @@ useSeoMeta({
 }
 
 .pub__titulo {
-  font-size: clamp(2rem, 5.5vw, 3.5rem);
-  letter-spacing: -0.045em;
-  line-height: 1.04;
-  margin: 0.5rem 0 1.25rem;
+  /* Techo mas bajo que el original: a 3.5rem el titulo dominaba tanto que el
+     resto del bloque parecia una nota al pie. */
+  font-size: clamp(1.9rem, 4.6vw, 3rem);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  margin: 0.75rem auto 1.25rem;
+  max-width: 18ch;
+  text-wrap: balance;
 }
 
 .pub__titulo--chico {
@@ -221,10 +225,13 @@ useSeoMeta({
 }
 
 .pub__bajada {
-  margin: 0 auto 1.75rem;
-  max-width: 46ch;
+  margin: 0 auto 2rem;
+  /* Mas ancha que antes para que el bloque se lea como una unidad y no como
+     una columna angosta debajo de un titulo enorme. */
+  max-width: 54ch;
   color: var(--text-muted, #888);
-  line-height: 1.65;
+  line-height: 1.7;
+  text-wrap: pretty;
 }
 
 /* --- hero ----------------------------------------------------------------- */
@@ -248,7 +255,7 @@ useSeoMeta({
 .pub__hero-inner {
   position: relative;
   z-index: 10;
-  max-width: 44rem;
+  max-width: 42rem;
 }
 
 /* --- secciones ------------------------------------------------------------ */

@@ -152,9 +152,15 @@ onBeforeUnmount(() => {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.8rem, 1.4vw, 1.05rem);
   line-height: 1;
-  opacity: 0.7;
+  opacity: 0.45;
   pointer-events: none;
   user-select: none;
+
+  /* Se desvanece hacia el centro. Sin esto el campo cruza por detrás del
+     texto y lo vuelve ilegible: el ancho del contenido y el de los dos
+     campos no caben juntos salvo en pantallas muy anchas. */
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 35%, transparent 78%);
+  mask-image: linear-gradient(to right, #000 0%, #000 35%, transparent 78%);
 
   /* Rampa de devsChile: del acento a la tiza, cinco pasos. */
   --banda-0: #2dd4bf;
@@ -168,14 +174,13 @@ onBeforeUnmount(() => {
   left: auto;
   right: 0;
   align-items: flex-end;
+  -webkit-mask-image: linear-gradient(to left, #000 0%, #000 35%, transparent 78%);
+  mask-image: linear-gradient(to left, #000 0%, #000 35%, transparent 78%);
 }
 
-/* En pantallas angostas el campo tapa el texto: se muestra solo el espejado. */
-.glyph-field--mirror {
-  display: flex;
-}
-
-@media (min-width: 640px) {
+/* Solo cuando de verdad sobra ancho a los lados del contenido. Debajo de eso
+   el campo quedaria detras del texto, que es peor que no tenerlo. */
+@media (min-width: 1000px) {
   .glyph-field {
     display: flex;
   }
