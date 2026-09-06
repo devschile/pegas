@@ -2,7 +2,14 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import Publicitar from '../publicitar.vue';
 
-const montar = () => mount(Publicitar, { global: { mocks: { $router: { push: () => {} } } } });
+/** GlyphField es decorativo y monta un rAF: no aporta nada al test. */
+const montar = () =>
+  mount(Publicitar, {
+    global: {
+      mocks: { $router: { push: () => {} } },
+      stubs: { GlyphField: { template: '<div data-test="glyph" />' } },
+    },
+  });
 
 describe('pages/publicitar', () => {
   it('describe las tres ubicaciones con sus medidas', () => {
@@ -34,6 +41,25 @@ describe('pages/publicitar', () => {
     const href = montar().find('ch-button[href^="mailto:"]').attributes('href')!;
     expect(href).toContain('subject=');
     expect(href).toContain('body=');
+  });
+
+  it('el esquema del sitio marca los tres espacios', () => {
+    const w = montar();
+    const slots = w.findAll('.pub__slot');
+    expect(slots.map(s => s.text())).toEqual(['cabecera', 'entre las pegas', 'pie']);
+  });
+
+  it('pasar por una ubicación la resalta en el esquema', async () => {
+    const w = montar();
+    expect(w.findAll('.pub__slot--on')).toHaveLength(0);
+    await w.findAll('.pub__item')[1]!.trigger('mouseenter');
+    const encendidos = w.findAll('.pub__slot--on');
+    expect(encendidos).toHaveLength(1);
+    expect(encendidos[0]!.text()).toBe('entre las pegas');
+  });
+
+  it('el campo de glifos es decorativo y no aporta texto', () => {
+    expect(montar().findAll('[data-test="glyph"]').length).toBeGreaterThan(0);
   });
 
   it('promete numeros del servidor, que es el diferencial', () => {
