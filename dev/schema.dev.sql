@@ -255,15 +255,6 @@ ALTER TABLE ONLY public.ads
 ALTER TABLE ONLY public.ads_eventos
     ADD CONSTRAINT ads_eventos_ad_id_fkey FOREIGN KEY (ad_id) REFERENCES public.ads(id) ON DELETE CASCADE;
 
-ALTER TABLE ONLY public.ads_log
-    ADD CONSTRAINT ads_log_ad_id_fkey FOREIGN KEY (ad_id) REFERENCES public.ads(id) ON DELETE SET NULL;
-
-ALTER TABLE ONLY public.ads_log
-    ADD CONSTRAINT ads_log_empresa_id_fkey FOREIGN KEY (empresa_id) REFERENCES public.empresas(id) ON DELETE SET NULL;
-
-ALTER TABLE ONLY public.ads_log
-    ADD CONSTRAINT ads_log_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id) ON DELETE SET NULL;
-
 ALTER TABLE ONLY public.pegas_estado_usuario
     ADD CONSTRAINT pegas_estado_usuario_pega_id_fkey FOREIGN KEY (pega_id) REFERENCES public.pegas(id) ON DELETE CASCADE;
 
