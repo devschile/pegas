@@ -29,5 +29,7 @@ logs
 # Respaldos locales de operaciones sobre git/n8n (nunca se versionan)
 .rollback/
 
-# Referencia de diseño (banner de terceros, con fuente embebida). No se publica.
-banner.html
+# Referencias de diseño en la raíz (piezas de terceros, con fuentes embebidas).
+# Un proyecto Nuxt no tiene HTML suelto en la raíz, así que la categoría entera
+# se ignora: es más seguro que ir agregando archivos de a uno.
+/*.html
