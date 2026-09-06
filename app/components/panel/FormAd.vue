@@ -39,7 +39,27 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ guardado: []; cancelar: [] }>();
-const { crearAd, actualizarAd } = useAdsAdmin();
+const { crearAd, actualizarAd, subirImagen } = useAdsAdmin();
+
+/** Qué campo se está subiendo, para deshabilitar solo ese. */
+const subiendo = ref<'desktop' | 'movil' | null>(null);
+
+async function elegirArchivo(cual: 'desktop' | 'movil', e: Event) {
+  const archivo = (e.target as HTMLInputElement).files?.[0];
+  if (!archivo) return;
+  error.value = '';
+  subiendo.value = cual;
+  try {
+    const { url } = await subirImagen(archivo);
+    if (cual === 'desktop') form.imagen_desktop_url = url;
+    else form.imagen_movil_url = url;
+  } catch (err) {
+    error.value = (err as { data?: { message?: string } })?.data?.message ?? 'No se pudo subir la imagen';
+  } finally {
+    subiendo.value = null;
+    (e.target as HTMLInputElement).value = '';
+  }
+}
 
 const vacio = (): AdEditable => ({
   empresa_id: props.empresas[0]?.id ?? null,
@@ -165,17 +185,30 @@ async function guardar() {
     />
 
     <template v-if="form.formato === 'imagen'">
-      <ChInput
-        label="Imagen desktop (https)"
-        :value="form.imagen_desktop_url"
-        @ch-input="form.imagen_desktop_url = $event.detail ?? $event"
-      />
-      <ChInput
-        label="Imagen móvil (https)"
-        hint="Sin la versión móvil el ad se ve roto en la mitad del tráfico."
-        :value="form.imagen_movil_url"
-        @ch-input="form.imagen_movil_url = $event.detail ?? $event"
-      />
+      <div class="form-ad__imagen">
+        <ChInput
+          label="Imagen desktop (https)"
+          :value="form.imagen_desktop_url"
+          @ch-input="form.imagen_desktop_url = $event.detail ?? $event"
+        />
+        <label class="form-ad__subir">
+          <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" :disabled="subiendo !== null" @change="elegirArchivo('desktop', $event)" />
+          <span>{{ subiendo === 'desktop' ? 'Subiendo…' : 'Subir archivo' }}</span>
+        </label>
+      </div>
+
+      <div class="form-ad__imagen">
+        <ChInput
+          label="Imagen móvil (https)"
+          hint="Sin la versión móvil el ad se ve roto en la mitad del tráfico."
+          :value="form.imagen_movil_url"
+          @ch-input="form.imagen_movil_url = $event.detail ?? $event"
+        />
+        <label class="form-ad__subir">
+          <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" :disabled="subiendo !== null" @change="elegirArchivo('movil', $event)" />
+          <span>{{ subiendo === 'movil' ? 'Subiendo…' : 'Subir archivo' }}</span>
+        </label>
+      </div>
       <ChInput
         label="Texto alternativo"
         hint="Lo que va a leer quien use lector de pantalla."
@@ -286,6 +319,50 @@ async function guardar() {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.9em;
+}
+
+.form-ad__imagen {
+  display: grid;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+@media (min-width: 640px) {
+  .form-ad__imagen {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+/* El input nativo se esconde y el label hace de botón: el control de archivo
+   del navegador no se puede maquetar y desentona con el resto del panel. */
+.form-ad__subir input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.form-ad__subir {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-radius: 0.4rem;
+  font-size: 0.85em;
+  color: var(--text-muted, #666);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.form-ad__subir:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.form-ad__subir:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .form-ad__error {

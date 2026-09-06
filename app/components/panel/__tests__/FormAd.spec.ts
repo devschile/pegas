@@ -1,11 +1,12 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import FormAd from '../FormAd.vue';
 
 const crearAd = vi.fn().mockResolvedValue({});
 const actualizarAd = vi.fn().mockResolvedValue({});
-mockNuxtImport('useAdsAdmin', () => () => ({ crearAd, actualizarAd }));
+const subirImagen = vi.fn().mockResolvedValue({ url: 'https://utfs.io/f/x.png', nombre: 'x' });
+mockNuxtImport('useAdsAdmin', () => () => ({ crearAd, actualizarAd, subirImagen }));
 
 const empresas = [
   { id: 1, nombre: 'devsChile', activo: true },
@@ -24,6 +25,7 @@ function llenar(w: ReturnType<typeof montar>, campos: Record<string, unknown>) {
 beforeEach(() => {
   crearAd.mockClear();
   actualizarAd.mockClear();
+  subirImagen.mockClear();
 });
 
 describe('FormAd — armado del cuerpo', () => {
@@ -158,5 +160,53 @@ describe('FormAd — ubicaciones', () => {
     const w = montar();
     const opciones = (w.vm as unknown as { opcionesEmpresa: { label: string }[] }).opcionesEmpresa;
     expect(opciones.map(o => o.label)).toEqual(['devsChile', 'Anunciante Pausado (apagada)']);
+  });
+});
+
+describe('FormAd — subida de imagen', () => {
+  /** Simula que la persona eligió un archivo en el input nativo. */
+  function elegir(w: ReturnType<typeof montar>, indice: number) {
+    const input = w.findAll('.form-ad__subir input')[indice]!;
+    Object.defineProperty(input.element, 'files', {
+      value: [new File([new Uint8Array([1, 2, 3])], 'foto.png', { type: 'image/png' })],
+      configurable: true,
+    });
+    return input.trigger('change');
+  }
+
+  it('sube el archivo y rellena la URL con la que devuelve el servidor', async () => {
+    subirImagen.mockResolvedValueOnce({ url: 'https://utfs.io/f/abc.png', nombre: 'ad-1-x.png' });
+    const w = montar();
+    await elegir(w, 0);
+    await flushPromises();
+
+    expect(subirImagen).toHaveBeenCalledWith(expect.any(File));
+    expect((w.vm as unknown as { form: Record<string, unknown> }).form.imagen_desktop_url)
+      .toBe('https://utfs.io/f/abc.png');
+  });
+
+  it('cada botón rellena su propio campo', async () => {
+    subirImagen.mockResolvedValueOnce({ url: 'https://utfs.io/f/movil.png', nombre: 'x' });
+    const w = montar();
+    await elegir(w, 1);
+    await flushPromises();
+
+    const form = (w.vm as unknown as { form: Record<string, unknown> }).form;
+    expect(form.imagen_movil_url).toBe('https://utfs.io/f/movil.png');
+    expect(form.imagen_desktop_url).toBe('');
+  });
+
+  it('muestra el motivo del rechazo, que es lo que explica qué archivo sirve', async () => {
+    subirImagen.mockRejectedValueOnce({ data: { message: 'el archivo no es una imagen PNG, JPEG, GIF o WebP' } });
+    const w = montar();
+    await elegir(w, 0);
+    await flushPromises();
+    expect(w.text()).toContain('no es una imagen PNG');
+  });
+
+  it('el formato html no ofrece subida de imágenes', async () => {
+    const w = montar();
+    await llenar(w, { formato: 'html' });
+    expect(w.findAll('.form-ad__subir')).toHaveLength(0);
   });
 });

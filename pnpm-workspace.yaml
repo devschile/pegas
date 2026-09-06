@@ -1,6 +1,9 @@
 allowBuilds:
   core-js: true
   esbuild: true
+  # Acelerador nativo opcional de msgpackr (viene con uploadthing).
+  # Sin compilarlo, msgpackr usa su implementación en JS y todo funciona igual.
+  msgpackr-extract: false
 minimumReleaseAgeExclude:
   - '@devschile/chucao@1.6.0'
 onlyBuiltDependencies:

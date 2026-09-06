@@ -23,5 +23,16 @@ export function useAdsAdmin() {
 
     actualizarEmpresa: (id: number, cuerpo: Record<string, unknown>) =>
       $fetch(`/api/empresas/${id}`, { method: 'PATCH', body: cuerpo }),
+
+    /**
+     * Sube una imagen y devuelve su URL https. El servidor valida los bytes y
+     * le pone nombre propio: lo que mande el navegador como tipo o nombre no
+     * se usa para nada.
+     */
+    subirImagen: (archivo: File) => {
+      const datos = new FormData();
+      datos.append('archivo', archivo);
+      return $fetch<{ url: string; nombre: string }>('/api/ads/imagen', { method: 'POST', body: datos });
+    },
   };
 }
