@@ -46,6 +46,17 @@ describe('pages/publicitar', () => {
   });
 
   /**
+   * El formato propio se describe por lo que el anunciante gana, no por la
+   * lista de cosas que su pieza no puede hacer: escrito en negativo suena a
+   * restriccion y espanta antes de explicar nada.
+   */
+  it('la tarjeta del HTML no se describe con prohibiciones', () => {
+    const caja = montar().findAll('.pub__caja').find(c => c.text().includes('Tu propio HTML'))!;
+    expect(caja.text()).not.toMatch(/no puede tocar|ni hacer una sola petición/);
+    expect(caja.text()).toContain('tal cual');
+  });
+
+  /**
    * Este repositorio es público y una tarifa cambia cuando se renegocia un
    * acuerdo: los valores se conversan por correo, no se publican acá.
    */
@@ -61,21 +72,20 @@ describe('pages/publicitar', () => {
     expect(href).toContain('body=');
   });
 
-  it('los esquemas marcan los cuatro espacios, en sus dos pantallas', () => {
+  /**
+   * El esquema representa el listado, que es donde caen tres de las cuatro
+   * ubicaciones. La de la pagina del aviso vive en otra pantalla y por eso se
+   * describe en la lista, sin forzar un segundo diagrama.
+   */
+  it('el esquema marca los tres espacios del listado', () => {
     const w = montar();
     const etiquetas = w.findAll('.pub__slot span');
-    expect(etiquetas.map(s => s.text())).toEqual([
-      'cabecera',
-      'entre las pegas',
-      'pie',
-      'en el aviso',
-    ]);
-    // La cuarta vive en otra pantalla, asi que va en su propio esquema.
-    expect(w.findAll('.pub__esquema')).toHaveLength(2);
+    expect(etiquetas.map(s => s.text())).toEqual(['cabecera', 'entre las pegas', 'pie']);
+    expect(w.findAll('.pub__esquema')).toHaveLength(1);
   });
 
   it('cada espacio del esquema lleva su textura animada', () => {
-    expect(montar().findAll('.pub__slot [data-test="ascii"]')).toHaveLength(4);
+    expect(montar().findAll('.pub__slot [data-test="ascii"]')).toHaveLength(3);
   });
 
   it('la lista describe las cuatro ubicaciones', () => {

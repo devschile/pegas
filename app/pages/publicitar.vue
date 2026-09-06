@@ -60,7 +60,7 @@ const ubicaciones = [
     id: 'pega' as const,
     n: '04',
     titulo: 'En el aviso',
-    donde: 'Otra pantalla: la página de una pega, debajo del aviso. Va después y no antes, porque quien llega ahí vino a leer algo concreto. Es la audiencia más comprometida del sitio.',
+    donde: 'Otra pantalla: la página de cada pega, debajo del aviso. Va después y no antes, porque quien llega ahí vino a leer algo concreto. Es la audiencia más comprometida del sitio.',
     medidas: 'escritorio 970 × 90–200 · móvil 320 × 100–200',
   },
 ];
@@ -100,7 +100,6 @@ useSeoMeta({
       <div class="pub__donde">
         <!-- Esquema del sitio: se entiende mucho más rápido que describirlo. -->
         <div class="pub__esquema" aria-hidden="true">
-          <p class="pub__esquema-rotulo">listado</p>
           <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'header' }">
             <AsciiFill :activo="resaltada === 'header'" />
             <span>cabecera</span>
@@ -117,18 +116,6 @@ useSeoMeta({
           <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'footer' }">
             <AsciiFill :activo="resaltada === 'footer'" />
             <span>pie</span>
-          </div>
-        </div>
-
-        <!-- La cuarta ubicación vive en otra pantalla, así que va en su propio
-             esquema en vez de forzarla dentro del listado. -->
-        <div class="pub__esquema pub__esquema--pega" aria-hidden="true">
-          <p class="pub__esquema-rotulo">página de una pega</p>
-          <div class="pub__barra" />
-          <div class="pub__card pub__card--alta" />
-          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'pega' }">
-            <AsciiFill :activo="resaltada === 'pega'" />
-            <span>en el aviso</span>
           </div>
         </div>
 
@@ -167,9 +154,9 @@ useSeoMeta({
         <article class="pub__caja">
           <h2>Tu propio HTML</h2>
           <p>
-            Si tienes una pieza hecha, con su CSS y su animación, la corremos tal cual. Se sirve
-            aislada del sitio: no puede tocar la página, ni a quien la visita, ni hacer una sola
-            petición a un servidor que no sea el nuestro.
+            Si tienes una pieza hecha, con su CSS y su animación, la corremos tal cual: nadie te
+            la reescribe ni te la pasa por un comité. Va en su propio entorno, así que se ve igual
+            acá que en tu maqueta y nada del sitio puede interferirla.
           </p>
           <p class="pub__mono">hasta 200 px de alto · 100 KB — responsive</p>
         </article>
@@ -383,24 +370,6 @@ useSeoMeta({
     gap: 4rem;
     align-items: start;
   }
-}
-
-.pub__esquema-rotulo {
-  margin: 0 0 0.15rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.58rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted, #777);
-}
-
-.pub__esquema--pega {
-  margin-top: 1rem;
-  position: static;
-}
-
-.pub__card--alta {
-  height: 5.5rem;
 }
 
 .pub__esquema {
