@@ -1,13 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+
 const { ads } = useAds();
+
+/**
+ * Una página puede pedir que no se le monte el marco del sitio con
+ * `definePageMeta({ marco: false })`.
+ *
+ * Lo usa /publicitar: el encabezado con el conteo de pegas compite con su
+ * propio hero, y mostrar espacios publicitarios en la página que los vende es
+ * raro — el visitante viene a comprar el espacio, no a verlo ocupado.
+ */
+const route = useRoute();
+const conMarco = computed(() => route.meta.marco !== false);
 </script>
 
 <template>
   <div class="app-shell">
     <NuxtRouteAnnouncer />
     <!-- A todo el ancho y arriba del header: es la ubicacion mas visible. -->
-    <AdSlot :ad="ads.header" ubicacion="header" />
-    <SiteHeader />
+    <AdSlot v-if="conMarco" :ad="ads.header" ubicacion="header" />
+    <SiteHeader v-if="conMarco" />
     <main class="app-shell__main">
       <!--
         NuxtLayout envuelve NuxtPage: el layout (ej. app/layouts/listado.vue,
@@ -49,7 +62,7 @@ const { ads } = useAds();
       </NuxtLayout>
     </main>
     <!-- Al ancho del contenido, entre la paginacion y el copyright. -->
-    <div class="app-shell__ad-pie">
+    <div v-if="conMarco" class="app-shell__ad-pie">
       <AdSlot :ad="ads.footer" ubicacion="footer" />
     </div>
     <SiteFooter />

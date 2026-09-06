@@ -15,6 +15,13 @@ import { ref } from 'vue';
  * Ver la regla en AGENTS.md.
  */
 
+/**
+ * Sin el marco del sitio: el encabezado con el conteo de pegas competiría con
+ * el hero de esta página, y no tiene sentido ocupar con publicidad la página
+ * que vende esos mismos espacios.
+ */
+definePageMeta({ marco: false });
+
 // TODO: reemplazar por la dirección real de contacto comercial.
 const CONTACTO = 'hola@devschile.cl';
 
