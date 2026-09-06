@@ -19,12 +19,27 @@ describe('pages/publicitar', () => {
     expect(t).toContain('320 × 100');
   });
 
-  it('explica los dos formatos y sus límites', () => {
-    const t = montar().text();
+  /**
+   * Sin fijar las cifras: son copia y se ajustan. Lo que no puede desaparecer
+   * es que los dos formatos estén y que cada uno diga sus límites.
+   */
+  it('explica los dos formatos, cada uno con sus límites', () => {
+    const w = montar();
+    const t = w.text();
     expect(t).toContain('Una imagen');
     expect(t).toContain('Tu propio HTML');
-    expect(t).toContain('2 MB');
-    expect(t).toContain('600 px');
+    expect(w.findAll('.pub__caja .pub__mono')).toHaveLength(2);
+  });
+
+  /**
+   * La CSP del sobre permite `img-src https:`, o sea los píxeles de
+   * seguimiento SÍ funcionan; lo que se bloquea son los scripts externos.
+   * Prometer "sin trackers" seria falso y esto lo impide.
+   */
+  it('no promete bloquear trackers, solo scripts de terceros', () => {
+    const t = montar().text();
+    expect(t).toContain('scripts de terceros');
+    expect(t).not.toMatch(/tampoco puede cargar trackers/);
   });
 
   /**

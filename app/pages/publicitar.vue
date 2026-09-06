@@ -130,19 +130,19 @@ useSeoMeta({
         <article class="pub__caja">
           <h2>Una imagen</h2>
           <p>
-            Nos mandas dos versiones, escritorio y móvil, más el link de destino. Pedimos las dos
+            Utilizamos dos versiones, escritorio y móvil, más el link de destino. Pedimos las dos
             porque una sola se ve rota en la mitad del tráfico.
           </p>
-          <p class="pub__mono">PNG · JPEG · GIF · WebP — hasta 2 MB</p>
+          <p class="pub__mono">PNG · JPEG · GIF · WebP — mínimo peso</p>
         </article>
         <article class="pub__caja">
           <h2>Tu propio HTML</h2>
           <p>
             Si tienes una pieza hecha, con su CSS y su animación, la corremos tal cual. Se sirve
-            aislada del sitio: no puede tocar la página ni a quien la visita —y por lo mismo
-            tampoco puede cargar trackers de terceros.
+            aislada del sitio, así que no puede tocar la página ni a quien la visita. Tus píxeles
+            de impresión y de click funcionan; lo que no corre son scripts de terceros.
           </p>
-          <p class="pub__mono">hasta 600 px de alto — responsive</p>
+          <p class="pub__mono">hasta 300 px de alto — responsive</p>
         </article>
       </div>
     </section>

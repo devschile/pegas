@@ -27,9 +27,15 @@
  * todo lo que no se permite explícitamente queda bloqueado.
  *
  * `script-src 'unsafe-inline'` deja correr el JS que vino en el documento pero
- * **no** permite cargar scripts externos: un anunciante no mete un tracker de
- * terceros en el sitio. `font-src data:` es necesario para las fuentes
+ * **no** permite cargar scripts externos: ningun tag manager ni verificador de
+ * terceros se ejecuta acá. `font-src data:` es necesario para las fuentes
  * embebidas en base64, que es como llegan las piezas cuidadas.
+ *
+ * ⚠️ Ojo con lo que esto NO bloquea: `img-src https:` deja pasar los **píxeles
+ * de seguimiento**, que son la forma mas comun de medir una campaña. Es
+ * deliberado —un anunciante directo casi siempre pide su pixel, y negarselo
+ * mata la venta— pero significa que la promesa que se le puede hacer al
+ * visitante es "no corre codigo de terceros", no "no hay ningun tercero".
  */
 export const CSP_DEL_AD = [
   "default-src 'none'",
