@@ -28,3 +28,6 @@ logs
 
 # Respaldos locales de operaciones sobre git/n8n (nunca se versionan)
 .rollback/
+
+# Referencia de diseño (banner de terceros, con fuente embebida). No se publica.
+banner.html

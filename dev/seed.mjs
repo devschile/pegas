@@ -47,10 +47,12 @@ async function main() {
   const client = await pool.connect();
   try {
     console.log('📐 Aplicando dev/schema.dev.sql...');
-    await client.query('DROP TABLE IF EXISTS ads, pegas_estado_usuario, usuarios, pegas CASCADE');
+    await client.query(
+      'DROP TABLE IF EXISTS ads_eventos, ads_log, ads, empresas, pegas_estado_usuario, usuarios, pegas CASCADE',
+    );
     await client.query(readFileSync(join(aqui, 'schema.dev.sql'), 'utf8'));
 
-    const { pegas, ads } = JSON.parse(readFileSync(join(aqui, 'fixtures.json'), 'utf8'));
+    const { pegas, empresas, ads } = JSON.parse(readFileSync(join(aqui, 'fixtures.json'), 'utf8'));
     console.log(`🌱 Cargando ${pegas.length} pegas de ejemplo...`);
 
     for (const p of pegas) {
@@ -64,15 +66,34 @@ async function main() {
       );
     }
 
-    // Los ads entran por acá y no por la API a propósito: sus imagen_url son
-    // rutas relativas a public/dev/ para que el listado se vea completo sin
+    console.log(`🏢 Cargando ${empresas.length} empresas anunciantes...`);
+    /** slug → id, para que las fixtures de ads no tengan que saber ids. */
+    const idPorSlug = new Map();
+    for (const e of empresas) {
+      const { rows } = await client.query(
+        `INSERT INTO empresas (nombre, slug, sitio_url, contacto_email, activo, es_casa)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         RETURNING id`,
+        [e.nombre, e.slug, e.sitio_url, e.contacto_email, e.activo, e.es_casa],
+      );
+      idPorSlug.set(e.slug, rows[0].id);
+    }
+
+    // Los ads entran por acá y no por la API a propósito: sus imágenes son
+    // rutas relativas a public/dev/ para que el sitio se vea completo sin
     // pedirle nada a internet, y la API real solo acepta https.
     console.log(`📢 Cargando ${ads.length} ads de ejemplo...`);
     for (const a of ads) {
+      const empresaId = idPorSlug.get(a.empresa_slug);
+      if (!empresaId) throw new Error(`el ad "${a.nombre}" apunta a una empresa que no existe: ${a.empresa_slug}`);
       await client.query(
-        `INSERT INTO ads (nombre, tipo, imagen_url, alt, html, link, activo, ubicaciones)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [a.nombre, a.tipo, a.imagen_url, a.alt, a.html, a.link, a.activo, a.ubicaciones],
+        `INSERT INTO ads (empresa_id, nombre, formato, imagen_desktop_url, imagen_movil_url,
+                          alt, html, alto_desktop, alto_movil, link, activo, ubicaciones,
+                          inicia_en, termina_en)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+        [empresaId, a.nombre, a.formato, a.imagen_desktop_url, a.imagen_movil_url,
+         a.alt, a.html, a.alto_desktop, a.alto_movil, a.link, a.activo, a.ubicaciones,
+         a.inicia_en, a.termina_en],
       );
     }
 
@@ -80,9 +101,10 @@ async function main() {
       'SELECT COUNT(*) FILTER (WHERE activo) AS activas, COUNT(*) AS total FROM pegas',
     );
     const { rows: ra } = await client.query(
-      'SELECT COUNT(*) FILTER (WHERE activo) AS activos, COUNT(*) AS total FROM ads',
+      `SELECT COUNT(*) FILTER (WHERE a.activo AND e.activo) AS activos, COUNT(*) AS total
+       FROM ads a JOIN empresas e ON e.id = a.empresa_id`,
     );
-    console.log(`✅ Listo: ${rows[0].activas} pegas activas de ${rows[0].total}, y ${ra[0].activos} ads activos de ${ra[0].total}.`);
+    console.log(`✅ Listo: ${rows[0].activas} pegas activas de ${rows[0].total}, y ${ra[0].activos} ads publicables de ${ra[0].total}.`);
     console.log('   Ahora: pnpm dev → http://localhost:3000');
   } finally {
     client.release();

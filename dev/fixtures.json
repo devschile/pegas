@@ -1,5 +1,5 @@
 {
-  "_comentario": "Datos SINTETICOS para desarrollo local. Empresas, avisos y URLs inventados: ningun dato viene de produccion, que contiene avisos reales y cuentas de personas. Los ads apuntan a imagenes SVG servidas desde public/dev/: son rutas relativas a proposito, para que el listado se vea completo sin depender de ningun servicio externo. La API real solo acepta URLs https; estas filas entran por seed.mjs, que escribe directo en la base.",
+  "_comentario": "Datos SINTETICOS para desarrollo local. Empresas, avisos, anunciantes y URLs inventados: ningun dato viene de produccion, que contiene avisos reales y cuentas de personas. Los ads apuntan a SVG servidos desde public/dev/ con ruta relativa, para que el sitio se vea completo sin depender de ningun servicio externo; entran por seed.mjs, que escribe directo en la base.",
   "pegas": [
     {
       "id": 1,
@@ -844,53 +844,147 @@
   ],
   "ads": [
     {
-      "nombre": "Patrocinador de cabecera (ejemplo)",
-      "tipo": "imagen",
-      "imagen_url": "/dev/banner-ejemplo-1.svg",
-      "alt": "Banner de ejemplo en la cabecera",
+      "empresa_slug": "devschile",
+      "nombre": "Casa - cabecera",
+      "formato": "imagen",
+      "imagen_desktop_url": "/dev/banner-ejemplo-1.svg",
+      "imagen_movil_url": "/dev/banner-ejemplo-1-movil.svg",
+      "alt": "Publicita en pegas devsChile",
       "html": null,
-      "link": "https://ejemplo.invalid/patrocinador",
+      "alto_desktop": null,
+      "alto_movil": null,
+      "link": "https://ejemplo.invalid/publicitar",
       "activo": true,
       "ubicaciones": [
         "header"
-      ]
+      ],
+      "inicia_en": null,
+      "termina_en": null
     },
     {
-      "nombre": "Bloque HTML entremedio del listado (ejemplo)",
-      "tipo": "html",
-      "imagen_url": null,
+      "empresa_slug": "devschile",
+      "nombre": "Casa - pie",
+      "formato": "imagen",
+      "imagen_desktop_url": "/dev/banner-ejemplo-2.svg",
+      "imagen_movil_url": "/dev/banner-ejemplo-2-movil.svg",
+      "alt": "Publicita en pegas devsChile",
+      "html": null,
+      "alto_desktop": null,
+      "alto_movil": null,
+      "link": "https://ejemplo.invalid/publicitar",
+      "activo": true,
+      "ubicaciones": [
+        "footer"
+      ],
+      "inicia_en": null,
+      "termina_en": null
+    },
+    {
+      "empresa_slug": "panguipulli-labs",
+      "nombre": "Campana HTML en el listado",
+      "formato": "html",
+      "imagen_desktop_url": null,
+      "imagen_movil_url": null,
       "alt": null,
-      "html": "<p><strong>Ejemplo de ad en HTML.</strong> Este bloque pasa por el sanitizador antes de guardarse y otra vez al renderizarse. <a href=\"https://ejemplo.invalid/oferta\">Ver mas</a></p>",
+      "html": "<!doctype html><html><head><meta charset=\"utf-8\"><style>*{box-sizing:border-box}body{margin:0;font:500 15px/1.4 system-ui,sans-serif}.b{display:flex;align-items:center;justify-content:center;gap:.6rem;min-height:56px;padding:.6rem 1rem;background:linear-gradient(90deg,#12303f,#1f6f5c);color:#e8fff7;text-align:center}.b a{color:#8ed6c4;text-decoration:underline;text-underline-offset:3px}.d{opacity:.55;font-variant-numeric:tabular-nums}@media(max-width:640px){.b{flex-direction:column;gap:.25rem}}</style></head><body><div class=\"b\"><span>Ad de ejemplo en HTML <span class=\"d\" id=\"c\"></span></span><a href=\"https://ejemplo.invalid/oferta\">Ver mas</a></div><script>var n=0,e=document.getElementById(\"c\");setInterval(function(){n=(n+1)%60;e.textContent=\"(\"+n+\")\"},1000);</script></body></html>",
+      "alto_desktop": 56,
+      "alto_movil": 88,
       "link": null,
       "activo": true,
       "ubicaciones": [
         "listado"
-      ]
+      ],
+      "inicia_en": null,
+      "termina_en": null
     },
     {
-      "nombre": "Pie de pagina, dos ubicaciones (ejemplo)",
-      "tipo": "imagen",
-      "imagen_url": "/dev/banner-ejemplo-2.svg",
-      "alt": "Banner de ejemplo al pie",
+      "empresa_slug": "nandu-software",
+      "nombre": "Cabecera comprada",
+      "formato": "imagen",
+      "imagen_desktop_url": "/dev/banner-ejemplo-2.svg",
+      "imagen_movil_url": "/dev/banner-ejemplo-2-movil.svg",
+      "alt": "Nandu Software esta contratando",
       "html": null,
-      "link": "https://ejemplo.invalid/otro-patrocinador",
+      "alto_desktop": null,
+      "alto_movil": null,
+      "link": "https://ejemplo.invalid/nandu",
       "activo": true,
       "ubicaciones": [
-        "footer",
-        "listado"
-      ]
+        "header",
+        "footer"
+      ],
+      "inicia_en": null,
+      "termina_en": null
     },
     {
-      "nombre": "Campana terminada (ejemplo, apagado)",
-      "tipo": "imagen",
-      "imagen_url": "/dev/banner-ejemplo-1.svg",
-      "alt": "Banner de una campana terminada",
+      "empresa_slug": "panguipulli-labs",
+      "nombre": "Campana terminada",
+      "formato": "imagen",
+      "imagen_desktop_url": "/dev/banner-ejemplo-1.svg",
+      "imagen_movil_url": "/dev/banner-ejemplo-1-movil.svg",
+      "alt": "Campana terminada",
       "html": null,
-      "link": "https://ejemplo.invalid/campana-vieja",
+      "alto_desktop": null,
+      "alto_movil": null,
+      "link": "https://ejemplo.invalid/vieja",
       "activo": false,
       "ubicaciones": [
         "header"
-      ]
+      ],
+      "inicia_en": "2026-07-01T00:00:00Z",
+      "termina_en": "2026-08-01T00:00:00Z"
+    },
+    {
+      "empresa_slug": "anunciante-pausado",
+      "nombre": "Prendido, pero su empresa esta apagada",
+      "formato": "imagen",
+      "imagen_desktop_url": "/dev/banner-ejemplo-2.svg",
+      "imagen_movil_url": "/dev/banner-ejemplo-2-movil.svg",
+      "alt": "No deberia verse",
+      "html": null,
+      "alto_desktop": null,
+      "alto_movil": null,
+      "link": "https://ejemplo.invalid/pausado",
+      "activo": true,
+      "ubicaciones": [
+        "listado"
+      ],
+      "inicia_en": null,
+      "termina_en": null
+    }
+  ],
+  "empresas": [
+    {
+      "nombre": "devsChile",
+      "slug": "devschile",
+      "sitio_url": "https://devschile.cl",
+      "contacto_email": null,
+      "activo": true,
+      "es_casa": true
+    },
+    {
+      "nombre": "Panguipulli Labs",
+      "slug": "panguipulli-labs",
+      "sitio_url": "https://ejemplo.invalid",
+      "contacto_email": "contacto@ejemplo.invalid",
+      "activo": true,
+      "es_casa": false
+    },
+    {
+      "nombre": "Nandu Software",
+      "slug": "nandu-software",
+      "sitio_url": "https://ejemplo.invalid",
+      "contacto_email": "hola@ejemplo.invalid",
+      "activo": true,
+      "es_casa": false
+    },
+    {
+      "nombre": "Anunciante Pausado",
+      "slug": "anunciante-pausado",
+      "sitio_url": "https://ejemplo.invalid",
+      "contacto_email": null,
+      "activo": false,
+      "es_casa": false
     }
   ]
 }
