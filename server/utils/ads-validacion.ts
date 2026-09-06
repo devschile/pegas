@@ -11,6 +11,14 @@ import { validarLink } from './ads-sanitize';
  * es como entran los datos de ejemplo de `dev/` sin pasar por la API.
  */
 
+/**
+ * Los límites son parte de la oferta, no una restricción técnica: un aviso
+ * liviano y bajo es el que esta audiencia no bloquea. Si una pieza no entra,
+ * se rehace — no se sube el techo.
+ */
+export const ALTO_MAXIMO = 200;
+export const HTML_MAXIMO = 100_000;
+
 export const UBICACIONES_VALIDAS = ['header', 'listado', 'footer'] as const;
 export type Ubicacion = (typeof UBICACIONES_VALIDAS)[number];
 
@@ -97,13 +105,13 @@ export function validarAd(body: unknown): Resultado<AdEntrada> {
     return { ok: false, error: `ubicaciones debe traer al menos una de ${UBICACIONES_VALIDAS.join(', ')}, sin repetir` };
   }
 
-  const alto_desktop = b.alto_desktop == null ? null : enteroEnRango(b.alto_desktop, 1, 600);
+  const alto_desktop = b.alto_desktop == null ? null : enteroEnRango(b.alto_desktop, 1, ALTO_MAXIMO);
   if (b.alto_desktop != null && alto_desktop === null) {
-    return { ok: false, error: 'alto_desktop debe ser un entero entre 1 y 600' };
+    return { ok: false, error: `alto_desktop debe ser un entero entre 1 y ${ALTO_MAXIMO}` };
   }
-  const alto_movil = b.alto_movil == null ? null : enteroEnRango(b.alto_movil, 1, 600);
+  const alto_movil = b.alto_movil == null ? null : enteroEnRango(b.alto_movil, 1, ALTO_MAXIMO);
   if (b.alto_movil != null && alto_movil === null) {
-    return { ok: false, error: 'alto_movil debe ser un entero entre 1 y 600' };
+    return { ok: false, error: `alto_movil debe ser un entero entre 1 y ${ALTO_MAXIMO}` };
   }
 
   const inicia_en = b.inicia_en == null ? null : fecha(b.inicia_en);
@@ -151,6 +159,9 @@ export function validarAd(body: unknown): Resultado<AdEntrada> {
 
   const html = texto(b.html);
   if (!html) return { ok: false, error: 'un ad de html necesita el campo html' };
+  if (html.length > HTML_MAXIMO) {
+    return { ok: false, error: `el html pasa de ${Math.round(HTML_MAXIMO / 1024)} KB: una pieza cuidada entra de sobra` };
+  }
   if (b.imagen_desktop_url != null || b.imagen_movil_url != null) {
     return { ok: false, error: 'un ad de html no lleva imágenes' };
   }

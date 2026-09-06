@@ -67,7 +67,7 @@ describe('validarImagen', () => {
     grande.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const r = validarImagen(grande);
     expect(r.ok).toBe(false);
-    expect(r.ok || r.error).toMatch(/MB/);
+    expect(r.ok || r.error).toMatch(/KB/);
   });
 
   it('explica por qué no acepta SVG, en vez de un error mudo', () => {

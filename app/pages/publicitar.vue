@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconArrowLeft, IconArrowUpRight, IconChartBar, IconShieldCheck } from '@tabler/icons-vue';
+import { IconArrowLeft, IconArrowUpRight, IconChartBar, IconPencil, IconShieldCheck } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
 /**
@@ -133,23 +133,23 @@ useSeoMeta({
             Utilizamos dos versiones, escritorio y móvil, más el link de destino. Pedimos las dos
             porque una sola se ve rota en la mitad del tráfico.
           </p>
-          <p class="pub__mono">PNG · JPEG · GIF · WebP — mínimo peso</p>
+          <p class="pub__mono">PNG · JPEG · GIF · WebP — hasta 150 KB</p>
         </article>
         <article class="pub__caja">
           <h2>Tu propio HTML</h2>
           <p>
             Si tienes una pieza hecha, con su CSS y su animación, la corremos tal cual. Se sirve
-            aislada del sitio, así que no puede tocar la página ni a quien la visita. Tus píxeles
-            de impresión y de click funcionan; lo que no corre son scripts de terceros.
+            aislada del sitio: no puede tocar la página, ni a quien la visita, ni hacer una sola
+            petición a un servidor que no sea el nuestro.
           </p>
-          <p class="pub__mono">hasta 300 px de alto — responsive</p>
+          <p class="pub__mono">hasta 200 px de alto · 100 KB — responsive</p>
         </article>
       </div>
     </section>
 
     <section class="pub__seccion">
       <p class="pub__eyebrow">qué recibes</p>
-      <div class="pub__dos">
+      <div class="pub__tres">
         <article class="pub__caja">
           <h2><IconChartBar :size="18" aria-hidden="true" /> Números que aguantan</h2>
           <p>
@@ -159,11 +159,24 @@ useSeoMeta({
           </p>
         </article>
         <article class="pub__caja">
-          <h2><IconShieldCheck :size="18" aria-hidden="true" /> Sin perseguir a nadie</h2>
+          <h2><IconShieldCheck :size="18" aria-hidden="true" /> El aviso que no bloquean</h2>
           <p>
-            No usamos cookies de seguimiento ni perfilamos visitantes. Registramos si el aviso
-            entró en pantalla y si alguien hizo click, nada más. Tu marca no aparece al lado de
-            prácticas que a esta comunidad no le gustan.
+            Acá el público sabe exactamente cómo funciona un tracker, y por eso lo bloquea. No
+            aceptamos scripts de terceros ni píxeles de seguimiento: un ad no puede hacer <em>una
+            sola</em> petición fuera de este dominio. Sin cookies, sin perfilado, sin subastas.
+          </p>
+          <p>
+            Eso significa que renuncias a tu propio conteo —te damos el nuestro— y a cambio tu
+            marca llega entera a gente que a todos los demás los tiene bloqueados.
+          </p>
+        </article>
+        <article class="pub__caja">
+          <h2><IconPencil :size="18" aria-hidden="true" /> Lo diseñamos contigo</h2>
+          <p>
+            Los límites de arriba son chicos a propósito: un banner de 2 MB y 600 px de alto es lo
+            que hace que esta gente instale un bloqueador. Si tu pieza no entra, la rehacemos
+            juntos —sin costo— hasta que pese poco y se vea como algo que un programador querría
+            mirar.
           </p>
         </article>
       </div>
@@ -371,6 +384,19 @@ useSeoMeta({
 @media (min-width: 720px) {
   .pub__dos {
     grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.pub__tres {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .pub__tres {
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
   }
 }

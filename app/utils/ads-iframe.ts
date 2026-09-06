@@ -26,22 +26,25 @@
  * propio servidor lo que vea del visitante. Con `default-src 'none'` de base,
  * todo lo que no se permite explícitamente queda bloqueado.
  *
- * `script-src 'unsafe-inline'` deja correr el JS que vino en el documento pero
- * **no** permite cargar scripts externos: ningun tag manager ni verificador de
- * terceros se ejecuta acá. `font-src data:` es necesario para las fuentes
- * embebidas en base64, que es como llegan las piezas cuidadas.
+ * La regla es **ni una petición a un tercero**, y eso incluye las imágenes:
+ * un `img-src https:` abierto deja pasar el píxel de seguimiento, que es la
+ * forma más común de medir una campaña. Por eso solo se permiten `data:` y el
+ * host donde alojamos nosotros los assets.
  *
- * ⚠️ Ojo con lo que esto NO bloquea: `img-src https:` deja pasar los **píxeles
- * de seguimiento**, que son la forma mas comun de medir una campaña. Es
- * deliberado —un anunciante directo casi siempre pide su pixel, y negarselo
- * mata la venta— pero significa que la promesa que se le puede hacer al
- * visitante es "no corre codigo de terceros", no "no hay ningun tercero".
+ * Es una decisión de posicionamiento, no técnica, y tiene un costo: algún
+ * anunciante va a exigir su verificador y va a decir que no. A cambio, el
+ * aviso es de los pocos que esta audiencia no bloquea —que es exactamente lo
+ * que se le vende— y los números se los damos nosotros, contados en el
+ * servidor y con su tamaño de muestra al lado.
  */
 export const CSP_DEL_AD = [
   "default-src 'none'",
-  "img-src https: data:",
+  // Solo assets que alojamos nosotros o que vienen embebidos en la pieza.
+  // Un `https:` abierto acá dejaría pasar el pixel de seguimiento, que es
+  // justo lo que este sitio promete que no ocurre.
+  "img-src data: https://*.ufs.sh",
   "style-src 'unsafe-inline'",
-  "font-src data: https:",
+  "font-src data:",
   "script-src 'unsafe-inline'",
   "connect-src 'none'",
   "frame-src 'none'",
@@ -171,7 +174,7 @@ export function parsearMensajeDelAd(data: unknown): MensajeDelAd | null {
   if (m.tipo === 'alto') {
     // Un alto absurdo, por error o a proposito, empuja el listado fuera de la
     // pantalla. Se acota al mismo rango que impone el CHECK de la migracion.
-    if (typeof m.alto !== 'number' || !Number.isFinite(m.alto) || m.alto < 1 || m.alto > 600) {
+    if (typeof m.alto !== 'number' || !Number.isFinite(m.alto) || m.alto < 1 || m.alto > 200) {
       return null;
     }
     return { fuente: 'pegas-ad', id: m.id, tipo: 'alto', alto: Math.ceil(m.alto) };

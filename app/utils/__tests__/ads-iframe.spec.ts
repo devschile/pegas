@@ -56,6 +56,16 @@ describe('CSP_DEL_AD', () => {
   it('permite fuentes en base64, que es como llegan las piezas cuidadas', () => {
     expect(CSP_DEL_AD).toMatch(/font-src[^;]*data:/);
   });
+
+  /**
+   * Esto sostiene la promesa que hace /publicitar. Un `img-src https:` abierto
+   * dejaria pasar el pixel de seguimiento, que es exactamente lo que este
+   * sitio dice que no ocurre.
+   */
+  it('no deja pasar imagenes de cualquier host: ahi vive el pixel de seguimiento', () => {
+    expect(CSP_DEL_AD).not.toMatch(/img-src[^;]*\bhttps:(?!\/)/);
+    expect(CSP_DEL_AD).toMatch(/img-src[^;]*data:/);
+  });
 });
 
 describe('construirSrcdoc — documento completo', () => {

@@ -7,7 +7,12 @@
  * confiar en la cabecera es exactamente el que no sirve.
  */
 
-export const MAX_BYTES = 2 * 1024 * 1024;
+/**
+ * 150 KB. Un banner de 2 MB es lo que hace un medio tradicional y es
+ * exactamente lo que esta audiencia bloquea: pesa más que muchas de las
+ * páginas donde se muestra. Si una pieza no entra acá, la rehacemos.
+ */
+export const MAX_BYTES = 150 * 1024;
 
 export type TipoImagen = 'png' | 'jpeg' | 'gif' | 'webp';
 
@@ -57,7 +62,7 @@ export function validarImagen(bytes: Uint8Array | null | undefined): ResultadoIm
   if (!bytes || bytes.length === 0) return { ok: false, error: 'no llegó ningún archivo' };
 
   if (bytes.length > MAX_BYTES) {
-    return { ok: false, error: `la imagen pesa más de ${Math.round(MAX_BYTES / 1024 / 1024)} MB` };
+    return { ok: false, error: `la imagen pesa más de ${Math.round(MAX_BYTES / 1024)} KB` };
   }
 
   const tipo = detectarTipo(bytes);
