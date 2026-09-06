@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 /**
  * Campo de brackets con barrido radial, de fondo.
@@ -49,12 +49,6 @@ function celda(x: number, y: number, cols: number, filas: number, t: number, esp
   };
 }
 
-let raf = 0;
-let observer: IntersectionObserver | null = null;
-let reduce: MediaQueryList | null = null;
-let pintar: ((t: number) => void) | null = null;
-let visible = true;
-
 function construir(root: HTMLElement) {
   const celdas: Array<{ el: HTMLElement; x: number; y: number; cols: number }> = [];
   for (const [y, cols] of FILAS.entries()) {
@@ -82,51 +76,7 @@ function construir(root: HTMLElement) {
   };
 }
 
-let inicio = 0;
-function tick(ahora: number) {
-  pintar?.(ahora - inicio);
-  raf = requestAnimationFrame(tick);
-}
-
-function arrancar() {
-  if (raf || !visible || reduce?.matches) return;
-  inicio = performance.now();
-  raf = requestAnimationFrame(tick);
-}
-
-function detener() {
-  if (!raf) return;
-  cancelAnimationFrame(raf);
-  raf = 0;
-}
-
-onMounted(() => {
-  if (!raiz.value) return;
-  pintar = construir(raiz.value);
-  pintar(0);
-
-  reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  reduce.addEventListener?.('change', () => (reduce!.matches ? detener() : arrancar()));
-
-  // Un rAF corriendo fuera de pantalla es batería regalada.
-  if (typeof IntersectionObserver !== 'undefined') {
-    observer = new IntersectionObserver(
-      e => {
-        visible = e[0]?.isIntersecting ?? false;
-        if (visible) arrancar();
-        else detener();
-      },
-      { rootMargin: '80px' },
-    );
-    observer.observe(raiz.value);
-  }
-  arrancar();
-});
-
-onBeforeUnmount(() => {
-  detener();
-  observer?.disconnect();
-});
+useAnimacionAscii(raiz, construir);
 </script>
 
 <template>

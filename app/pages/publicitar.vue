@@ -40,21 +40,21 @@ const ubicaciones = [
     n: '01',
     titulo: 'Cabecera',
     donde: 'A todo el ancho, antes que todo. Es lo primero que se ve al entrar, y está en todas las páginas.',
-    medidas: '970 × 90 escritorio · 320 × 100 móvil',
+    medidas: 'escritorio 970 × 90–200 · móvil 320 × 100–200',
   },
   {
     id: 'listado' as const,
     n: '02',
     titulo: 'Entre las pegas',
     donde: 'Intercalado entre las tarjetas, en una posición fija por página. Se ve mientras la persona busca, que es cuando está más atenta.',
-    medidas: '970 × 90 escritorio · 320 × 100 móvil',
+    medidas: 'escritorio 970 × 90–200 · móvil 320 × 100–200',
   },
   {
     id: 'footer' as const,
     n: '03',
     titulo: 'Pie',
-    donde: 'Al ancho del contenido, después del listado. Lo ve quien recorrió la página entera.',
-    medidas: '970 × 90 escritorio · 320 × 100 móvil',
+    donde: 'Al ancho del contenido, después del listado. Lo ve quien busca navegar.',
+    medidas: 'escritorio 970 × 90–200 · móvil 320 × 100–200',
   },
 ];
 
@@ -93,14 +93,23 @@ useSeoMeta({
       <div class="pub__donde">
         <!-- Esquema del sitio: se entiende mucho más rápido que describirlo. -->
         <div class="pub__esquema" aria-hidden="true">
-          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'header' }">cabecera</div>
+          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'header' }">
+            <AsciiFill :activo="resaltada === 'header'" />
+            <span>cabecera</span>
+          </div>
           <div class="pub__barra" />
           <div class="pub__card" />
           <div class="pub__card" />
-          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'listado' }">entre las pegas</div>
+          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'listado' }">
+            <AsciiFill :activo="resaltada === 'listado'" />
+            <span>entre las pegas</span>
+          </div>
           <div class="pub__card" />
           <div class="pub__card" />
-          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'footer' }">pie</div>
+          <div class="pub__slot" :class="{ 'pub__slot--on': resaltada === 'footer' }">
+            <AsciiFill :activo="resaltada === 'footer'" />
+            <span>pie</span>
+          </div>
         </div>
 
         <ol class="pub__lista">
@@ -323,6 +332,19 @@ useSeoMeta({
   margin: 0 0 0.5rem;
 }
 
+/* Los títulos de las ubicaciones toman el color de acción y crecen al
+   mirarlos: es lo que conecta la lista con el espacio que se ilumina. */
+.pub__item h2 {
+  font-size: 1.35rem;
+  color: var(--pub-accion);
+  transition: color 0.2s ease;
+}
+
+.pub__item:hover h2,
+.pub__item:focus-within h2 {
+  color: var(--pub-tiza);
+}
+
 .pub__seccion p {
   margin: 0 0 0.5rem;
   line-height: 1.6;
@@ -337,8 +359,8 @@ useSeoMeta({
 
 @media (min-width: 800px) {
   .pub__donde {
-    grid-template-columns: 300px 1fr;
-    gap: 3.5rem;
+    grid-template-columns: minmax(320px, 400px) 1fr;
+    gap: 4rem;
     align-items: start;
   }
 }
@@ -346,44 +368,52 @@ useSeoMeta({
 .pub__esquema {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.7rem;
+  gap: 0.5rem;
+  padding: 1rem;
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-  border-radius: 0.6rem;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.025);
   position: sticky;
   top: 1.5rem;
 }
 
 .pub__barra {
-  height: 0.85rem;
+  height: 1rem;
   border-radius: 0.2rem;
   background: rgba(255, 255, 255, 0.07);
 }
 
 .pub__card {
-  height: 2.1rem;
+  height: 2.6rem;
   border-radius: 0.3rem;
   background: rgba(255, 255, 255, 0.045);
 }
 
 .pub__slot {
+  position: relative;
+  isolation: isolate;
   display: grid;
   place-items: center;
-  height: 1.7rem;
-  border: 1px dashed var(--pub-accion);
-  border-radius: 0.3rem;
+  overflow: hidden;
+  height: 2.6rem;
+  border: 1px dashed color-mix(in srgb, var(--pub-accion) 55%, transparent);
+  border-radius: 0.35rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
   color: var(--pub-accion);
-  opacity: 0.45;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.pub__slot span {
+  position: relative;
+  z-index: 1;
 }
 
 .pub__slot--on {
-  opacity: 1;
-  background: color-mix(in srgb, var(--pub-accion) 18%, transparent);
+  border-color: var(--pub-accion);
+  border-style: solid;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pub-accion) 12%, transparent);
 }
 
 .pub__lista {

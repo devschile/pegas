@@ -2,12 +2,15 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import Publicitar from '../publicitar.vue';
 
-/** GlyphField es decorativo y monta un rAF: no aporta nada al test. */
+/** Las piezas ASCII son decorativas y montan un rAF: no aportan al test. */
 const montar = () =>
   mount(Publicitar, {
     global: {
       mocks: { $router: { push: () => {} } },
-      stubs: { GlyphField: { template: '<div data-test="glyph" />' } },
+      stubs: {
+        GlyphField: { template: '<div data-test="glyph" />' },
+        AsciiFill: { template: '<div data-test="ascii" />' },
+      },
     },
   });
 
@@ -60,8 +63,12 @@ describe('pages/publicitar', () => {
 
   it('el esquema del sitio marca los tres espacios', () => {
     const w = montar();
-    const slots = w.findAll('.pub__slot');
-    expect(slots.map(s => s.text())).toEqual(['cabecera', 'entre las pegas', 'pie']);
+    const etiquetas = w.findAll('.pub__slot span');
+    expect(etiquetas.map(s => s.text())).toEqual(['cabecera', 'entre las pegas', 'pie']);
+  });
+
+  it('cada espacio del esquema lleva su textura animada', () => {
+    expect(montar().findAll('.pub__slot [data-test="ascii"]')).toHaveLength(3);
   });
 
   it('pasar por una ubicación la resalta en el esquema', async () => {
@@ -70,7 +77,7 @@ describe('pages/publicitar', () => {
     await w.findAll('.pub__item')[1]!.trigger('mouseenter');
     const encendidos = w.findAll('.pub__slot--on');
     expect(encendidos).toHaveLength(1);
-    expect(encendidos[0]!.text()).toBe('entre las pegas');
+    expect(encendidos[0]!.find('span').text()).toBe('entre las pegas');
   });
 
   it('el campo de glifos es decorativo y no aporta texto', () => {
