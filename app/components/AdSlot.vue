@@ -37,11 +37,24 @@ const marco = ref<HTMLIFrameElement | null>(null);
 const track = useTrackEvent();
 const { registrar } = useAdEventos();
 
-/** Alto reservado antes de que el ad diga cuánto mide, para no causar saltos. */
-const alto = ref(props.ad?.alto_desktop ?? 90);
-
 const dispositivo = () =>
   import.meta.client && window.matchMedia('(max-width: 640px)').matches ? 'movil' : 'desktop';
+
+/**
+ * Alto reservado hasta que el ad diga cuánto mide, para no causar saltos.
+ *
+ * En móvil se reserva `alto_movil`: un ad que en escritorio entra en una fila
+ * suele necesitar dos o tres en un teléfono, y reservar el de escritorio
+ * dejaba el hueco corto. En SSR no hay viewport que consultar, así que sale
+ * escritorio y se corrige al montar.
+ */
+function altoReservado() {
+  const a = props.ad;
+  if (!a) return 90;
+  return (dispositivo() === 'movil' ? a.alto_movil ?? a.alto_desktop : a.alto_desktop) ?? 90;
+}
+
+const alto = ref(props.ad?.alto_desktop ?? 90);
 
 const dimensiones = () => ({
   ubicacion: props.ubicacion,
@@ -129,17 +142,36 @@ function alRecibirMensaje(e: MessageEvent) {
   }
 }
 
-/** El tema viaja por mensaje: rearmar el srcdoc recargaría el iframe. */
+/**
+ * El tema viaja por mensaje: rearmar el srcdoc recargaría el iframe.
+ *
+ * El mensaje sirve además de saludo, y por eso importa que llegue: es lo que
+ * le dice al ad que del otro lado hay alguien escuchando, y lo hace reportar
+ * su alto de nuevo.
+ *
+ * Sale por `e.target` antes que por la ref porque en el ad del encabezado la
+ * ref todavía es `null` cuando el iframe dispara `load`: ese ad viene armado
+ * del servidor y el navegador lo carga antes de que Vue hidrate y asigne las
+ * refs. Sin esto el saludo no salía nunca y el ad quedaba con el alto
+ * reservado, recortado.
+ */
 let mediaTema: MediaQueryList | null = null;
-function avisarTema() {
-  marco.value?.contentWindow?.postMessage({ fuente: 'pegas-host', tema: temaActual() }, '*');
+function avisarTema(e?: Event) {
+  const marcoDelEvento = e?.target as HTMLIFrameElement | undefined;
+  const ventana = marcoDelEvento?.contentWindow ?? marco.value?.contentWindow;
+  ventana?.postMessage({ fuente: 'pegas-host', tema: temaActual() }, '*');
 }
 
 onMounted(() => {
+  // En SSR no hay viewport: recién acá se sabe si toca el alto de móvil.
+  alto.value = altoReservado();
   observarImpresion();
   window.addEventListener('message', alRecibirMensaje);
   mediaTema = window.matchMedia('(prefers-color-scheme: light)');
   mediaTema.addEventListener?.('change', avisarTema);
+  // Si el iframe ya cargó durante la hidratación su `load` se perdió, así que
+  // se saluda ahora: es lo que hace que el ad vuelva a reportar su alto.
+  avisarTema();
 });
 
 onBeforeUnmount(() => {
@@ -150,7 +182,7 @@ onBeforeUnmount(() => {
 
 watch(() => props.ad?.id, () => {
   yaContada = false;
-  alto.value = props.ad?.alto_desktop ?? 90;
+  alto.value = altoReservado();
   observer?.disconnect();
   observarImpresion();
 });

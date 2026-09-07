@@ -99,6 +99,14 @@ export function scriptDelSobre(adId: number): string {
   window.addEventListener('message', function (e) {
     if (!e.data || e.data.fuente !== 'pegas-host') return;
     if (e.data.tema) document.documentElement.setAttribute('data-theme', e.data.tema);
+    // Cualquier mensaje del host sirve de acuse: recien ahi sabemos que del
+    // otro lado hay alguien escuchando. El primer reporte de alto se pierde
+    // cuando el ad esta en el primer render de la pagina —el iframe carga y
+    // postea antes de que el host registre su listener— y como el alto no
+    // vuelve a cambiar, el ResizeObserver no dispara nunca mas y el ad queda
+    // recortado. Se vuelve a reportar sin condiciones.
+    ultimo = 0;
+    reportarAlto();
   });
 })();`;
 }

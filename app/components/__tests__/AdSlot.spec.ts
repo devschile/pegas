@@ -83,6 +83,34 @@ describe('AdSlot', () => {
     expect(montar({ ad: adHtml }).find('iframe').attributes('style')).toContain('height: 56px');
   });
 
+  /**
+   * Un ad que en escritorio entra en una fila suele necesitar dos o tres en un
+   * telefono. Reservando el alto de escritorio el hueco quedaba corto y la
+   * pieza salia recortada hasta que el propio ad reportaba su alto real.
+   */
+  it('en móvil reserva el alto de móvil y no el de escritorio', async () => {
+    vi.stubGlobal('matchMedia', vi.fn((q: string) => ({
+      matches: q === '(max-width: 640px)',
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })));
+    const w = montar({ ad: { ...adHtml, alto_desktop: 56, alto_movil: 140 } });
+    // El alto de móvil se resuelve al montar: en SSR no hay viewport que medir.
+    await w.vm.$nextTick();
+    expect(w.find('iframe').attributes('style')).toContain('height: 140px');
+  });
+
+  it('sin alto de móvil declarado cae al de escritorio', async () => {
+    vi.stubGlobal('matchMedia', vi.fn((q: string) => ({
+      matches: q === '(max-width: 640px)',
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })));
+    const w = montar({ ad: adHtml });
+    await w.vm.$nextTick();
+    expect(w.find('iframe').attributes('style')).toContain('height: 56px');
+  });
+
   it('declara que es publicidad, con el nombre del anunciante', () => {
     expect(montar({ ad: adImagen }).text()).toContain('Publicidad · Ñandú Software');
   });
@@ -170,6 +198,34 @@ describe('AdSlot — impresión y clicks del iframe', () => {
     window.dispatchEvent(new MessageEvent('message', { data, source: ventana as unknown as MessageEventSource }));
     return w.vm.$nextTick();
   }
+
+  /**
+   * El saludo del host es lo que le dice al ad que hay alguien escuchando, y
+   * lo hace reportar su alto de nuevo. Sin el, el ad del encabezado —que viene
+   * armado del servidor y carga antes de que Vue hidrate— perdia su unico
+   * reporte de alto y quedaba con el alto reservado, recortado.
+   */
+  it('saluda al iframe apenas monta, aunque su `load` ya haya pasado', () => {
+    const ventana = { postMessage: vi.fn() };
+    vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue(ventana as never);
+    montar({ ad: adHtml });
+    expect(ventana.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ fuente: 'pegas-host' }),
+      '*',
+    );
+  });
+
+  it('al cargar saluda por el iframe del evento y no por la ref, que puede no estar', async () => {
+    const w = montar({ ad: adHtml });
+    const marco = w.find('iframe').element as HTMLIFrameElement;
+    const ventana = { postMessage: vi.fn() };
+    vi.spyOn(marco, 'contentWindow', 'get').mockReturnValue(ventana as never);
+    await w.find('iframe').trigger('load');
+    expect(ventana.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ fuente: 'pegas-host' }),
+      '*',
+    );
+  });
 
   it('cuenta la impresión recién cuando el ad entra en pantalla', async () => {
     montar({ ad: adImagen });
