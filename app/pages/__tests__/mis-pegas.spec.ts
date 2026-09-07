@@ -23,6 +23,23 @@ mockNuxtImport('useUserSession', () => () => ({ loggedIn: loggedInRef }));
 const isAdminRef = ref(false);
 mockNuxtImport('useMe', () => () => ({ me: ref(null), isAdmin: isAdminRef, refresh: vi.fn() }));
 
+const { replaceMock } = vi.hoisted(() => ({ replaceMock: vi.fn() }));
+const rutaQuery = ref<Record<string, string>>({});
+// Los no-op de abajo no son decorado: el runtime de Nuxt registra sus propios
+// hooks de router al montar, y sin ellos el mock revienta antes de los tests.
+mockNuxtImport('useRouter', () => () => ({
+  replace: replaceMock,
+  push: vi.fn(),
+  back: vi.fn(),
+  afterEach: vi.fn(),
+  beforeEach: vi.fn(),
+  beforeResolve: vi.fn(),
+  resolve: vi.fn(() => ({ href: '/' })),
+  isReady: () => Promise.resolve(),
+  currentRoute: ref({ path: '/mis-pegas', query: {} }),
+}));
+mockNuxtImport('useRoute', () => () => ({ get query() { return rutaQuery.value; }, path: '/mis-pegas' }));
+
 function buildJob(overrides: Partial<Pega> = {}): Pega {
   return {
     id: 1,
@@ -83,6 +100,8 @@ describe('pages/mis-pegas', () => {
     statesRef.value = {};
     loggedInRef.value = true;
     isAdminRef.value = false;
+    replaceMock.mockReset();
+    rutaQuery.value = {};
   });
 
   it('redirige a / si no hay sesion', async () => {

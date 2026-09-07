@@ -22,6 +22,27 @@ function llenar(w: ReturnType<typeof montar>, campos: Record<string, unknown>) {
   return w.vm.$nextTick();
 }
 
+type Vm = { form: Record<string, unknown>; paso: string };
+
+/** Salta a un paso concreto: los campos solo existen en el suyo. */
+function irAPaso(w: ReturnType<typeof montar>, paso: string) {
+  (w.vm as unknown as Vm).paso = paso;
+  return w.vm.$nextTick();
+}
+
+/**
+ * Envía el formulario. Salta a la revisión primero porque el botón solo
+ * guarda en el último paso; la navegación tiene su propio bloque de tests.
+ */
+async function enviar(w: ReturnType<typeof montar>) {
+  await irAPaso(w, 'revision');
+  await w.find('form').trigger('submit');
+  await flushPromises();
+}
+
+/** Lo mínimo que hace válido un ad de html, para no repetirlo en cada test. */
+const HTML_VALIDO = { nombre: 'Pieza', formato: 'html', html: '<x/>', ubicaciones: ['listado'] };
+
 beforeEach(() => {
   crearAd.mockClear();
   actualizarAd.mockClear();
@@ -40,7 +61,7 @@ describe('FormAd — armado del cuerpo', () => {
       link: 'https://ejemplo.invalid',
       ubicaciones: ['header'],
     });
-    await w.find('form').trigger('submit');
+    await enviar(w);
 
     const cuerpo = crearAd.mock.calls[0][0];
     expect(cuerpo.imagen_desktop_url).toBe('https://cdn.invalid/d.png');
@@ -51,8 +72,8 @@ describe('FormAd — armado del cuerpo', () => {
 
   it('un ad de html manda el html y ninguna imagen', async () => {
     const w = montar();
-    await llenar(w, { nombre: 'Pieza', formato: 'html', html: '<div>x</div>', ubicaciones: ['listado'] });
-    await w.find('form').trigger('submit');
+    await llenar(w, { ...HTML_VALIDO, html: '<div>x</div>' });
+    await enviar(w);
 
     const cuerpo = crearAd.mock.calls[0][0];
     expect(cuerpo.html).toBe('<div>x</div>');
@@ -62,8 +83,8 @@ describe('FormAd — armado del cuerpo', () => {
 
   it('un alto vacío viaja como null, no como cero ni cadena', async () => {
     const w = montar();
-    await llenar(w, { formato: 'html', html: '<x/>', alto_desktop: '', alto_movil: '56' });
-    await w.find('form').trigger('submit');
+    await llenar(w, { ...HTML_VALIDO, alto_desktop: '', alto_movil: '56' });
+    await enviar(w);
 
     expect(crearAd.mock.calls[0][0].alto_desktop).toBeNull();
     expect(crearAd.mock.calls[0][0].alto_movil).toBe(56);
@@ -71,16 +92,80 @@ describe('FormAd — armado del cuerpo', () => {
 
   it('un link vacío viaja como null', async () => {
     const w = montar();
-    await llenar(w, { formato: 'html', html: '<x/>', link: '   ' });
-    await w.find('form').trigger('submit');
+    await llenar(w, { ...HTML_VALIDO, link: '   ' });
+    await enviar(w);
     expect(crearAd.mock.calls[0][0].link).toBeNull();
   });
 
   it('un ad nuevo nace apagado', async () => {
     const w = montar();
-    await llenar(w, { formato: 'html', html: '<x/>' });
-    await w.find('form').trigger('submit');
+    await llenar(w, HTML_VALIDO);
+    await enviar(w);
     expect(crearAd.mock.calls[0][0].activo).toBe(false);
+  });
+});
+
+describe('FormAd — pasos', () => {
+  const pasoActual = (w: ReturnType<typeof montar>) => (w.vm as unknown as Vm).paso;
+  const avanzar = async (w: ReturnType<typeof montar>) => {
+    await w.find('form').trigger('submit');
+    await w.vm.$nextTick();
+  };
+
+  it('empieza en el primer paso', () => {
+    expect(pasoActual(montar())).toBe('anunciante');
+  });
+
+  /**
+   * Lo que motivó los pasos: antes se llenaba todo, se enviaba, y el servidor
+   * contestaba "nombre es obligatorio". Ahora no deja avanzar sin eso.
+   */
+  it('no avanza si al paso le falta algo, y dice qué', async () => {
+    const w = montar();
+    await avanzar(w);
+    expect(pasoActual(w)).toBe('anunciante');
+    expect(w.find('.form-ad__faltan').text()).toContain('nombre interno');
+  });
+
+  it('avanza cuando el paso está completo', async () => {
+    const w = montar();
+    await llenar(w, { nombre: 'Campaña' });
+    await avanzar(w);
+    expect(pasoActual(w)).toBe('pieza');
+    expect(w.find('.form-ad__faltan').exists()).toBe(false);
+  });
+
+  it('se puede volver atrás', async () => {
+    const w = montar();
+    await llenar(w, { nombre: 'Campaña' });
+    await avanzar(w);
+    await irAPaso(w, 'pieza');
+    (w.vm as unknown as { atras: () => void }).atras();
+    await w.vm.$nextTick();
+    expect(pasoActual(w)).toBe('anunciante');
+  });
+
+  /** Saltar a un paso futuro por la barra frenaría en el primero incompleto. */
+  it('la barra no deja saltarse un paso incompleto', async () => {
+    const w = montar();
+    (w.vm as unknown as { irA: (p: string) => void }).irA('revision');
+    await w.vm.$nextTick();
+    expect(pasoActual(w)).toBe('anunciante');
+  });
+
+  it('en la revisión guarda en vez de avanzar', async () => {
+    const w = montar();
+    await llenar(w, HTML_VALIDO);
+    await enviar(w);
+    expect(crearAd).toHaveBeenCalledTimes(1);
+  });
+
+  it('no guarda si algo quedó incompleto en un paso anterior', async () => {
+    const w = montar();
+    await llenar(w, { ...HTML_VALIDO, nombre: '' });
+    await enviar(w);
+    expect(crearAd).not.toHaveBeenCalled();
+    expect(w.find('.form-ad__faltan').text()).toContain('nombre interno');
   });
 });
 
@@ -110,7 +195,7 @@ describe('FormAd — edición', () => {
 
   it('actualiza en vez de crear, con el id correcto', async () => {
     const w = montar(existente);
-    await w.find('form').trigger('submit');
+    await enviar(w);
     expect(crearAd).not.toHaveBeenCalled();
     expect(actualizarAd).toHaveBeenCalledWith(9, expect.objectContaining({ nombre: 'Vieja' }));
   });
@@ -123,28 +208,27 @@ describe('FormAd — edición', () => {
 
 describe('FormAd — errores', () => {
   it('muestra el motivo que manda el servidor, no un mensaje genérico', async () => {
-    crearAd.mockRejectedValueOnce({ data: { message: 'un ad de imagen necesita link' } });
+    crearAd.mockRejectedValueOnce({ data: { message: 'la empresa no existe' } });
     const w = montar();
-    await llenar(w, { formato: 'html', html: '<x/>' });
-    await w.find('form').trigger('submit');
-    await w.vm.$nextTick();
-    expect(w.text()).toContain('un ad de imagen necesita link');
+    await llenar(w, HTML_VALIDO);
+    await enviar(w);
+    expect(w.text()).toContain('la empresa no existe');
   });
 
   it('si el error no trae motivo, avisa igual', async () => {
     crearAd.mockRejectedValueOnce(new Error('boom'));
     const w = montar();
-    await llenar(w, { formato: 'html', html: '<x/>' });
-    await w.find('form').trigger('submit');
-    await w.vm.$nextTick();
-    expect(w.find('[role="alert"]').text()).toBe('No se pudo guardar');
+    await llenar(w, HTML_VALIDO);
+    await enviar(w);
+    expect(w.find('.form-ad__error').text()).toBe('No se pudo guardar');
   });
 });
 
 describe('FormAd — ubicaciones', () => {
   it('marca y desmarca sin duplicar', async () => {
     const w = montar();
-    const casillas = w.findAll('.form-ad__ubicacion input');
+    await irAPaso(w, 'donde');
+    const casillas = w.findAll('.ubicaciones__opcion input');
     // header, listado, footer y la página de la pega.
     expect(casillas).toHaveLength(4);
 
@@ -169,7 +253,8 @@ describe('FormAd — ubicaciones', () => {
 
 describe('FormAd — subida de imagen', () => {
   /** Simula que la persona eligió un archivo en el input nativo. */
-  function elegir(w: ReturnType<typeof montar>, indice: number) {
+  async function elegir(w: ReturnType<typeof montar>, indice: number) {
+    await irAPaso(w, 'pieza');
     const input = w.findAll('.form-ad__subir input')[indice]!;
     Object.defineProperty(input.element, 'files', {
       value: [new File([new Uint8Array([1, 2, 3])], 'foto.png', { type: 'image/png' })],
@@ -211,6 +296,7 @@ describe('FormAd — subida de imagen', () => {
   it('el formato html no ofrece subida de imágenes', async () => {
     const w = montar();
     await llenar(w, { formato: 'html' });
+    await irAPaso(w, 'pieza');
     expect(w.findAll('.form-ad__subir')).toHaveLength(0);
   });
 });

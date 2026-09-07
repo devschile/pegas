@@ -78,8 +78,10 @@ const tabActiva = computed(() => {
   return tabs.value.some(t => t.value === pedida) ? String(pedida) : 'guardadas';
 });
 
+/** El filtro y su porqué están en `pestanaDelEvento`. */
 function handleTabChange(e: Event) {
-  const valor = (e as CustomEvent<string>).detail;
+  const valor = pestanaDelEvento(e, tabs.value.map(t => t.value));
+  if (!valor) return;
   router.replace({ query: { ...route.query, tab: valor === 'guardadas' ? undefined : valor } });
 }
 
