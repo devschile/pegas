@@ -48,22 +48,28 @@ async function main() {
   try {
     console.log('📐 Aplicando dev/schema.dev.sql...');
     await client.query(
-      'DROP TABLE IF EXISTS ads_eventos, ads_log, ads, empresas, pegas_estado_usuario, usuarios, pegas CASCADE',
+      'DROP TABLE IF EXISTS relacionadas_eventos, pegas_similares, ads_eventos, ads_log, ads, empresas, pegas_estado_usuario, usuarios, pegas CASCADE',
     );
     await client.query(readFileSync(join(aqui, 'schema.dev.sql'), 'utf8'));
 
-    const { pegas, empresas, ads } = JSON.parse(readFileSync(join(aqui, 'fixtures.json'), 'utf8'));
+    const { pegas, empresas, ads, similares } = JSON.parse(readFileSync(join(aqui, 'fixtures.json'), 'utf8'));
     console.log(`🌱 Cargando ${pegas.length} pegas de ejemplo...`);
 
+    /** id de fixtures.json → id real, para que las similares no dependan del SERIAL. */
+    const idPorFixture = new Map();
     for (const p of pegas) {
-      await client.query(
+      const { rows } = await client.query(
         `INSERT INTO pegas (url, titulo, empleador, descripcion, categoria, ubicacion,
                             sueldo, tags, fecha_publicacion, fuente, activo)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-         ON CONFLICT (url) DO NOTHING`,
+         ON CONFLICT (url) DO NOTHING
+         RETURNING id`,
         [p.url, p.titulo, p.empleador, p.descripcion, p.categoria, p.ubicacion,
          p.sueldo, p.tags, p.fecha_publicacion, p.fuente, p.activo],
       );
+      // El ON CONFLICT no devuelve fila: sin esto seria un TypeError sin pistas.
+      if (!rows[0]) throw new Error(`dos pegas de ejemplo comparten la misma url: ${p.url}`);
+      idPorFixture.set(p.id, rows[0].id);
     }
 
     console.log(`🏢 Cargando ${empresas.length} empresas anunciantes...`);
@@ -97,6 +103,8 @@ async function main() {
       );
     }
 
+    await cargarSimilares(client, similares, idPorFixture);
+
     const { rows } = await client.query(
       'SELECT COUNT(*) FILTER (WHERE activo) AS activas, COUNT(*) AS total FROM pegas',
     );
@@ -109,6 +117,36 @@ async function main() {
   } finally {
     client.release();
     await pool.end();
+  }
+}
+
+/**
+ * Grafo de similitud de ejemplo, para que la página de detalle tenga qué
+ * mostrar en el bloque de relacionadas.
+ *
+ * Se salta sin ruido si `pegas_similares` no está en el esquema. Esa tabla la
+ * crea pegas-core —el cálculo no vive en este repositorio— y hasta que
+ * `dev/schema.dev.sql` se regenere con ella, un `pnpm dev:db` tiene que
+ * seguir dejando la base utilizable igual.
+ */
+async function cargarSimilares(client, similares, idPorFixture) {
+  const { rows } = await client.query("SELECT to_regclass('public.pegas_similares') AS tabla");
+  if (!rows[0].tabla) {
+    console.log('⏭️  pegas_similares no está en el esquema todavía: no se carga el grafo de similitud.');
+    return;
+  }
+
+  console.log(`🔗 Cargando ${similares.length} aristas de similitud de ejemplo...`);
+  for (const s of similares) {
+    const pegaId = idPorFixture.get(s.pega_id);
+    const similarId = idPorFixture.get(s.similar_id);
+    if (!pegaId || !similarId) throw new Error(`arista hacia una pega que no existe: ${s.pega_id} → ${s.similar_id}`);
+    await client.query(
+      `INSERT INTO pegas_similares (pega_id, similar_id, score, motivo)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT (pega_id, similar_id) DO NOTHING`,
+      [pegaId, similarId, s.score, s.motivo],
+    );
   }
 }
 

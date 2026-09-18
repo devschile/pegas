@@ -81,7 +81,7 @@ Si un cambio necesita una columna que `dev/schema.dev.sql` no tiene, el que
 quedó atrás es ese archivo — abre un issue y se regenera, no lo edites a mano.
 
 Ese mismo pipeline calcula qué pegas se parecen entre sí y deja el resultado en
-`pegas_similares`, que es de donde sale el bloque de "Otras pegas parecidas" al
+`pegas_similares`, que es de donde sale el bloque de "Pegas similares" al
 pie de cada aviso. El cálculo no vive acá a propósito: qué se le ofrece a
 alguien después de leer un aviso es una decisión de producto, y este
 repositorio es público. Acá solo se lee la tabla y se registra qué hizo la

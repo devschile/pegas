@@ -2,7 +2,7 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime';
 import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref, Suspense } from 'vue';
-import type { Pega } from '~/types/pega';
+import type { Pega, PegaRelacionada } from '~/types/pega';
 
 const { useFetchMock, useRouteMock, trackMock } = vi.hoisted(() => ({
   useFetchMock: vi.fn(),
@@ -40,6 +40,20 @@ function buildJob(overrides: Partial<Pega> = {}): Pega {
   };
 }
 
+/**
+ * La página dispara dos `useFetch` en paralelo (la pega y sus relacionadas),
+ * así que el mock tiene que responder según la URL: devolverle lo mismo a los
+ * dos le pasaría la pega al bloque de relacionadas.
+ */
+function mockFetches({ job = null, error = null, relacionadas = [] as PegaRelacionada[] } = {}) {
+  useFetchMock.mockReset();
+  useFetchMock.mockImplementation((url: string) =>
+    String(url).endsWith('/relacionadas')
+      ? { data: ref(relacionadas), error: ref(null) }
+      : { data: ref(job), error: ref(error) },
+  );
+}
+
 async function mountDetailPage() {
   const { default: DetailPage } = await import('../[id].vue');
   const wrapper = mount(
@@ -73,7 +87,7 @@ async function mountDetailPageExpectingError() {
 describe('pages/pega/[id]', () => {
   it('muestra la pega cuando el id del slug matchea', async () => {
     useRouteMock.mockReturnValue({ params: { id: '123-frontend-developer-acme' } });
-    useFetchMock.mockReturnValue({ data: ref(buildJob()), error: ref(null) });
+    mockFetches({ job: buildJob() });
 
     const wrapper = await mountDetailPage();
 
@@ -85,7 +99,7 @@ describe('pages/pega/[id]', () => {
 
   it('trackea pega_view_detail al montar', async () => {
     useRouteMock.mockReturnValue({ params: { id: '123-frontend-developer-acme' } });
-    useFetchMock.mockReturnValue({ data: ref(buildJob()), error: ref(null) });
+    mockFetches({ job: buildJob() });
     trackMock.mockClear();
 
     await mountDetailPage();
@@ -99,7 +113,7 @@ describe('pages/pega/[id]', () => {
   it('al hacer click en "Ver oferta original" abre el aviso y trackea el evento', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     useRouteMock.mockReturnValue({ params: { id: '123-frontend-developer-acme' } });
-    useFetchMock.mockReturnValue({ data: ref(buildJob()), error: ref(null) });
+    mockFetches({ job: buildJob() });
     trackMock.mockClear();
 
     const wrapper = await mountDetailPage();
@@ -114,9 +128,41 @@ describe('pages/pega/[id]', () => {
     openSpy.mockRestore();
   });
 
+  it('pide las relacionadas de la misma pega, en paralelo con la pega', async () => {
+    useRouteMock.mockReturnValue({ params: { id: '123-frontend-developer-acme' } });
+    mockFetches({
+      job: buildJob(),
+      relacionadas: [{
+        id: 9, titulo: 'Backend Engineer', empleador: 'Ñandú', categoria: 'Backend',
+        ubicacion: 'Chile', sueldo: null, tags: 'remote',
+        fecha_publicacion: '2026-08-15T00:00:00.000Z', fecha_creacion: '2026-08-15T00:00:00.000Z',
+        score: 0.8, motivo: 'stack',
+      }],
+    });
+
+    const wrapper = await mountDetailPage();
+
+    expect(useFetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/pegas/123',
+      '/api/pegas/123/relacionadas',
+    ]);
+    expect(wrapper.text()).toContain('Backend Engineer');
+  });
+
+  /** Que el grafo de similitud falle no puede tumbar el aviso que la persona vino a leer. */
+  it('muestra la pega igual si no hay relacionadas', async () => {
+    useRouteMock.mockReturnValue({ params: { id: '123-frontend-developer-acme' } });
+    mockFetches({ job: buildJob(), relacionadas: [] });
+
+    const wrapper = await mountDetailPage();
+
+    expect(wrapper.text()).toContain('Frontend Developer');
+    expect(wrapper.find('.relacionadas').exists()).toBe(false);
+  });
+
   it('tira 404 si la API responde 404 (pega no encontrada)', async () => {
     useRouteMock.mockReturnValue({ params: { id: '999-no-existe' } });
-    useFetchMock.mockReturnValue({ data: ref(null), error: ref({ statusCode: 404 }) });
+    mockFetches({ error: { statusCode: 404 } });
 
     const error = await mountDetailPageExpectingError();
 
@@ -126,6 +172,7 @@ describe('pages/pega/[id]', () => {
   it('tira 404 si el slug no empieza con un id numerico, sin llamar a la API', async () => {
     useRouteMock.mockReturnValue({ params: { id: 'sin-id' } });
     useFetchMock.mockClear();
+    useFetchMock.mockImplementation(() => ({ data: ref(null), error: ref(null) }));
 
     const error = await mountDetailPageExpectingError();
 
@@ -135,7 +182,7 @@ describe('pages/pega/[id]', () => {
 
   it('tira 500 si fallo la carga de la pega por otra razon', async () => {
     useRouteMock.mockReturnValue({ params: { id: '123-frontend-developer-acme' } });
-    useFetchMock.mockReturnValue({ data: ref(null), error: ref({ statusCode: 500 }) });
+    mockFetches({ error: { statusCode: 500 } });
 
     const error = await mountDetailPageExpectingError();
 

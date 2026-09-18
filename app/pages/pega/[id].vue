@@ -4,7 +4,7 @@ import { IconArrowLeft, IconCalendar, IconCoin, IconExternalLink, IconHome } fro
 import { computed, onMounted } from 'vue';
 import { formatDate, sourceLabel } from '~/utils/pegas';
 import { categorySlug, idFromSlug, jobSlug } from '~/utils/slug';
-import type { Pega } from '~/types/pega';
+import type { Pega, PegaRelacionada } from '~/types/pega';
 
 const { ads } = useAds();
 
@@ -18,7 +18,23 @@ if (id === null) {
   throw createError({ statusCode: 404, statusMessage: 'Pega no encontrada', fatal: true });
 }
 
-const { data: fetchedJob, error: fetchError } = await useFetch<Pega>(`/api/pegas/${id}`, { key: `pega-${id}` });
+/**
+ * Las dos consultas salen juntas y no encadenadas: la de relacionadas solo
+ * necesita el id de la ruta, no la pega, así que esperarla después sumaría un
+ * viaje completo al render del servidor sin ganar nada.
+ *
+ * Un fallo al traer las relacionadas no se revisa a propósito -- `default`
+ * deja la lista vacía y el bloque no se dibuja. Que el grafo de similitud no
+ * responda no puede tumbar la página del aviso, que es lo que la persona vino
+ * a leer.
+ */
+const [{ data: fetchedJob, error: fetchError }, { data: relacionadas }] = await Promise.all([
+  useFetch<Pega>(`/api/pegas/${id}`, { key: `pega-${id}` }),
+  useFetch<PegaRelacionada[]>(`/api/pegas/${id}/relacionadas`, {
+    key: `relacionadas-${id}`,
+    default: () => [],
+  }),
+]);
 
 if (fetchError.value) {
   const statusCode = fetchError.value.statusCode === 404 ? 404 : 500;
@@ -132,10 +148,17 @@ function handleBackClick() {
       </div>
     </ChCard>
 
+    <PegasRelacionadas :pega-id="job.id" :relacionadas="relacionadas ?? []" />
+
     <!--
       Despues de la tarjeta y no antes: quien llega aca vino a leer un aviso
       concreto, y meterle publicidad delante seria exactamente lo que hace que
       esta audiencia instale un bloqueador.
+
+      Tambien despues de las relacionadas, y no entre medio: dejarlo en el
+      sandwich lo convierte en una interrupcion entre dos bloques de
+      contenido, y ademas pone un aviso pagado justo al lado de tarjetas de
+      pegas, que es donde se confunde con ellas.
     -->
     <AdSlot :ad="ads.pega" ubicacion="pega" />
   </article>
