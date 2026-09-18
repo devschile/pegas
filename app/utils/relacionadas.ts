@@ -28,6 +28,18 @@ const LABEL_BY_REASON = new Map<string, string>([
   ['comportamiento', 'También la miraron'],
 ]);
 
+/**
+ * `stack` no se muestra: la sección ya se llama "Pegas similares", así que
+ * "Mismo stack" repite el encabezado en el 93% de las tarjetas y deja de
+ * leerse. Sin él, la etiqueta pasa a marcar la excepción —"Misma empresa",
+ * "Sueldo parecido"— y gana atención justamente por ser poco frecuente.
+ *
+ * Se queda en el mapa de arriba y no se borra: el motivo existe, se guarda en
+ * los eventos y se sigue analizando. Lo que cambia es si se pinta.
+ */
+const SIN_ETIQUETA = new Set(['stack']);
+
 export function reasonLabel(motivo: string): string | null {
+  if (SIN_ETIQUETA.has(motivo)) return null;
   return LABEL_BY_REASON.get(motivo) ?? null;
 }

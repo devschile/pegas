@@ -1,4 +1,5 @@
 import { query } from './db';
+import { mezclar } from '~/utils/hash';
 import type { PegaRelacionada } from '~/types/pega';
 
 /**
@@ -57,6 +58,53 @@ const UNDEFINED_TABLE = '42P01';
 let missingTableWarned = false;
 
 /**
+ * Qué tan por debajo de la mejor candidata puede estar una para entrar igual
+ * al sorteo. Con 0.75, una que puntúa un cuarto menos que la mejor sigue
+ * siendo comparable; una que puntúa la mitad, no.
+ *
+ * El límite es lo que evita que rotar sea empeorar: se varía entre candidatas
+ * de calidad parecida, nunca metiendo una mala para tener variedad.
+ */
+const BANDA_DE_CALIDAD = 0.75;
+
+/** Tope del sorteo, para que no se vuelva impredecible de más. */
+const POOL_MAX = 5;
+
+/** Día actual en días desde la época. Cambia el sorteo una vez al día. */
+const diaDeHoy = () => Math.floor(Date.now() / 86_400_000);
+
+/**
+ * Cuáles de las buenas se muestran hoy.
+ *
+ * Mostrar siempre las dos mejores encierra a la gente en un triángulo: si A
+ * recomienda B y C, y B recomienda A y C, se rebota entre tres avisos mientras
+ * las otras ocho vecinas guardadas no se usan nunca. Rotar abre el recorrido.
+ *
+ * NO es aleatorio por request, a propósito, y es el mismo criterio que la
+ * posición del ad en el listado (ver `app/utils/ads.ts`): si el par cambiara
+ * en cada recarga no se podría atribuir un click a una arista concreta, que es
+ * justo lo que `relacionadas_eventos` existe para medir. Cambia una vez al
+ * día: estable mientras alguien navega, distinto la próxima visita.
+ */
+export function elegirVisibles(
+  candidatas: PegaRelacionada[],
+  limite: number,
+  semilla: number,
+): PegaRelacionada[] {
+  if (candidatas.length <= limite) return candidatas;
+
+  const mejor = candidatas[0]!.score;
+  const pool = candidatas
+    .filter(c => c.score >= mejor * BANDA_DE_CALIDAD)
+    .slice(0, POOL_MAX);
+
+  if (pool.length <= limite) return candidatas.slice(0, limite);
+
+  const desde = mezclar(semilla) % pool.length;
+  return Array.from({ length: limite }, (_, i) => pool[(desde + i) % pool.length]!);
+}
+
+/**
  * Las relacionadas de una pega, ya filtradas por vigencia y umbral.
  *
  * Devuelve `[]` —y no un error— si `pegas_similares` todavía no existe: la
@@ -89,5 +137,6 @@ export async function getRelatedJobs(pegaId: number, limit: number): Promise<Peg
     return [];
   }
 
-  return edges.filter(edge => edge.score >= MIN_SCORE).slice(0, limit);
+  const buenas = edges.filter(edge => edge.score >= MIN_SCORE);
+  return elegirVisibles(buenas, limit, pegaId + diaDeHoy());
 }

@@ -3,7 +3,6 @@ import { reasonLabel } from '../relacionadas';
 
 describe('reasonLabel', () => {
   it('traduce los motivos que el front conoce', () => {
-    expect(reasonLabel('stack')).toBe('Mismo stack');
     expect(reasonLabel('empresa')).toBe('Misma empresa');
     expect(reasonLabel('categoria')).toBe('Misma categoría');
     expect(reasonLabel('sueldo')).toBe('Sueldo parecido');
@@ -11,6 +10,14 @@ describe('reasonLabel', () => {
     expect(reasonLabel('remoto')).toBe('También remota');
     expect(reasonLabel('antiguedad')).toBe('Mismo nivel');
     expect(reasonLabel('comportamiento')).toBe('También la miraron');
+  });
+
+  /**
+   * "Mismo stack" repetía el encabezado de la sección en el 93% de las
+   * tarjetas. Sin etiqueta, la que sí aparece marca la excepción.
+   */
+  it('no pinta etiqueta para el motivo más común', () => {
+    expect(reasonLabel('stack')).toBeNull();
   });
 
   /**

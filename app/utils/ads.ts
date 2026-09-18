@@ -1,3 +1,5 @@
+import { mezclar } from './hash';
+
 /**
  * Dónde cae el ad entremedio de las cards del listado.
  *
@@ -8,18 +10,6 @@
  *
  * Entre páginas sí cambia, para no quemar siempre el mismo hueco.
  */
-
-/**
- * Mezcla el número de página en un entero. Un `pagina % n` directo daría
- * posiciones consecutivas para páginas consecutivas, que se nota como un
- * patrón; esto las reparte.
- */
-function mezclar(n: number): number {
-  let x = (n | 0) + 0x9e3779b9;
-  x = Math.imul(x ^ (x >>> 16), 0x21f0aaad);
-  x = Math.imul(x ^ (x >>> 15), 0x735a2d97);
-  return (x ^ (x >>> 15)) >>> 0;
-}
 
 /**
  * Devuelve el índice de card ANTES del cual insertar el ad, o `null` si la
