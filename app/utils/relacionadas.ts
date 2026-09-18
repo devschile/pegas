@@ -24,6 +24,7 @@ const LABEL_BY_REASON = new Map<string, string>([
   ['sueldo', 'Sueldo parecido'],
   ['ubicacion', 'Misma ubicación'],
   ['remoto', 'También remota'],
+  ['antiguedad', 'Mismo nivel'],
   ['comportamiento', 'También la miraron'],
 ]);
 

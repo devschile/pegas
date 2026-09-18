@@ -9,6 +9,7 @@ describe('reasonLabel', () => {
     expect(reasonLabel('sueldo')).toBe('Sueldo parecido');
     expect(reasonLabel('ubicacion')).toBe('Misma ubicación');
     expect(reasonLabel('remoto')).toBe('También remota');
+    expect(reasonLabel('antiguedad')).toBe('Mismo nivel');
     expect(reasonLabel('comportamiento')).toBe('También la miraron');
   });
 
