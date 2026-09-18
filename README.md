@@ -2,8 +2,8 @@
 
 Vitrina de ofertas de trabajo tech en Chile: [pegas.devschile.cl](https://pegas.devschile.cl)
 
-Listado con búsqueda y filtros, página por pega y por categoría, cuentas para
-guardar y reaccionar, SEO (sitemap, `schema.org/JobPosting`, OG images) y
+Listado con búsqueda y filtros, página por pega y por categoría, pegas similares
+al pie de cada aviso, cuentas para guardar y reaccionar, SEO (sitemap, `schema.org/JobPosting`, OG images) y
 analítica en PostHog.
 
 **Los aportes son bienvenidos** — ver [CONTRIBUTING.md](./CONTRIBUTING.md). Se
@@ -54,17 +54,17 @@ test/           # helpers de test
 Convenciones de código: [`AGENTS.md`](./AGENTS.md). Marca y diseño:
 [`DESIGN.md`](./DESIGN.md).
 
-**¿Buscas la página para auspiciar?** Se mudó al portal B2B de devsChile:
-[empresas.devschile.cl/pegas-devschile](https://empresas.devschile.cl/pegas-devschile).
-Este repo sirve los espacios; el portal los vende. La ruta vieja
-(`/publicitar`) queda como 301.
-
 ```bash
 pnpm test            # una pasada
 pnpm test:watch      # modo watch
 pnpm test:coverage   # con cobertura (falla bajo 80%)
 pnpm build           # build de producción
 ```
+
+**¿Buscas la página para auspiciar?** Se mudó al portal B2B de devsChile:
+[empresas.devschile.cl/pegas-devschile](https://empresas.devschile.cl/pegas-devschile).
+Este repo sirve los espacios; el portal los vende. La ruta vieja
+(`/publicitar`) queda como 301.
 
 ## De dónde salen las pegas
 
@@ -80,12 +80,16 @@ ejemplo, y el sitio no distingue entre esos y los reales.
 Si un cambio necesita una columna que `dev/schema.dev.sql` no tiene, el que
 quedó atrás es ese archivo — abre un issue y se regenera, no lo edites a mano.
 
-Ese mismo pipeline calcula qué pegas se parecen entre sí y deja el resultado en
-`pegas_similares`, que es de donde sale el bloque de "Pegas similares" al
-pie de cada aviso. El cálculo no vive acá a propósito: qué se le ofrece a
-alguien después de leer un aviso es una decisión de producto, y este
-repositorio es público. Acá solo se lee la tabla y se registra qué hizo la
-gente con lo que se le mostró — ver `server/utils/relacionadas.ts`.
+En ese mismo repositorio vive el proceso que calcula qué pegas se parecen entre
+sí y deja el resultado en `pegas_similares`, de donde sale el bloque de "Pegas
+similares" al pie de cada aviso. No corre al ingerir sino cada cierto tiempo
+sobre las pegas activas: una pega de hace meses tiene que poder recomendar una
+de esta semana, y las vecinas que guardó se le van venciendo.
+
+El cálculo no vive acá a propósito: qué se le ofrece a alguien después de leer
+un aviso es una decisión de producto, y este repositorio es público. Acá solo
+se lee la tabla y se registra qué hizo la gente con lo que se le mostró — ver
+`server/utils/relacionadas.ts`.
 
 Mientras `dev/schema.dev.sql` no traiga esa tabla, el bloque no aparece en
 local y el resto del sitio funciona igual: `pnpm dev:db` lo dice al sembrar y
