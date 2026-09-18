@@ -8,7 +8,7 @@ import { ChLink } from '@devschile/chucao/vue';
     <span class="site-footer__separator">·</span>
     <ChLink href="https://github.com/devschile/pegas">GitHub</ChLink>
     <span class="site-footer__separator">·</span>
-    <NuxtLink to="/publicitar" class="site-footer__publicitar">Quiero publicitar pegas</NuxtLink>
+    <ChLink href="https://empresas.devschile.cl/pegas-devschile">Quiero auspiciar en pegas</ChLink>
     <span class="site-footer__separator">·</span>
     <span>Datos públicos desde LinkedIn, WorkingNomads, GetOnBoard y otras fuentes.</span>
   </footer>
@@ -24,11 +24,5 @@ import { ChLink } from '@devschile/chucao/vue';
 
 .site-footer__separator {
   margin: 0 0.5rem;
-}
-
-/* Va con el mismo peso que los demás enlaces del pie: es una invitación, no
-   un aviso. */
-.site-footer__publicitar {
-  color: inherit;
 }
 </style>

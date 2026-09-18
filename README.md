@@ -54,6 +54,11 @@ test/           # helpers de test
 Convenciones de código: [`AGENTS.md`](./AGENTS.md). Marca y diseño:
 [`DESIGN.md`](./DESIGN.md).
 
+**¿Buscas la página para auspiciar?** Se mudó al portal B2B de devsChile:
+[empresas.devschile.cl/pegas-devschile](https://empresas.devschile.cl/pegas-devschile).
+Este repo sirve los espacios; el portal los vende. La ruta vieja
+(`/publicitar`) queda como 301.
+
 ```bash
 pnpm test            # una pasada
 pnpm test:watch      # modo watch
@@ -74,6 +79,17 @@ ejemplo, y el sitio no distingue entre esos y los reales.
 
 Si un cambio necesita una columna que `dev/schema.dev.sql` no tiene, el que
 quedó atrás es ese archivo — abre un issue y se regenera, no lo edites a mano.
+
+Ese mismo pipeline calcula qué pegas se parecen entre sí y deja el resultado en
+`pegas_similares`, que es de donde sale el bloque de "Otras pegas parecidas" al
+pie de cada aviso. El cálculo no vive acá a propósito: qué se le ofrece a
+alguien después de leer un aviso es una decisión de producto, y este
+repositorio es público. Acá solo se lee la tabla y se registra qué hizo la
+gente con lo que se le mostró — ver `server/utils/relacionadas.ts`.
+
+Mientras `dev/schema.dev.sql` no traiga esa tabla, el bloque no aparece en
+local y el resto del sitio funciona igual: `pnpm dev:db` lo dice al sembrar y
+la página de detalle no se entera.
 
 ## Licencia
 

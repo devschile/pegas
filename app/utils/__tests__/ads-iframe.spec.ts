@@ -58,9 +58,10 @@ describe('CSP_DEL_AD', () => {
   });
 
   /**
-   * Esto sostiene la promesa que hace /publicitar. Un `img-src https:` abierto
-   * dejaria pasar el pixel de seguimiento, que es exactamente lo que este
-   * sitio dice que no ocurre.
+   * Esto sostiene la promesa que le hacemos al anunciante en la landing de
+   * auspicios (empresas.devschile.cl/pegas-devschile, antes /publicitar acá).
+   * Un `img-src https:` abierto dejaria pasar el pixel de seguimiento, que es
+   * exactamente lo que ese texto dice que no ocurre.
    */
   it('no deja pasar imagenes de cualquier host: ahi vive el pixel de seguimiento', () => {
     expect(CSP_DEL_AD).not.toMatch(/img-src[^;]*\bhttps:(?!\/)/);

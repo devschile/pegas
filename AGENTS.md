@@ -28,6 +28,39 @@ Borrarlo después no arregla nada: el historial de un repositorio público
 queda, y los forks ajenos **no** se vuelven privados si algún día se cierra
 el original.
 
+## Los auspicios se venden en otro sitio
+
+Pegas **sirve** los espacios publicitarios; no los vende. La página que los
+explica y los cotiza vive en el portal B2B de devsChile:
+
+| | |
+|---|---|
+| Antes | `pegas.devschile.cl/publicitar` |
+| Ahora | `empresas.devschile.cl/pegas-devschile` |
+| Repo | [`devschile-empresas`](https://github.com/devschile/devschile-empresas) |
+
+Se movió el 2026-09-17 porque el portal concentra los auspicios de todas las
+propiedades de devsChile, y un anunciante compara entre ellas: obligarlo a
+saltar de sitio en sitio para eso le costaba la venta.
+
+Lo que eso significa acá:
+
+- **No se vuelve a crear una landing de venta en este repo.** Si hay que
+  cambiar el texto, las medidas de los espacios o los formatos aceptados, se
+  edita en el portal. Este repo define el comportamiento real del espacio;
+  aquel describe lo que se vende.
+- **La ruta vieja tiene un 301** en `routeRules` de `nuxt.config.ts`. Está
+  indexada y con enlaces apuntándole: no se borra a secas.
+- **El motor de glifos se fue con ella.** `GlyphField`, `GlyphButton`,
+  `AsciiFill`, `TerminalMarquee`, `StackedWordmark`, `useAnimacionAscii` y
+  `utils/glyph-field.ts` solo los usaba esa página, así que se borraron en el
+  mismo movimiento. Viven en el portal y están en el historial de este repo.
+  `Reveal.vue` se quedó: lo usa `PegaCard`.
+- **Lo que este repo sí tiene que sostener son las promesas de esa página.**
+  La CSP del iframe de ads es la que hace cierto el "sin scripts de terceros"
+  —ver `app/utils/__tests__/ads-iframe.spec.ts`—, y si cambia acá, allá hay
+  un texto que pasa a ser falso.
+
 ## Nombres de identificadores
 
 Funciones, parámetros, métodos y variables van en **inglés, camelCase** —

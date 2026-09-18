@@ -29,6 +29,15 @@ export default defineNuxtConfig({
   routeRules: {
     '/categoria/data': { redirect: { to: '/categoria/data-bi', statusCode: 301 } },
     '/categoria/gestion': { redirect: { to: '/categoria/liderazgo', statusCode: 301 } },
+    /*
+     * La landing de auspicios se mudó al portal B2B el 2026-09-17: el
+     * anunciante compara propiedades de devsChile y no puede tener que
+     * saltar entre sitios. La URL vieja está indexada y tiene enlaces
+     * apuntándole, así que va 301 y no se borra a secas.
+     */
+    '/publicitar': {
+      redirect: { to: 'https://empresas.devschile.cl/pegas-devschile', statusCode: 301 },
+    },
   },
 
   // URLs dinamicas (pegas individuales, categorias): no hay rutas fisicas

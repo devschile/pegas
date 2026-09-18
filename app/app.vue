@@ -1,34 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
-const { ads } = useAds();
-
 /**
- * Una página puede pedir que no se le monte el marco del sitio con
- * `definePageMeta({ marco: false })`.
+ * El marco del sitio: ad de cabecera, header, contenido, ad de pie y footer.
  *
- * Lo usa /publicitar: el encabezado con el conteo de pegas compite con su
- * propio hero, y mostrar espacios publicitarios en la página que los vende es
- * raro — el visitante viene a comprar el espacio, no a verlo ocupado.
+ * Hubo dos escapes de este marco, `definePageMeta({ marco: false })` y
+ * `{ ancho: 'amplio' }`, y los pedía una sola página: /publicitar, que se
+ * migró al portal B2B (empresas.devschile.cl/pegas-devschile). Sin ella las
+ * dos condiciones daban siempre el mismo valor, así que se sacaron: un
+ * `v-if` que nunca es falso hace creer que todavía decide algo. Si vuelve a
+ * hacer falta una página sin marco, esto está en el historial.
  */
-const route = useRoute();
-const conMarco = computed(() => route.meta.marco !== false);
-
-/**
- * Los 800px del contenedor son los correctos para el listado —una columna de
- * tarjetas se lee mal si es mas ancha— pero ahogan a una landing. Una pagina
- * puede pedir mas aire con `definePageMeta({ ancho: 'amplio' })`.
- */
-const anchoAmplio = computed(() => route.meta.ancho === 'amplio');
+const { ads } = useAds();
 </script>
 
 <template>
   <div class="app-shell">
     <NuxtRouteAnnouncer />
     <!-- A todo el ancho y arriba del header: es la ubicacion mas visible. -->
-    <AdSlot v-if="conMarco" :ad="ads.header" ubicacion="header" />
-    <SiteHeader v-if="conMarco" />
-    <main class="app-shell__main" :class="{ 'app-shell__main--amplio': anchoAmplio }">
+    <AdSlot :ad="ads.header" ubicacion="header" />
+    <SiteHeader />
+    <main class="app-shell__main">
       <!--
         NuxtLayout envuelve NuxtPage: el layout (ej. app/layouts/listado.vue,
         con la barra de filtros) es persistente entre paginas que lo
@@ -69,7 +59,7 @@ const anchoAmplio = computed(() => route.meta.ancho === 'amplio');
       </NuxtLayout>
     </main>
     <!-- Al ancho del contenido, entre la paginacion y el copyright. -->
-    <div v-if="conMarco" class="app-shell__ad-pie">
+    <div class="app-shell__ad-pie">
       <AdSlot :ad="ads.footer" ubicacion="footer" />
     </div>
     <SiteFooter />
@@ -84,9 +74,6 @@ const anchoAmplio = computed(() => route.meta.ancho === 'amplio');
   padding: 0 1.5rem;
 }
 
-.app-shell__main--amplio {
-  max-width: 1180px;
-}
 
 .app-shell__main {
   max-width: 800px;
