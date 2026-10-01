@@ -4,6 +4,7 @@ const SOURCE_LABEL: Record<string, string> = {
   workingnomads: 'WorkingNomads',
   jobicy: 'Jobicy',
   himalayas: 'Himalayas',
+  takealuk: 'Luk',
 };
 
 export function sourceLabel(source: string): string {

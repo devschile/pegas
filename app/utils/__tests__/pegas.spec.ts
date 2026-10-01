@@ -7,6 +7,7 @@ describe('sourceLabel', () => {
     expect(sourceLabel('workingnomads')).toBe('WorkingNomads');
     expect(sourceLabel('jobicy')).toBe('Jobicy');
     expect(sourceLabel('himalayas')).toBe('Himalayas');
+    expect(sourceLabel('takealuk')).toBe('Luk');
   });
 
   it('cae al valor crudo para fuentes desconocidas', () => {
