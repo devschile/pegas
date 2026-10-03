@@ -68,6 +68,7 @@ function handleBackClick() {
 const TABS_BASE = [{ value: 'guardadas', label: 'Guardadas' }];
 const TABS_ADMIN = [
   { value: 'desactivadas', label: 'Desactivadas' },
+  { value: 'agregar', label: 'Agregar pega' },
   { value: 'ads', label: 'Ads' },
 ];
 
@@ -135,6 +136,10 @@ useSeoMeta({
             </li>
           </ul>
         </section>
+      </div>
+
+      <div v-if="isAdmin" slot="panel-agregar">
+        <PanelAgregarPega />
       </div>
 
       <div v-if="isAdmin" slot="panel-ads">
