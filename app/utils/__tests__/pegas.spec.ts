@@ -8,7 +8,7 @@ describe('sourceLabel', () => {
     expect(sourceLabel('jobicy')).toBe('Jobicy');
     expect(sourceLabel('himalayas')).toBe('Himalayas');
     expect(sourceLabel('takealuk')).toBe('Luk');
-    expect(sourceLabel('trabajoremoto')).toBe('Trabajo Remoto');
+    expect(sourceLabel('trabajoremoto')).toBe('trabajoremoto.cl');
   });
 
   it('cae al valor crudo para fuentes desconocidas', () => {
