@@ -5,6 +5,7 @@ const SOURCE_LABEL: Record<string, string> = {
   jobicy: 'Jobicy',
   himalayas: 'Himalayas',
   takealuk: 'Luk',
+  trabajoremoto: 'Trabajo Remoto',
   manual: '#pegas',
 };
 

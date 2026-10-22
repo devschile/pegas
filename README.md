@@ -69,10 +69,11 @@ Este repo sirve los espacios; el portal los vende. La ruta vieja
 ## De dónde salen las pegas
 
 Las pegas reales las ingiere un pipeline que lee newsletters de LinkedIn Jobs y
-las APIs públicas de GetOnBoard, WorkingNomads, Jobicy y Himalayas, las
-deduplica, las clasifica en 13 categorías y las guarda en la misma base que este
-sitio consulta. Ese pipeline vive en un repositorio aparte y privado, junto con
-el esquema de la base y los scripts de operación.
+las APIs públicas de GetOnBoard, WorkingNomads, Jobicy y Himalayas, además de
+Takealuk y el feed de Trabajo Remoto, las deduplica, las clasifica en 13
+categorías y las guarda en la misma base que este sitio consulta. Ese pipeline
+vive en un repositorio aparte y privado, junto con el esquema de la base y los
+scripts de operación.
 
 Para aportar acá no hace falta: `dev/` trae una copia del esquema y datos de
 ejemplo, y el sitio no distingue entre esos y los reales.
