@@ -23,7 +23,7 @@
     "@tabler/icons-vue": "^3.46.0",
     "morphicons": "^1.7.0",
     "motion-v": "^2.3.0",
-    "nuxt": "^4.5.2",
+    "nuxt": "^4.6.2",
     "nuxt-auth-utils": "^0.5.30",
     "pg": "^8.23.0",
     "posthog-js": "^1.417.1",
